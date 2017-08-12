@@ -40,10 +40,7 @@ $.prototype.forEach = function (consumer)
 
 HTMLElement.prototype.hasClass = function (className)
 {
-    if (this.classList)
-        return this.classList.contains(className);
-    else
-        return new RegExp('(^| )' + className + '( |$)', 'gi').test(this.className);
+    return this.classList.contains(className);
 }
 HTMLDivElement.prototype.hasChild = function (selector)
 {
@@ -51,6 +48,24 @@ HTMLDivElement.prototype.hasChild = function (selector)
         return true;
     else
         return false;
+}
+Node.prototype.addClass = function (className)
+{
+    this.classList.add(className);
+}
+Node.prototype.addClasses = function (...names)
+{
+    for (var idx = 0, len = names.length; idx < len; ++idx)
+        this.classList.add(names[idx]);
+}
+Node.prototype.removeClass = function (className)
+{
+    this.classList.remove(className);
+}
+Node.prototype.removeClasses = function (...names)
+{
+    for (var idx = 0, len = names.length; idx < len; ++idx)
+        this.classList.remove(names[idx]);
 }
 /*Node.prototype.findChild = function (selector, ...more)
 {
@@ -180,7 +195,8 @@ function reportSpam(id, type)
 function createButton(extraClass, text)
 {
     var btn = document.createElement('button');
-    btn.className = "Button " + extraClass;
+    btn.addClass("Button");
+    btn.addClasses(...extraClass);
     btn.setAttribute("type", "button");
     btn.innerText = text;
     return btn;
@@ -249,7 +265,7 @@ function addSpamUserBtns(voterNodes)
         if (!user) return;
         users.push(user);
 
-        var btn = createButton("Btn-ReportSpam Button--primary", "广告");
+        var btn = createButton(["Btn-ReportSpam", "Button--primary"], "广告");
         btn.dataset.id = user.id;
         btn.dataset.type = "member";
         $(".ContentItem-extra", node).prepend(btn);
@@ -308,12 +324,12 @@ function addSpamAnsBtns(answerNodes)
             if (!ansArea)
                 return;
             {
-                var btn = createButton("Btn-CheckSpam Button--primary Button--blue", "分析");
+                var btn = createButton(["Btn-CheckSpam", "Button--primary"], "分析");
                 btn.dataset.id = answer.id;
                 ansArea.appendChild(btn);
             }
             {
-                var btn = createButton("Btn-ReportSpam Button--primary", "广告");
+                var btn = createButton(["Btn-ReportSpam", "Button--primary"], "广告");
                 btn.dataset.id = answer.id;
                 btn.dataset.type = "answer";
                 ansArea.appendChild(btn);
@@ -357,11 +373,11 @@ $("body").on("click", ".Btn-ReportSpam", function ()
 {
     var btn = $(this)[0];
     reportSpam(btn.dataset.id, btn.dataset.type)
-        .done(() => btn.style.backgroundColor = "green")
+        .done(() => btn.style.backgroundColor = "rgb(0,224,32)")
         .fail((e) =>
         {
             console.warn("report fail:" + e.code, e.error);
-            btn.style.backgroundColor = "red";
+            btn.style.backgroundColor = "rgb(224,0,32)";
         });
 });
 $("body").on("click", ".Btn-CheckSpam", function ()
@@ -371,6 +387,7 @@ $("body").on("click", ".Btn-CheckSpam", function ()
     getAnsVoters(ansId, 0, 100)
         .done(voters =>
         {
+            btn.addClass("Button--blue");
             _report("users", voters);
             var zans = voters.map(user => new Zan(user, ansId));
             _report("zans", zans);
@@ -379,9 +396,13 @@ $("body").on("click", ".Btn-CheckSpam", function ()
                 {
                     var total = voters.length, spm = spamed.length;
                     btn.innerText = spm + "/" + total;
-                    var ratio = Math.ceil((spm / total) * 255);
-                    var color = formColor(ratio, 255 - ratio, 64);
-                    btn.style.backgroundColor = color;
+                    if (total === 0)
+                        return;
+                    var ratio = ((spm / total) - 0.5) * 2;
+                    var blue = 64 - Math.ceil(Math.abs(ratio) * 32);
+                    var red = ratio > 0 ? 224 : Math.ceil((ratio + 1) * 192) + 32;
+                    var green = ratio < 0 ? 224 : 224 - Math.ceil(ratio * 192);
+                    btn.style.backgroundColor = "rgb(" + red + "," + green + "," + blue + ")";
                 });
         });
 });
@@ -417,7 +438,7 @@ function procInQuestion()
         var qstArea = $(".QuestionHeader-footer .QuestionButtonGroup")
         if (qstArea.length > 0)
         {
-            var btn = createButton("Btn-ReportSpam Button--primary", "广告");
+            var btn = createButton(["Btn-ReportSpam", "Button--primary"], "广告");
             btn.dataset.id = CUR_QUESTION.id;
             btn.dataset.type = "question";
             qstArea.prepend(btn);
@@ -448,7 +469,7 @@ function procInPeople()
     user.followcnt = parseInt($(".FollowshipCard-counts a")[1].querySelector(".NumberBoard-value").innerText);
     CUR_USER = user;
     {
-        var btn = createButton("Btn-ReportSpam Button--primary", "广告");
+        var btn = createButton(["Btn-ReportSpam", "Button--primary"], "广告");
         btn.dataset.id = user.id;
         btn.dataset.type = "member";
         $(".ProfileButtonGroup", header).prepend(btn);

@@ -16,6 +16,18 @@ db.version(4).stores(
 db.open().catch(e => console.error("cannot open db", e));
 
 
+var TIMER_CLEAR_BADGE = setTimeout(clearBadge, 0);
+function putBadge(num)
+{
+    clearTimeout(TIMER_CLEAR_BADGE);
+    chrome.browserAction.setBadgeText({ text: "" + num });
+    TIMER_CLEAR_BADGE = setTimeout(clearBadge, 500);
+}
+function clearBadge()
+{
+    chrome.browserAction.setBadgeText({ text: "" });
+}
+
 
 function insertDB(target, data)
 {
@@ -50,9 +62,15 @@ function insertDB(target, data)
     console.log(target, data);
     var pms;
     if (!(data instanceof Array))
+    {
         pms = table.put(data);
+        putBadge(1);
+    }
     else if (data.length > 0)
+    {
         pms = table.bulkPut(data);
+        putBadge(data.length);
+    }
     else
         return false;
     pms.catch(error => console.warn("failed!", error, target, data));
