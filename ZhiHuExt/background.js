@@ -135,4 +135,4 @@ $(document).ready(function ()
     new Clipboard('#copyBtn');
 });
 
-//import Dexie from "./dexie.js"
+//import Dexie from "./Dependency/dexie.js"
