@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.26430.16
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ZhiHuExt", "ZhiHuExt", "{93675B82-EC6C-4F02-80C6-4872E07264D3}"
+	ProjectSection(SolutionItems) = preProject
+		ZhiHuExt\background.html = ZhiHuExt\background.html
+		ZhiHuExt\background.js = ZhiHuExt\background.js
+		ZhiHuExt\content.js = ZhiHuExt\content.js
+		ZhiHuExt\dexie.js = ZhiHuExt\dexie.js
+		ZhiHuExt\dexie.min.js = ZhiHuExt\dexie.min.js
+		ZhiHuExt\dexie.min.js.map = ZhiHuExt\dexie.min.js.map
+		ZhiHuExt\icon.png = ZhiHuExt\icon.png
+		ZhiHuExt\jquery-3.2.1.js = ZhiHuExt\jquery-3.2.1.js
+		ZhiHuExt\jquery-3.2.1.min.js = ZhiHuExt\jquery-3.2.1.min.js
+		ZhiHuExt\jquery-3.2.1.min.map = ZhiHuExt\jquery-3.2.1.min.map
+		ZhiHuExt\manifest.json = ZhiHuExt\manifest.json
+		ZhiHuExt\pod.js = ZhiHuExt\pod.js
+		ZhiHuExt\popup.html = ZhiHuExt\popup.html
+		ZhiHuExt\popup.js = ZhiHuExt\popup.js
+	EndProjectSection
+	ProjectSection(FolderGlobals) = preProject
+		__JSONSchema = http://json-schema.org/draft-04/schema
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
