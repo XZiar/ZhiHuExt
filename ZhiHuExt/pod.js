@@ -7,10 +7,10 @@ class User
         this.id = "";
         this.name = "";
         this.head = "";
-        this.status = "";
-        this.anscnt = 0;
-        this.articlecnt = 0;
-        this.followcnt = 0;
+        this.status = null;
+        this.anscnt = -1;
+        this.articlecnt = -1;
+        this.followcnt = -1;
         this.assign(data);
     }
 

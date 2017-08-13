@@ -14,6 +14,26 @@ db.version(1).stores(
     .upgrade(trans =>
     {
     });
+db.users.hook("creating", (primKey, obj, trans) =>
+{
+    if (obj.status === null)
+        obj.status = "";
+});
+db.users.hook("updating", (mods, primKey, obj, trans) =>
+{
+    const keys = Object.keys(mods);
+    if (keys.length === 0) return;
+    const ret = {};
+    for (let idx = 0; idx < keys.length; idx++)
+    {
+        const key = keys[idx], val = mods[key];
+        if ((val === -1 || val === null))
+            if(obj.hasOwnProperty(key))
+                ret[key] = obj[key];//skip unset values
+    }
+    //console.log("compare", mods, ret);
+    return ret;
+});
 db.open().catch(e => console.error("cannot open db", e));
 
 
