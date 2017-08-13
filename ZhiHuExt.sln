@@ -24,6 +24,12 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ZhiHuExt", "ZhiHuExt", "{93
 		__JSONSchema = http://json-schema.org/draft-04/schema
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Dependecy", "Dependecy", "{E476A3D7-D0E1-40EA-990A-D165CFDB83D7}"
+	ProjectSection(SolutionItems) = preProject
+		Dependency\dexie.js = Dependency\dexie.js
+		Dependency\jquery-3.2.1.js = Dependency\jquery-3.2.1.js
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

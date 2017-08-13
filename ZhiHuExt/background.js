@@ -154,23 +154,18 @@ function exportDB()
     return pms;
 }
 
-function checkSpamUser(users)
+async function checkSpamUser(waitUsers)
 {
-    const ids = users.map(user => user.id);
-    const spamsPms = db.spams.where("id").anyOf(ids)
+    const ret = { banned: [], spamed: [] };
+    const ids = waitUsers.mapToProp("id");
+    const bannedIds = await db.users.where("status").equals("ban").primaryKeys();
+    const [bannedPart, unbannedPart] = splitInsideOrNot(ids, bannedIds);
+    ret.banned = await db.users.where("id").anyOf(bannedPart).toArray();
+
+    const spamedIds = await db.spams.where("id").anyOf(unbannedPart)
         .filter(spam => spam.type == "member").primaryKeys();
-    const pms = $.Deferred();
-    spamsPms.then(uids =>
-    {
-        if (uids.length === 0)
-        {
-            pms.resolve([]);
-            return;
-        }
-        db.users.where("id").anyOf(uids)
-            .toArray(uss => pms.resolve(uss));
-    })
-    return pms;
+    ret.spamed = await db.users.where("id").anyOf(spamedIds).toArray();
+    return ret;
 }
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) =>
@@ -185,13 +180,14 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) =>
             });
             return true;
         case "chkspam":
-            checkSpamUser(request.data instanceof Array ? request.data : [request.data])
+            {
+                checkSpamUser(request.data instanceof Array ? request.data : [request.data])
                 .then(result =>
                 {
                     console.log("check-spam result:", result);
                     sendResponse(result);
                 });
-            return true;
+            }return true;
         case "export":
             exportDB().done(dbjson =>
             {
@@ -199,7 +195,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) =>
                 const blob = new Blob([JSON.stringify(dbjson)], { type: "application/json" });
                 const blobUrl = URL.createObjectURL(blob);
                 console.log("export to:", blobUrl);
-                chrome.downloads.download({ url: blobUrl, filename: "ZhiHuExtDB.json" }, did =>
+                const time = new Date().Format("yyyyMMdd-hhmm");
+                const fname = "ZhiHuExtDB-" + time + ".json";
+                chrome.downloads.download({ url: blobUrl, filename: fname }, did =>
                 {
                     if (did === undefined)
                     { console.warn("download wrong", chrome.runtime.lastError); return; }

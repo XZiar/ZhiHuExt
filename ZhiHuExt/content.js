@@ -106,7 +106,7 @@ function checkSpam(target, data)
 {
     const pms = $.Deferred();
     if (!data || (data instanceof Array && data.length === 0))
-        pms.resolve([]);
+        pms.resolve({ banned: [], spamed: [] });
     else
         chrome.runtime.sendMessage({ action: "chkspam", target: target, data: data },
             ret => pms.resolve(ret));
@@ -235,11 +235,13 @@ function parseAnswer(node)
 }
 
 
-function addSpamUserBtns(voterNodes)
+async function addSpamVoterBtns(voterNodes)
 {
     const users = [];
-    voterNodes.forEach(node =>
+    const btnMap = {};
+    for (let idx = 0; idx < voterNodes.length; ++idx)
     {
+        const node = voterNodes[idx];
         const user = parseUser(node);
         if (!user) return;
         users.push(user);
@@ -248,9 +250,20 @@ function addSpamUserBtns(voterNodes)
         btn.dataset.id = user.id;
         btn.dataset.type = "member";
         $(".ContentItem-extra", node).prepend(btn);
-    });
+        btnMap[user.id] = btn;
+    }
     _report("users", users);
-    return users;
+    const result = await checkSpam("users", users);
+    if (CUR_ANSWER)
+    {
+        const zans = users.map(user => new Zan(user, CUR_ANSWER));
+        _report("zans", zans);
+    }
+    for (let idx = 0; idx < result.banned.length; ++idx)
+    {
+        const btn = btnMap[result.banned[idx].id];
+        btn.style.backgroundColor = "black";
+    }
 };
 const voterObserver = new MutationObserver(records =>
 {
@@ -260,12 +273,7 @@ const voterObserver = new MutationObserver(records =>
             .map(record => $.makeArray(record.addedNodes)))
         .filter(node => node.hasClass("List-item") && !node.hasChild(".Btn-ReportSpam"));
     console.log("added " + voterNodes.length + " voters", voterNodes);
-    const users = addSpamUserBtns(voterNodes);
-    if (CUR_ANSWER)
-    {
-        const zans = users.map(user => new Zan(user, CUR_ANSWER));
-        _report("zans", zans);
-    }
+    addSpamVoterBtns(voterNodes);
 });
 function monitorVoter(voterPopup)
 {
@@ -274,12 +282,7 @@ function monitorVoter(voterPopup)
     const curVoters = $(voterPopup).find(".List-item").toArray()
         .filter(node => !node.hasChild(".Btn-ReportSpam"));
     console.log("current " + curVoters.length + " voters", curVoters);
-    const users = addSpamUserBtns(curVoters);
-    if (CUR_ANSWER)
-    {
-        const zans = users.map(user => new Zan(user, CUR_ANSWER));
-        _report("zans", zans);
-    }
+    addSpamVoterBtns(curVoters);
     voterObserver.observe($(voterPopup)[0], { "childList": true });
 }
 
@@ -362,31 +365,28 @@ $("body").on("click", ".Btn-ReportSpam", function ()
                 btn.style.backgroundColor = "rgb(224,0,32)";
         });
 });
-$("body").on("click", ".Btn-CheckSpam", function ()
+$("body").on("click", ".Btn-CheckSpam", async function ()
 {
     const btn = $(this)[0];
     const ansId = btn.dataset.id;
-    getAnsVoters(ansId, 0, 100)
-        .done(voters =>
-        {
-            btn.addClass("Button--blue");
-            _report("users", voters);
-            const zans = voters.map(user => new Zan(user, ansId));
-            _report("zans", zans);
-            checkSpam("users", voters)
-                .done(spamed =>
-                {
-                    const total = voters.length, spm = spamed.length;
-                    btn.innerText = spm + "/" + total;
-                    if (total === 0)
-                        return;
-                    const ratio = ((spm / total) - 0.5) * 2;
-                    const blue = 64 - Math.ceil(Math.abs(ratio) * 32);
-                    const red = ratio > 0 ? 224 : Math.ceil((ratio + 1) * 192) + 32;
-                    const green = ratio < 0 ? 224 : 224 - Math.ceil(ratio * 192);
-                    btn.style.backgroundColor = "rgb(" + red + "," + green + "," + blue + ")";
-                });
-        });
+    const voters = await getAnsVoters(ansId, 0, 100);
+
+    btn.addClass("Button--blue");
+    _report("users", voters);
+    const zans = voters.map(user => new Zan(user, ansId));
+    _report("zans", zans);
+
+    const result = await checkSpam("users", voters);
+    const total = voters.length, ban = result.banned.length, spm = result.spamed.length;
+    btn.innerText = "(" + ban + "+" + spm + ")/" + total;
+    if (total === 0)
+        return;
+
+    const ratio = (2 * (ban + spm) / total) - 1;
+    const blue = 64 - Math.ceil(Math.abs(ratio) * 32);
+    const red = ratio > 0 ? 224 : Math.ceil((ratio + 1) * 192) + 32;
+    const green = ratio < 0 ? 224 : 224 - Math.ceil(ratio * 192);
+    btn.style.backgroundColor = "rgb(" + red + "," + green + "," + blue + ")";
 });
 $("body").on("click", "span.Voters", function ()
 {
@@ -405,59 +405,77 @@ $("body").on("click", "button.Modal-closeButton", function ()
 
 function procInQuestion()
 {
-    try
+    console.log("question page");
+    const qstPage = $(".QuestionPage")[0];
+    const qstData = JSON.parse(Array.from(qstPage.childNodes)
+        .filter(node => node instanceof HTMLDivElement)
+        .find(div => div.className == "")
+        .dataset.zopQuestion);
+    const topics = qstData.topics;
+    const quest = new Question(qstData.id, qstData.title, topics.map(tp => tp.id));
+    CUR_QUESTION = quest;
+    _report("questions", quest);
+    _report("topics", topics);
+    const qstArea = $(".QuestionHeader-footer .QuestionButtonGroup")
+    if (qstArea.length > 0)
     {
-        const qstPage = $(".QuestionPage")[0];
-        const qstData = JSON.parse(Array.from(qstPage.childNodes)
-            .filter(node => node instanceof HTMLDivElement)
-            .find(div => div.className == "")
-            .dataset.zopQuestion);
-        const topics = qstData.topics;
-        const quest = new Question(qstData.id, qstData.title, topics.map(tp => tp.id));
-        CUR_QUESTION = quest;
-        _report("questions", quest);
-        _report("topics", topics);
-        const qstArea = $(".QuestionHeader-footer .QuestionButtonGroup")
-        if (qstArea.length > 0)
-        {
-            const btn = createButton(["Btn-ReportSpam", "Button--primary"], "广告");
-            btn.dataset.id = CUR_QUESTION.id;
-            btn.dataset.type = "question";
-            qstArea.prepend(btn);
-        }
-    } catch (e) { console.warn(e); }
+        const btn = createButton(["Btn-ReportSpam", "Button--primary"], "广告");
+        btn.dataset.id = CUR_QUESTION.id;
+        btn.dataset.type = "question";
+        qstArea.prepend(btn);
+    }
 }
 function procInPeople()
 {
+    console.log("people page");
     const user = new User();
+    
     const header = $("#ProfileHeader")[0];
     if (!header)
-        return;
-    user.id = JSON.parse(header.dataset.zaModuleInfo).card.content.token;
-    user.name = $("span.ProfileHeader-name", header).text();
-    user.head = header.querySelector("img.Avatar").src
-        .split("/").pop()
-        .removeSuffix(7);
-    if ($(".UserStatus span.UserStatus-warnText").text().includes("停用"))
-        user.status = "ban";
-    const info = $("#ProfileMain a.Tabs-link").toArray()
-        .forEach(ahref =>
-        {
-            const txt = ahref.innerText;
-            const num = parseInt(txt.substring(2));
-            if (txt.includes("回答"))
-                user.anscnt = num;
-            else if (txt.includes("文章"))
-                user.articlecnt = num;
-        });
-    user.followcnt = parseInt($(".FollowshipCard-counts a")[1].querySelector(".NumberBoard-value").innerText);
-    CUR_USER = user;
     {
-        const btn = createButton(["Btn-ReportSpam", "Button--primary"], "广告");
-        btn.dataset.id = user.id;
-        btn.dataset.type = "member";
-        $(".ProfileButtonGroup", header).prepend(btn);
+        const txt = $("h1.ProfileLockStatus-title").text();
+        if (txt.includes("封禁") || txt.includes("反作弊"))//banned user
+        {
+            user.id = JSON.parse(
+                document.querySelector("#root").childNodes[0].dataset.zopUsertoken)
+                .urlToken;
+            user.name = document.title.removeSuffix(5);
+            user.status = "ban";
+        }
+        else
+            return;
     }
+    else
+    {
+        user.id = JSON.parse(header.dataset.zaModuleInfo).card.content.token;
+        user.name = $("span.ProfileHeader-name", header).text();
+        user.head = header.querySelector("img.Avatar").src
+            .split("/").pop()
+            .removeSuffix(7);
+        if ($(".UserStatus span.UserStatus-warnText").text().includes("停用"))
+            user.status = "ban";
+        else
+            user.status = "";
+        const info = $("#ProfileMain a.Tabs-link").toArray()
+            .forEach(ahref =>
+            {
+                const txt = ahref.innerText;
+                const num = parseInt(txt.substring(2));
+                if (txt.includes("回答"))
+                    user.anscnt = num;
+                else if (txt.includes("文章"))
+                    user.articlecnt = num;
+            });
+        user.followcnt = parseInt($(".FollowshipCard-counts a")[1].querySelector(".NumberBoard-value").innerText);
+
+        {
+            const btn = createButton(["Btn-ReportSpam", "Button--primary"], "广告");
+            btn.dataset.id = user.id;
+            btn.dataset.type = "member";
+            $(".ProfileButtonGroup", header).prepend(btn);
+        }
+    }
+    CUR_USER = user;
     _report("users", user);
 }
 
@@ -514,6 +532,7 @@ else if (pathname.startsWith("/people/"))
 }
 else if (pathname.startsWith("/community") && !pathname.includes("reported"))
 {
+    console.log("community report page");
     cmrepotObserver.observe($(".zu-main-content-inner")[0], { "childList": true, "subtree": true });
 }
 {

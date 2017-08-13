@@ -11,6 +11,31 @@ Array.prototype.flatArray = function ()
 {
     return Array.fromArrays(...this);
 }
+Array.prototype.findInArray = function(array)
+{
+    if (!(array instanceof Array))
+    {
+        console.warn("argument is not array", array);
+        return;
+    }
+    const ret = [];
+    for (let idx = 0; idx < this.length; ++idx)
+    {
+        let obj = this[idx];
+        if (array.includes(obj))
+            ret.push(obj);
+    }
+    return ret;
+}
+Array.prototype.mapToProp = function(keyName)
+{
+    const ret = [];
+    for (let idx = 0; idx < this.length; ++idx)
+    {
+        ret.push((this[idx])[keyName]);
+    }
+    return ret;
+}
 Array.fromArrays = function (...array)
 {
     return [].concat.apply([], array);
@@ -24,6 +49,45 @@ Array.fromArray = function (array)
 }
 String.prototype.removeSuffix = function (count)
 {
-    var del = Math.min(this.length, count);
+    const del = Math.min(this.length, count);
     return this.substring(0, this.length - del);
+}
+
+Date.prototype.Format = function (fmt)
+{ //author: meizz
+    const o =
+    {
+        "M+": this.getMonth() + 1, //月份
+        "d+": this.getDate(), //日
+        "h+": this.getHours(), //小时
+        "m+": this.getMinutes(), //分
+        "s+": this.getSeconds(), //秒
+        "q+": Math.floor((this.getMonth() + 3) / 3), //季度
+        "S": this.getMilliseconds() //毫秒
+    };
+    if (/(y+)/.test(fmt))
+        fmt = fmt.replace(RegExp.$1, (this.getFullYear() + "").substr(4 - RegExp.$1.length));
+    for (let k in o)
+        if (new RegExp("(" + k + ")").test(fmt))
+            fmt = fmt.replace(RegExp.$1, (RegExp.$1.length == 1) ? (o[k]) : (("00" + o[k]).substr(("" + o[k]).length)));
+    return fmt;
+}
+
+function splitInsideOrNot(array, other)
+{
+    if (!(array instanceof Array) || !(other instanceof Array))
+    {
+        console.warn("argument is not array", array, other);
+        return;
+    }
+    const inside = [], outside = [];
+    for (let idx = 0; idx < array.length; ++idx)
+    {
+        let obj = array[idx];
+        if (other.includes(obj))
+            inside.push(obj);
+        else
+            outside.push(obj);
+    }
+    return [inside, outside];
 }
