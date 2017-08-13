@@ -1,3 +1,5 @@
+"use strict"
+
 class User
 {
     constructor(data)
@@ -5,6 +7,7 @@ class User
         this.id = "";
         this.name = "";
         this.head = "";
+        this.status = "";
         this.anscnt = 0;
         this.articlecnt = 0;
         this.followcnt = 0;

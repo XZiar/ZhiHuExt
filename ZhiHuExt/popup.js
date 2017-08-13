@@ -18,7 +18,11 @@ function rfs()
     });
 }
 
-$(document).on("click", "button.rfs", () => rfs());
+$(document).on("click", "button#rfs", rfs);
+$(document).on("click", "button#export", () =>
+{
+    chrome.runtime.sendMessage({ action: "export" });
+});
 $(document).ready(() =>
 {
     rfs();

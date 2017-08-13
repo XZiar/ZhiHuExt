@@ -185,7 +185,7 @@ function reportSpam(id, type)
         .fail((data, status, xhr) =>
         {
             if (data.responseJSON)
-                pms.reject({ code: xhr.status, error: data.responseJSON.error.message });
+                pms.reject({ code: data.responseJSON.error.code, error: data.responseJSON.error.message });
             else
                 pms.reject({ code: xhr.status, error: "unknown error" });
         })
@@ -377,7 +377,10 @@ $("body").on("click", ".Btn-ReportSpam", function ()
         .fail((e) =>
         {
             console.warn("report fail:" + e.code, e.error);
-            btn.style.backgroundColor = "rgb(224,0,32)";
+            if (e.code === 103001)
+                btn.style.backgroundColor = "rgb(224,224,32)";
+            else
+                btn.style.backgroundColor = "rgb(224,0,32)";
         });
 });
 $("body").on("click", ".Btn-CheckSpam", function ()
@@ -456,6 +459,8 @@ function procInPeople()
     user.head = header.querySelector("img.Avatar").src
         .split("/").pop()
         .removeSuffix(7);
+    if ($(".UserStatus span.UserStatus-warnText").text().includes("停用"))
+        user.status = "ban";
     var info = $("#ProfileMain a.Tabs-link").toArray()
         .forEach(ahref =>
         {

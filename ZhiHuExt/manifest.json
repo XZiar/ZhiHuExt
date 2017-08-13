@@ -20,7 +20,8 @@
   [
     "*://www.zhihu.com/",
     "tabs",
-    "storage"
+    "storage",
+    "downloads"
   ],
   "background":
   {

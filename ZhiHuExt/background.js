@@ -1,22 +1,23 @@
+"use strict"
 
-var db = new Dexie("ZhihuDB");
-db.version(4).stores(
+const db = new Dexie("ZhihuDB");
+db.version(1).stores(
     {
         spams: "id,type",
-        users: "id,anscnt,followcnt",
+        users: "id,status,anscnt,followcnt",
         follows: "[from+to],from,to",
         zans: "[from+to],from,to",
         answers: "id,author,question",
         questions: "id",
         topics: "id"
     })
-    .upgrade(() =>
+    .upgrade(trans =>
     {
     });
 db.open().catch(e => console.error("cannot open db", e));
 
 
-var TIMER_CLEAR_BADGE = setTimeout(clearBadge, 0);
+let TIMER_CLEAR_BADGE = setTimeout(clearBadge, 0);
 function putBadge(num)
 {
     clearTimeout(TIMER_CLEAR_BADGE);
@@ -29,9 +30,9 @@ function clearBadge()
 }
 
 
-function insertDB(target, data)
+function getTargetTable(target)
 {
-    var table;
+    let table;
     switch (target)
     {
         case "spam":
@@ -57,10 +58,17 @@ function insertDB(target, data)
             break;
         default:
             console.warn("unknown target:" + target);
-            return false;
+            break;
     }
+    return table;
+}
+function insertDB(target, data)
+{
+    const table = getTargetTable(target);
+    if (!table)
+        return false;
     console.log(target, data);
-    var pms;
+    let pms;
     if (!(data instanceof Array))
     {
         pms = table.put(data);
@@ -73,40 +81,65 @@ function insertDB(target, data)
     }
     else
         return false;
-    pms.catch(error => console.warn("failed!", error, target, data));
+    pms.catch(error => console.warn("[insert] failed!", error, target, data));
     return true;
 }
-function countDB(idx, pms)
+function updateDB(target, data)
 {
-    if (idx == null)
-    {
-        pms = $.Deferred();
-        pms.extraData = db.tables;
-        pms.tmpResult = {};
-        countDB(0, pms);
-        return pms;
-    }
+    const table = getTargetTable(target);
+    if (!table)
+        return false;
+    console.log(target, data);
+    let matchs;
+    if (data.obj instanceof Array)
+        matchs = table.where(data.key).anyOf(data.obj);
     else
-    {
-        var tables = pms.extraData;
-        if (idx < tables.length)
-        {
-            var table = tables[idx];
-            table.count()
-                .then(cnt => pms.tmpResult[table.name] = cnt)
-                .catch(error => console.warn("counting error", error))
-                .finally(() => countDB(idx + 1, pms));
-        }
-        else//finish
-            pms.resolve(pms.tmpResult);
-    }
+        matchs = table.where(data.key).equals(data.obj);
+    matchs.modify(match => Object.assign(match, data.updator))
+        .catch(error => console.warn("[update] failed!", error, target, data));
+    return true;
 }
+function countDB()
+{
+    const pms = $.Deferred();
+    db.transaction("r", ...db.tables, () =>
+    {
+        const ret = {};
+        const tabpmss = db.tables.map(async table =>
+        {
+            ret[table.name] = await table.count();
+        });
+        Promise.all(tabpmss)
+            .then(() => pms.resolve(ret))
+            .catch(e => pms.reject(e));
+    });
+    return pms;
+}
+function exportDB()
+{
+    const pms = $.Deferred();
+    db.transaction("r", ...db.tables, () =>
+    {
+        const tabpmss = db.tables.map(async table =>
+        {
+            const ret = {};
+            ret[table.name] = await table.toArray();
+            console.log("export table [" + table.name + "] success", ret);
+            return ret;
+        });
+        Promise.all(tabpmss)
+            .then(tabs => pms.resolve(tabs))
+            .catch(e => pms.reject(e));
+    });
+    return pms;
+}
+
 function checkSpamUser(users)
 {
-    var ids = users.map(user => user.id);
-    var spamsPms = db.spams.where("id").anyOf(ids)
+    const ids = users.map(user => user.id);
+    const spamsPms = db.spams.where("id").anyOf(ids)
         .filter(spam => spam.type == "member").primaryKeys();
-    var pms = $.Deferred();
+    const pms = $.Deferred();
     spamsPms.then(uids =>
     {
         if (uids.length === 0)
@@ -139,14 +172,49 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) =>
                     sendResponse(result);
                 });
             return true;
+        case "export":
+            exportDB().done(dbjson =>
+            {
+                //console.log("export db outputs:", dbjson);
+                const blob = new Blob([JSON.stringify(dbjson)], { type: "application/json" });
+                const blobUrl = URL.createObjectURL(blob);
+                console.log("export to:", blobUrl);
+                chrome.downloads.download({ url: blobUrl, filename: "ZhiHuExtDB.json" }, did =>
+                {
+                    if (did === undefined)
+                    { console.warn("download wrong", chrome.runtime.lastError); return; }
+                    DOWNLOAD_QUEUE[did] = blobUrl;
+                    console.log("start download [" + did + "]");
+                });
+            }).fail(error => console.warn("exportDB fail", error));
+            break;
         case "insert":
             if (!insertDB(request.target, request.data))
-                console.log("insert wrong", request);
+                console.warn("insert wrong", request);
+            break;
+        case "update":
+            if (!updateDB(request.target, request.data))
+                console.warn("update wrong", request);
             break;
         default:
             console.log("unknown action:" + request.action, request);
+            break;
     }
 });
+
+const DOWNLOAD_QUEUE = {}
+chrome.downloads.onChanged.addListener((delta) =>
+{
+    if (!DOWNLOAD_QUEUE.hasOwnProperty(delta.id))
+        return;
+    if (delta.state && delta.state.current === "complete")
+    {
+        const url = DOWNLOAD_QUEUE[delta.id];
+        delete DOWNLOAD_QUEUE[delta.id];
+        URL.revokeObjectURL(url);
+        console.log("finish download [" + delta.id + "], revoke:", url);
+    }
+})
 
 $(document).ready(function ()
 {
