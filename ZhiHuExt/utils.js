@@ -73,21 +73,3 @@ Date.prototype.Format = function (fmt)
     return fmt;
 }
 
-function splitInsideOrNot(array, other)
-{
-    if (!(array instanceof Array) || !(other instanceof Array))
-    {
-        console.warn("argument is not array", array, other);
-        return;
-    }
-    const inside = [], outside = [];
-    for (let idx = 0; idx < array.length; ++idx)
-    {
-        let obj = array[idx];
-        if (other.includes(obj))
-            inside.push(obj);
-        else
-            outside.push(obj);
-    }
-    return [inside, outside];
-}

@@ -10,6 +10,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ZhiHuExt", "ZhiHuExt", "{93
 		ZhiHuExt\content.js = ZhiHuExt\content.js
 		ZhiHuExt\dexie.min.js = ZhiHuExt\dexie.min.js
 		ZhiHuExt\dexie.min.js.map = ZhiHuExt\dexie.min.js.map
+		ZhiHuExt\DownloadMan.js = ZhiHuExt\DownloadMan.js
 		ZhiHuExt\icon.png = ZhiHuExt\icon.png
 		ZhiHuExt\jquery-3.2.1.min.js = ZhiHuExt\jquery-3.2.1.min.js
 		ZhiHuExt\jquery-3.2.1.min.map = ZhiHuExt\jquery-3.2.1.min.map

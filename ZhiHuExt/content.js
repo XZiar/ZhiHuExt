@@ -429,51 +429,54 @@ function procInPeople()
 {
     console.log("people page");
     const user = new User();
-    
+    user.id = pathname.split("/")[2];
+
     const header = $("#ProfileHeader")[0];
     if (!header)
     {
         const txt = $("h1.ProfileLockStatus-title").text();
         if (txt.includes("封禁") || txt.includes("反作弊"))//banned user
         {
-            user.id = JSON.parse(
-                document.querySelector("#root").childNodes[0].dataset.zopUsertoken)
-                .urlToken;
             user.name = document.title.removeSuffix(5);
             user.status = "ban";
         }
         else
+        {
+            if ($("div.error p").text().includes("没有知识存在的荒原"))
+            {
+                _update("users", "id", user.id, { status: "ban" });
+            }
             return;
+        }
     }
     else
     {
-        user.id = JSON.parse(header.dataset.zaModuleInfo).card.content.token;
         user.name = $("span.ProfileHeader-name", header).text();
-        user.head = header.querySelector("img.Avatar").src
-            .split("/").pop()
-            .removeSuffix(7);
+        $(header).siblings("meta").forEach(meta =>
+        {
+            let jmeta = $(meta);
+            let prop = jmeta.attr("itemprop"), val = jmeta.attr("content");
+            switch (prop)
+            {
+                case "image":
+                    user.head = val.split("/").pop().removeSuffix(7); break;
+                case "zhihu:answerCount":
+                    user.anscnt = parseInt(val); break;
+                case "zhihu:articlesCount":
+                    user.articlecnt = parseInt(val); break;
+                case "zhihu:followerCount":
+                    user.followcnt = parseInt(val); break;
+            }
+        })
         if ($(".UserStatus span.UserStatus-warnText").text().includes("停用"))
             user.status = "ban";
         else
             user.status = "";
-        const info = $("#ProfileMain a.Tabs-link").toArray()
-            .forEach(ahref =>
-            {
-                const txt = ahref.innerText;
-                const num = parseInt(txt.substring(2));
-                if (txt.includes("回答"))
-                    user.anscnt = num;
-                else if (txt.includes("文章"))
-                    user.articlecnt = num;
-            });
-        user.followcnt = parseInt($(".FollowshipCard-counts a")[1].querySelector(".NumberBoard-value").innerText);
 
-        {
-            const btn = createButton(["Btn-ReportSpam", "Button--primary"], "广告");
-            btn.dataset.id = user.id;
-            btn.dataset.type = "member";
-            $(".ProfileButtonGroup", header).prepend(btn);
-        }
+        const btn = createButton(["Btn-ReportSpam", "Button--primary"], "广告");
+        btn.dataset.id = user.id;
+        btn.dataset.type = "member";
+        $(".ProfileButtonGroup", header).prepend(btn);
     }
     CUR_USER = user;
     _report("users", user);
@@ -483,14 +486,15 @@ const cmrepotObserver = new MutationObserver(records =>
 {
     //console.log("detect add community report", records);
     let rows = [];
-    for (let ridx = 0, rlen = records.length; ridx < rlen; ++ridx)
+    for (let ridx = 0; ridx < records.length; ++ridx)
     {
         const record = records[ridx];
         if (record.type != "childList")
             continue;
-        for (let nidx = 0, nlen = record.addedNodes.length; nidx < nlen; ++nidx)
+        const nodes = record.addedNodes;
+        for (let nidx = 0; nidx < nodes.length; ++nidx)
         {
-            const node = record.addedNodes[nidx];
+            const node = nodes[nidx];
             if (node instanceof HTMLTableRowElement)
                 rows.push(node);
             else
@@ -502,7 +506,7 @@ const cmrepotObserver = new MutationObserver(records =>
     console.log("find " + rows.length + " table-row", rows);
     const spams = [];
     const userUpds = [];
-    for (let ridx = 0, rlen = rows.length; ridx < rlen; ++ridx)
+    for (let ridx = 0; ridx < rows.length; ++ridx)
     {
         const tds = Array.from(rows[ridx].childNodes)
             .filter(child => child instanceof HTMLTableCellElement);
