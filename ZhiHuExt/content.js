@@ -61,12 +61,12 @@ function formColor(red, green, blue)
     if (sblue.length < 2) sblue = "0" + sblue;
     return "#" + sred + sgreen + sblue;
 }
-function _get(url, data)
+function _get(url, data, type)
 {
     return $.ajax(url,
         {
             type: "GET",
-            dataType: "json",
+            //dataType: type ? type : "json",
             data: data
         });
 }
@@ -101,6 +101,45 @@ function _update(target, key, objs, updator)
     chrome.runtime.sendMessage({ action: "update", target: target, data: { key: key, obj: objs, updator: updator } });
 }
 
+
+function checkUserState(uid)
+{
+    const pms = $.Deferred();
+    _get("https://www.zhihu.com/people/" + uid)
+        .done((data) =>
+        {
+            const html = document.createElement("html");
+            html.innerHTML = data;
+            const dataElement = html.querySelector("#data");
+            if (!dataElement)
+            {
+                pms.reject();
+                return;
+            }
+            const state = JSON.parse(dataElement.dataset.state);
+            const theuser = state.entities.users[uid];
+            if (!theuser)
+            {
+                pms.reject();
+                return;
+            }
+            const statuss = theuser.accountStatus;
+            const user = new User();
+            user.id = uid;
+            user.name = theuser.name;
+            user.head = theuser.avatarUrl.split("/").pop().removeSuffix(7);
+            user.anscnt = theuser.answerCount;
+            user.followcnt = theuser.followerCount;
+            user.articlecnt = theuser.articlesCount;
+            if (statuss.find(x => x.name === "hang"))
+                user.status = "ban";
+            else
+                user.status = "";
+            pms.resolve(user);
+            console.log(theuser);
+        });
+    return pms;
+}
 
 function checkSpam(target, data)
 {
@@ -243,7 +282,8 @@ async function addSpamVoterBtns(voterNodes)
     {
         const node = voterNodes[idx];
         const user = parseUser(node);
-        if (!user) return;
+        if (!user)
+            continue;
         users.push(user);
 
         const btn = createButton(["Btn-ReportSpam", "Button--primary"], "广告");
@@ -251,6 +291,10 @@ async function addSpamVoterBtns(voterNodes)
         btn.dataset.type = "member";
         $(".ContentItem-extra", node).prepend(btn);
         btnMap[user.id] = btn;
+
+        const btn2 = createButton(["Btn-CheckStatus", "Button--primary"], "检测");
+        btn2.dataset.id = user.id;
+        $(".ContentItem-extra", node).prepend(btn2);
     }
     _report("users", users);
     const result = await checkSpam("users", users);
@@ -369,7 +413,7 @@ $("body").on("click", ".Btn-CheckSpam", async function ()
 {
     const btn = $(this)[0];
     const ansId = btn.dataset.id;
-    const voters = await getAnsVoters(ansId, 0, 100);
+    const voters = await getAnsVoters(ansId, 0, 300);
 
     btn.addClass("Button--blue");
     _report("users", voters);
@@ -388,6 +432,24 @@ $("body").on("click", ".Btn-CheckSpam", async function ()
     const green = ratio < 0 ? 224 : 224 - Math.ceil(ratio * 192);
     btn.style.backgroundColor = "rgb(" + red + "," + green + "," + blue + ")";
 });
+$("body").on("click", ".Btn-CheckStatus", async function ()
+{
+    const btn = $(this)[0];
+    const user = await checkUserState(btn.dataset.id);
+    if (!user)
+        return;
+    _report("users", user);
+    if (user.status === "ban")
+    {
+        btn.style.backgroundColor = "black";
+        $(btn).siblings(".Btn-ReportSpam")[0].style.backgroundColor = "black";
+    }
+    else
+    {
+        btn.style.backgroundColor = "rgb(0,224,32)";
+        $(btn).siblings(".Btn-ReportSpam")[0].style.backgroundColor = "";
+    }
+})
 $("body").on("click", "span.Voters", function ()
 {
     const span = $(this)[0];
@@ -476,7 +538,7 @@ function procInPeople()
         const btn = createButton(["Btn-ReportSpam", "Button--primary"], "广告");
         btn.dataset.id = user.id;
         btn.dataset.type = "member";
-        $(".ProfileButtonGroup", header).prepend(btn);
+        setTimeout(() => $(".ProfileButtonGroup", header).prepend(btn), 500);
     }
     CUR_USER = user;
     _report("users", user);
