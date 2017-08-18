@@ -1,58 +1,5 @@
 "use strict"
 
-$.prototype.forEach = function (consumer)
-{
-    this.each((idx, ele) =>
-    {
-        try
-        {
-            consumer(ele);
-        }
-        catch (e) { console.warn(e); }
-    });
-}
-
-HTMLElement.prototype.hasClass = function (className)
-{
-    return this.classList.contains(className);
-}
-HTMLDivElement.prototype.hasChild = function (selector)
-{
-    if (this.querySelector(selector))
-        return true;
-    else
-        return false;
-}
-Node.prototype.addClass = function (className)
-{
-    this.classList.add(className);
-}
-Node.prototype.addClasses = function (...names)
-{
-    for (let idx = 0, len = names.length; idx < len; ++idx)
-        this.classList.add(names[idx]);
-}
-Node.prototype.removeClass = function (className)
-{
-    this.classList.remove(className);
-}
-Node.prototype.removeClasses = function (...names)
-{
-    for (let idx = 0, len = names.length; idx < len; ++idx)
-        this.classList.remove(names[idx]);
-}
-/*Node.prototype.findChild = function (selector, ...more)
-{
-    let children = this.querySelectorAll("selector");
-    if (more.length === 0)
-        return children;
-
-    return Array.fromArray(Array.from(children)
-            .map(child => child.findChild(...more))
-        .filter(ret => ret.length > 0));
-}*/
-
-
 function formColor(red, green, blue)
 {
     const sred = red.toString(16), sgreen = green.toString(16), sblue = blue.toString(16);
@@ -61,55 +8,13 @@ function formColor(red, green, blue)
     if (sblue.length < 2) sblue = "0" + sblue;
     return "#" + sred + sgreen + sblue;
 }
-function _get(url, data, type)
-{
-    return $.ajax(url,
-        {
-            type: "GET",
-            //dataType: type ? type : "json",
-            data: data,
-            statusCode:
-            {
-                429: xhr => xhr.fail()
-            }
-        });
-}
-function _post(url, data)
-{
-    let cType;
-    if (typeof data == "string")
-        cType = "application/x-www-form-urlencoded";
-    else
-    {
-        cType = "application/json";
-        data = JSON.stringify(data);
-    }
-    return $.ajax(url,
-        {
-            type: "POST",
-            contentType: cType,
-            dataType: "json",
-            data: data
-        });
-}
-function _report(target, data)
-{
-    if (!data || (data instanceof Array && data.length === 0))
-        return;
-    chrome.runtime.sendMessage({ action: "insert", target: target, data: data });
-}
-function _update(target, key, objs, updator)
-{
-    if (!objs || (objs instanceof Array && objs.length === 0))
-        return;
-    chrome.runtime.sendMessage({ action: "update", target: target, data: { key: key, obj: objs, updator: updator } });
-}
+
 
 
 function checkUserState(uid)
 {
     const pms = $.Deferred();
-    _get("https://www.zhihu.com/people/" + uid)
+    _get("https://www.zhihu.com/people/" + uid + "/activities")
         .done((data) =>
         {
             const html = document.createElement("html");
@@ -127,18 +32,7 @@ function checkUserState(uid)
                 pms.resolve(null);
                 return;
             }
-            const statuss = theuser.accountStatus;
-            const user = new User();
-            user.id = uid;
-            user.name = theuser.name;
-            user.head = theuser.avatarUrl.split("/").pop().removeSuffix(7);
-            user.anscnt = theuser.answerCount;
-            user.followcnt = theuser.followerCount;
-            user.articlecnt = theuser.articlesCount;
-            if (statuss.find(x => x.name === "hang" || x.name === "lock"))
-                user.status = "ban";
-            else
-                user.status = "";
+            const user = User.fromRawJson(theuser);
             pms.resolve(user);
             console.log(theuser);
         })
@@ -229,8 +123,6 @@ function createButton(extraClass, text)
 
 let CUR_QUESTION = null;
 let CUR_ANSWER = null;
-let CUR_USER = null;
-
 
 function parseUser(node)
 {
@@ -358,11 +250,11 @@ function addSpamAnsBtns(answerNodes)
             const answer = parseAnswer(node);
             if (!answer) return;
             answers.push(answer);
-            if (CUR_USER)
+            if (ContentBase.CUR_USER)
             {
                 const span = $("span.ActivityItem-metaTitle", node.parentElement)[0];
                 if (span && span.innerText.startsWith("赞"))
-                    zans.push(new Zan(CUR_USER, answer));
+                    zans.push(new Zan(ContentBase.CUR_USER, answer));
             }
             const ansArea = node.querySelector(".AuthorInfo");
             if (!ansArea)
@@ -431,7 +323,7 @@ $("body").on("click", ".Btn-CheckSpam", async function ()
 {
     const btn = $(this)[0];
     const ansId = btn.dataset.id;
-    const voters = await getAnsVoters(ansId, 0, 550);
+    const voters = await getAnsVoters(ansId, 0, 1300);
 
     btn.addClass("Button--blue");
     _report("users", voters);
@@ -541,58 +433,15 @@ function procInQuestion()
 function procInPeople()
 {
     console.log("people page");
-    const user = new User();
-    user.id = pathname.split("/")[2];
-
+    const user = ContentBase.CUR_USER;
     const header = $("#ProfileHeader")[0];
-    if (!header)
-    {
-        const txt = $("h1.ProfileLockStatus-title").text();
-        if (txt.includes("封禁") || txt.includes("反作弊"))//banned user
-        {
-            user.name = document.title.removeSuffix(5);
-            user.status = "ban";
-        }
-        else
-        {
-            if ($("div.error p").text().includes("没有知识存在的荒原"))
-            {
-                _update("users", "id", user.id, { status: "ban" });
-            }
-            return;
-        }
-    }
-    else
-    {
-        user.name = $("span.ProfileHeader-name", header).text();
-        $(header).siblings("meta").forEach(meta =>
-        {
-            let jmeta = $(meta);
-            let prop = jmeta.attr("itemprop"), val = jmeta.attr("content");
-            switch (prop)
-            {
-                case "image":
-                    user.head = val.split("/").pop().removeSuffix(7); break;
-                case "zhihu:answerCount":
-                    user.anscnt = parseInt(val); break;
-                case "zhihu:articlesCount":
-                    user.articlecnt = parseInt(val); break;
-                case "zhihu:followerCount":
-                    user.followcnt = parseInt(val); break;
-            }
-        })
-        if ($(".UserStatus span.UserStatus-warnText").text().includes("停用"))
-            user.status = "ban";
-        else
-            user.status = "";
+    if (!user || !header)
+        return;
 
-        const btn = createButton(["Btn-ReportSpam", "Button--primary"], "广告");
-        btn.dataset.id = user.id;
-        btn.dataset.type = "member";
-        setTimeout(() => $(".ProfileButtonGroup", header).prepend(btn), 500);
-    }
-    CUR_USER = user;
-    _report("users", user);
+    const btn = createButton(["Btn-ReportSpam", "Button--primary"], "广告");
+    btn.dataset.id = user.id;
+    btn.dataset.type = "member";
+    setTimeout(() => $(".ProfileButtonGroup", header).prepend(btn), 500);
 }
 
 const cmrepotObserver = new MutationObserver(records =>

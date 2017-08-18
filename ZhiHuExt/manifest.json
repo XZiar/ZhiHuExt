@@ -41,6 +41,28 @@
         "jquery-3.2.1.min.js",
         "pod.js",
         "utils.js",
+        "ContentBase.js"
+      ],
+      "run_at": "document_start"
+    },
+    {
+      "matches":
+      [
+        "*://www.zhihu.com/people/*"
+      ],
+      "js":
+      [
+        "PeoplePage.js"
+      ],
+      "run_at": "document_start"
+    },
+    {
+      "matches":
+      [
+        "*://www.zhihu.com/*"
+      ],
+      "js":
+      [
         "content.js"
       ],
       "run_at": "document_end"

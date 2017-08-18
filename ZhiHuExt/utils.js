@@ -73,6 +73,48 @@ Date.prototype.Format = function (fmt)
     return fmt;
 }
 
+$.prototype.forEach = function (consumer)
+{
+    this.each((idx, ele) =>
+    {
+        try
+        {
+            consumer(ele);
+        }
+        catch (e) { console.warn(e); }
+    });
+}
+
+HTMLElement.prototype.hasClass = function (className)
+{
+    return this.classList.contains(className);
+}
+HTMLDivElement.prototype.hasChild = function (selector)
+{
+    if (this.querySelector(selector))
+        return true;
+    else
+        return false;
+}
+Node.prototype.addClass = function (className)
+{
+    this.classList.add(className);
+}
+Node.prototype.addClasses = function (...names)
+{
+    for (let idx = 0, len = names.length; idx < len; ++idx)
+        this.classList.add(names[idx]);
+}
+Node.prototype.removeClass = function (className)
+{
+    this.classList.remove(className);
+}
+Node.prototype.removeClasses = function (...names)
+{
+    for (let idx = 0, len = names.length; idx < len; ++idx)
+        this.classList.remove(names[idx]);
+}
+
 class SimpleBag
 {
     constructor(arg)

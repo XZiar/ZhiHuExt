@@ -26,6 +26,22 @@ class User
         else
             return [new User(dat)];
     }
+    static fromRawJson(theuser)
+    {
+        const statuss = theuser.accountStatus;
+        const user = new User();
+        user.id = theuser.urlToken;
+        user.name = theuser.name;
+        user.head = theuser.avatarUrl.split("/").pop().removeSuffix(7);
+        user.anscnt = theuser.answerCount;
+        user.followcnt = theuser.followerCount;
+        user.articlecnt = theuser.articlesCount;
+        if (statuss.find(x => x.name === "hang" || x.name === "lock"))
+            user.status = "ban";
+        else
+            user.status = "";
+        return user;
+    }
 }
 
 class Question
