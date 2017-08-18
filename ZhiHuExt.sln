@@ -5,6 +5,7 @@ VisualStudioVersion = 15.0.26430.16
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ZhiHuExt", "ZhiHuExt", "{93675B82-EC6C-4F02-80C6-4872E07264D3}"
 	ProjectSection(SolutionItems) = preProject
+		ZhiHuExt\analysis.js = ZhiHuExt\analysis.js
 		ZhiHuExt\background.html = ZhiHuExt\background.html
 		ZhiHuExt\background.js = ZhiHuExt\background.js
 		ZhiHuExt\content.js = ZhiHuExt\content.js
@@ -22,7 +23,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ZhiHuExt", "ZhiHuExt", "{93
 		ZhiHuExt\utils.js = ZhiHuExt\utils.js
 	EndProjectSection
 	ProjectSection(FolderGlobals) = preProject
-		__JSONSchema = http://json-schema.org/draft-04/schema
+		__JSONSchema = 
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Dependecy", "Dependecy", "{E476A3D7-D0E1-40EA-990A-D165CFDB83D7}"

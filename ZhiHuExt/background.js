@@ -275,6 +275,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) =>
             if (!updateDB(request.target, request.data))
                 console.warn("update wrong", request);
             break;
+        case "openpage":
+            chrome.tabs.create({ active: !request.isBackground, url: request.target });
+            break;
         default:
             console.log("unknown action:" + request.action, request);
             break;

@@ -67,7 +67,11 @@ function _get(url, data, type)
         {
             type: "GET",
             //dataType: type ? type : "json",
-            data: data
+            data: data,
+            statusCode:
+            {
+                429: xhr => xhr.fail()
+            }
         });
 }
 function _post(url, data)
@@ -113,14 +117,14 @@ function checkUserState(uid)
             const dataElement = html.querySelector("#data");
             if (!dataElement)
             {
-                pms.reject();
+                pms.resolve(null);
                 return;
             }
             const state = JSON.parse(dataElement.dataset.state);
             const theuser = state.entities.users[uid];
             if (!theuser)
             {
-                pms.reject();
+                pms.resolve(null);
                 return;
             }
             const statuss = theuser.accountStatus;
@@ -131,13 +135,14 @@ function checkUserState(uid)
             user.anscnt = theuser.answerCount;
             user.followcnt = theuser.followerCount;
             user.articlecnt = theuser.articlesCount;
-            if (statuss.find(x => x.name === "hang"))
+            if (statuss.find(x => x.name === "hang" || x.name === "lock"))
                 user.status = "ban";
             else
                 user.status = "";
             pms.resolve(user);
             console.log(theuser);
-        });
+        })
+        .fail((e) => { console.warn(e); pms.resolve(null); });
     return pms;
 }
 
@@ -277,7 +282,7 @@ function parseAnswer(node)
 async function addSpamVoterBtns(voterNodes)
 {
     const users = [];
-    const btnMap = {};
+    const btnMap = [];
     for (let idx = 0; idx < voterNodes.length; ++idx)
     {
         const node = voterNodes[idx];
@@ -290,23 +295,30 @@ async function addSpamVoterBtns(voterNodes)
         btn.dataset.id = user.id;
         btn.dataset.type = "member";
         $(".ContentItem-extra", node).prepend(btn);
-        btnMap[user.id] = btn;
+        btnMap.push(btn);
 
         const btn2 = createButton(["Btn-CheckStatus", "Button--primary"], "检测");
         btn2.dataset.id = user.id;
         $(".ContentItem-extra", node).prepend(btn2);
     }
     _report("users", users);
-    const result = await checkSpam("users", users);
     if (CUR_ANSWER)
     {
         const zans = users.map(user => new Zan(user, CUR_ANSWER));
         _report("zans", zans);
     }
-    for (let idx = 0; idx < result.banned.length; ++idx)
+
+    const result = await checkSpam("users", users);
+    const banned = result.banned.mapToProp("id");
+    const spamed = result.spamed.mapToProp("id");
+    for (let idx = 0; idx < btnMap.length; ++idx)
     {
-        const btn = btnMap[result.banned[idx].id];
-        btn.style.backgroundColor = "black";
+        const btn = btnMap[idx];
+        const id = btn.dataset.id;
+        if (banned.includes(id))
+            btn.style.backgroundColor = "black";
+        else if (spamed.includes(id))
+            btn.style.backgroundColor = "cornsilk";
     }
 };
 const voterObserver = new MutationObserver(records =>
@@ -328,6 +340,12 @@ function monitorVoter(voterPopup)
     console.log("current " + curVoters.length + " voters", curVoters);
     addSpamVoterBtns(curVoters);
     voterObserver.observe($(voterPopup)[0], { "childList": true });
+    const title = $(voterPopup).siblings(".Topbar").find(".Topbar-title")[0];
+    if (title)
+    {
+        const btn = createButton(["Btn-CheckAllStatus", "Button--primary"], "检测全部");
+        title.appendChild(btn);
+    }
 }
 
 function addSpamAnsBtns(answerNodes)
@@ -413,7 +431,7 @@ $("body").on("click", ".Btn-CheckSpam", async function ()
 {
     const btn = $(this)[0];
     const ansId = btn.dataset.id;
-    const voters = await getAnsVoters(ansId, 0, 300);
+    const voters = await getAnsVoters(ansId, 0, 550);
 
     btn.addClass("Button--blue");
     _report("users", voters);
@@ -432,13 +450,18 @@ $("body").on("click", ".Btn-CheckSpam", async function ()
     const green = ratio < 0 ? 224 : 224 - Math.ceil(ratio * 192);
     btn.style.backgroundColor = "rgb(" + red + "," + green + "," + blue + ")";
 });
-$("body").on("click", ".Btn-CheckStatus", async function ()
+$("body").on("click", ".Btn-CheckStatus", async function (e)
 {
     const btn = $(this)[0];
-    const user = await checkUserState(btn.dataset.id);
+    const uid = btn.dataset.id;
+    if (e.ctrlKey)
+    {
+        chrome.runtime.sendMessage({ action: "openpage", target: "https://www.zhihu.com/people/" + uid + "/activities", isBackground: true });
+        return;
+    }
+    const user = await checkUserState(uid);
     if (!user)
         return;
-    _report("users", user);
     if (user.status === "ban")
     {
         btn.style.backgroundColor = "black";
@@ -449,7 +472,35 @@ $("body").on("click", ".Btn-CheckStatus", async function ()
         btn.style.backgroundColor = "rgb(0,224,32)";
         $(btn).siblings(".Btn-ReportSpam")[0].style.backgroundColor = "";
     }
-})
+    _report("users", user);
+});
+$("body").on("click", ".Btn-CheckAllStatus", async function (e)
+{
+    const btn = $(this)[0];
+    const isCtrl = e.ctrlKey;
+    const voterList = btn.parentNode.parentNode.parentNode;
+    const btnList = [];
+    $(voterList).find(".ContentItem").each((idx, item) =>
+    {
+        const extraArea = item.querySelector(".ContentItem-extra");
+        if (!extraArea)
+            return;
+        const btnChk = extraArea.children[0], btnSpam = extraArea.children[1];
+        if (btnChk.style.backgroundColor != "" || btnSpam.style.backgroundColor == "black")//has result
+            return;
+        if (!isCtrl && btnSpam.style.backgroundColor != "")
+            return;
+        btnList.push({ name: btnChk.dataset.id, btn: btnChk });
+    });
+    console.log("detech " + btnList.length + "user");
+    for (let idx = 0; idx < btnList.length; ++idx)
+    {
+        btn.textContent = btnList[idx].name;
+        btnList[idx].btn.click();
+        await _sleep(500);
+    }
+    btn.textContent = "检测全部";
+});
 $("body").on("click", "span.Voters", function ()
 {
     const span = $(this)[0];
