@@ -1,7 +1,16 @@
 "use strict"
 
+async function toNameMap(prop)
+{
+    const result = {};
+    await this.each(obj => result[obj[prop]] = obj);
+    return result;
+}
+Dexie.addons.push(x => x.Collection.prototype.toNameMap = toNameMap);
+
 const db = new Dexie("ZhihuDB");
 let BAN_UID = new Set();
+
 db.version(1).stores(
     {
         spams: "id,type",
@@ -268,7 +277,15 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) =>
             }).fail(error => console.warn("exportDB fail", error));
             break;
         case "insert":
-            if (!insertDB(request.target, request.data))
+            if (request.target === "batch")
+                Object.entries(request.data).forEach(([key, val]) =>
+                {
+                    if (!val || (val instanceof Array && val.length === 0))
+                        return;
+                    if (!insertDB(key, val))
+                        console.warn("insert wrong", key, val);
+                })
+            else if (!insertDB(request.target, request.data))
                 console.warn("insert wrong", request);
             break;
         case "update":

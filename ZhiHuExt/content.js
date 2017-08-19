@@ -14,7 +14,7 @@ function formColor(red, green, blue)
 function checkUserState(uid)
 {
     const pms = $.Deferred();
-    _get("https://www.zhihu.com/people/" + uid + "/activities")
+    ContentBase._get("https://www.zhihu.com/people/" + uid + "/activities")
         .done((data) =>
         {
             const html = document.createElement("html");
@@ -35,6 +35,11 @@ function checkUserState(uid)
             const user = User.fromRawJson(theuser);
             pms.resolve(user);
             console.log(theuser);
+            {
+                const entities = ContentBase.parseEntities(state.entities);
+                ContentBase._report("batch", entities);
+                console.log(entities);
+            }
         })
         .fail((e) => { console.warn(e); pms.resolve(null); });
     return pms;
@@ -58,7 +63,7 @@ function getAnsVoters(ansId, offset, limit, pms)
         pms.extraData = [];
         pms.voterEnd = false;
     }
-    _get("https://www.zhihu.com/api/v4/answers/" + ansId + "/voters?include=data[*].answer_count&limit=20&offset=" + offset)
+    ContentBase._get("https://www.zhihu.com/api/v4/answers/" + ansId + "/voters?include=data[*].answer_count&limit=20&offset=" + offset)
         .done((data, status, xhr) =>
         {
             pms.voterEnd = data.paging.is_end;
@@ -91,10 +96,10 @@ function getAnsVoters(ansId, offset, limit, pms)
 function reportSpam(id, type)
 {
     const payload = { "resource_id": id, "type": type, "reason_type": "spam", "source": "web" };
-    _report("spam", { id: id, type: type });
+    ContentBase._report("spam", { id: id, type: type });
     //req.setRequestHeader("Referer", "https://www.zhihu.com/people/" + id + "/activities");
     const pms = $.Deferred();
-    _post("https://www.zhihu.com/api/v4/reports", payload)
+    ContentBase._post("https://www.zhihu.com/api/v4/reports", payload)
         .done((data, status, xhr) =>
         {
             if (xhr.status === 204 || xhr.status === 200)
@@ -193,11 +198,11 @@ async function addSpamVoterBtns(voterNodes)
         btn2.dataset.id = user.id;
         $(".ContentItem-extra", node).prepend(btn2);
     }
-    _report("users", users);
+    ContentBase._report("users", users);
     if (CUR_ANSWER)
     {
         const zans = users.map(user => new Zan(user, CUR_ANSWER));
-        _report("zans", zans);
+        ContentBase._report("zans", zans);
     }
 
     const result = await checkSpam("users", users);
@@ -271,8 +276,8 @@ function addSpamAnsBtns(answerNodes)
                 ansArea.appendChild(btn);
             }
         });
-    _report("answers", answers);
-    _report("zans", zans);
+    ContentBase._report("answers", answers);
+    ContentBase._report("zans", zans);
     return answers;
 }
 
@@ -326,9 +331,9 @@ $("body").on("click", ".Btn-CheckSpam", async function ()
     const voters = await getAnsVoters(ansId, 0, 1300);
 
     btn.addClass("Button--blue");
-    _report("users", voters);
+    ContentBase._report("users", voters);
     const zans = voters.map(user => new Zan(user, ansId));
-    _report("zans", zans);
+    ContentBase._report("zans", zans);
 
     const result = await checkSpam("users", voters);
     const total = voters.length, ban = result.banned.length, spm = result.spamed.length;
@@ -364,7 +369,7 @@ $("body").on("click", ".Btn-CheckStatus", async function (e)
         btn.style.backgroundColor = "rgb(0,224,32)";
         $(btn).siblings(".Btn-ReportSpam")[0].style.backgroundColor = "";
     }
-    _report("users", user);
+    ContentBase._report("users", user);
 });
 $("body").on("click", ".Btn-CheckAllStatus", async function (e)
 {
@@ -419,8 +424,8 @@ function procInQuestion()
     const topics = qstData.topics;
     const quest = new Question(qstData.id, qstData.title, topics.map(tp => tp.id));
     CUR_QUESTION = quest;
-    _report("questions", quest);
-    _report("topics", topics);
+    ContentBase._report("questions", quest);
+    ContentBase._report("topics", topics);
     const qstArea = $(".QuestionHeader-footer .QuestionButtonGroup")
     if (qstArea.length > 0)
     {
@@ -483,8 +488,8 @@ const cmrepotObserver = new MutationObserver(records =>
                 userUpds.push(uid);
         }
     }
-    _report("spam", spams);
-    _update("users", "id", userUpds, { status: "ban" });
+    ContentBase._report("spam", spams);
+    ContentBase._update("users", "id", userUpds, { status: "ban" });
 });
 
 const pathname = document.location.pathname;

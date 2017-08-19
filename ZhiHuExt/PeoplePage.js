@@ -44,12 +44,14 @@
                 ContentBase.CUR_USER = user;
                 console.log(theuser);
                 console.log(user);
-                _report("users", user);
+                ContentBase._report("users", user);
                 break;
             }
         }
         {
-            const zans = [];
+            const entities = ContentBase.parseEntities(state.entities);
+            ContentBase._report("batch", entities);
+            console.log(entities);
         }
     });
     obs.observe(document, { "childList": true, "subtree": true });

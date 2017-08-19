@@ -28,18 +28,24 @@ class User
     }
     static fromRawJson(theuser)
     {
-        const statuss = theuser.accountStatus;
         const user = new User();
         user.id = theuser.urlToken;
         user.name = theuser.name;
-        user.head = theuser.avatarUrl.split("/").pop().removeSuffix(7);
-        user.anscnt = theuser.answerCount;
-        user.followcnt = theuser.followerCount;
-        user.articlecnt = theuser.articlesCount;
-        if (statuss.find(x => x.name === "hang" || x.name === "lock"))
-            user.status = "ban";
-        else
-            user.status = "";
+        user.head = theuser.avatarUrl.split("/").pop().replace(/_[\w]*.[\w]*$/, "");
+        if (theuser.answerCount)
+            user.anscnt = theuser.answerCount;
+        if (theuser.followerCount)
+            user.followcnt = theuser.followerCount;
+        if (theuser.articlesCount)
+            user.articlecnt = theuser.articlesCount;
+        const statuss = theuser.accountStatus;
+        if (statuss)
+        {
+            if (statuss.find(x => x.name === "hang" || x.name === "lock"))
+                user.status = "ban";
+            else
+                user.status = "";
+        }
         return user;
     }
 }
@@ -99,6 +105,6 @@ class Zan
         if (answer instanceof Answer)
             this.to = answer.id;
         else
-            this.to = answer;
+            this.to = "" + answer;
     }
 }
