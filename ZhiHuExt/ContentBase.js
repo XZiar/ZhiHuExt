@@ -1,6 +1,24 @@
 "use strict"
 
-
+function _getAnsVoters(ansId, offset)
+{
+    const pms = $.Deferred();
+    ContentBase._get("https://www.zhihu.com/api/v4/answers/" + ansId + "/voters?include=data[*].answer_count&limit=20&offset=" + offset)
+        .done((data, status, xhr) =>
+        {
+            const users = data.data.map(User.fromRawJson2);
+            pms.resolve({ "users": users, "end": data.paging.is_end, "start": data.paging.is_start, "total": data.paging.totals });
+        })
+        .fail((data, status, xhr) =>
+        {
+            if (data.responseJSON)
+                console.warn("getAnsVoter fail:" + xhr.status, data.responseJSON.error.message);
+            else
+                console.warn("getAnsVoter fail:" + xhr.status);
+            pms.reject();
+        })
+    return pms;
+}
 
 let _CUR_USER;
 let _CUR_ANSWER;
@@ -52,6 +70,11 @@ class ContentBase
         chrome.runtime.sendMessage({ action: "update", target: target, data: { key: key, obj: objs, updator: updator } });
     }
 
+    static keepOnlyDataDiv(rawhtml)
+    {
+        return rawhtml.substring(rawhtml.indexOf('<div id="data"'), rawhtml.lastIndexOf('</div><script'));
+    }
+
     static parseEntities(data)
     {
         const acts = Object.values(data.activities);
@@ -86,5 +109,29 @@ class ContentBase
             answers.push(answer);
         }
         return { "users": users, "zans": zans, "answers": answers, "questions": quests };
+    }
+
+
+    static async getAnsVoters(ansId, limit, config, onProgress)
+    {
+        const first = await _getAnsVoters(ansId, 0);
+        let ret = first.users;
+        const total = Math.min(first.total, limit);
+        let left = total - first.users.length;
+        if (left <= 0)
+            return ret;
+        let offset = 20;
+        if (config === "old")
+            offset = first.total - left;
+        while (left > 0)
+        {
+            const part = await _getAnsVoters(ansId, offset);
+            ret = ret.concat(part.users);
+            const len = part.users.length;
+            offset += len, left -= len;
+            if (onProgress)
+                onProgress(ret.length, total);
+        }
+        return ret;
     }
 }

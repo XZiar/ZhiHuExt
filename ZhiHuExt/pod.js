@@ -48,6 +48,16 @@ class User
         }
         return user;
     }
+    static fromRawJson2(theuser)
+    {
+        const user = new User();
+        user.id = theuser.url_token;
+        user.name = theuser.name;
+        user.head = theuser.avatar_url.split("/").pop().replace(/_[\w]*.[\w]*$/, "");
+        if (theuser.answer_count)
+            user.anscnt = theuser.answer_count;
+        return user;
+    }
 }
 
 class Question

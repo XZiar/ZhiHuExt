@@ -47,6 +47,12 @@ Array.fromArray = function (array)
     else
         return [array];
 }
+
+Set.prototype.toArray = function ()
+{
+    return Array.from(this);
+}
+
 String.prototype.removeSuffix = function (count)
 {
     const del = Math.min(this.length, count);
@@ -187,6 +193,76 @@ class SimpleBag
         return array;
     }
     get size() { return Object.keys(this._map).length; }
+}
+
+class SimpleBag2
+{
+    constructor(arg)
+    {
+        this._map = new Map();
+        if (!arg)
+            return;
+        if (arg instanceof Array)
+            this.add(...arg);
+        else if (arg instanceof Set)
+            this.add(...arg.entries);
+    }
+    add(...elements)
+    {
+        for (let idx = 0; idx < elements.length; ++idx)
+        {
+            const ele = elements[idx];
+            const old = this._map.get(ele) | 0;
+            this._map.set(ele, old + 1);
+        }
+        return this;
+    }
+    addMany(element, count)
+    {
+        const old = this._map.get(element) | 0;
+        this._map.set(element, old + count);
+    }
+    remove(...elements)
+    {
+        for (let idx = 0; idx < elements.length; ++idx)
+        {
+            const ele = elements[idx];
+            const old = this._map.get(ele);
+            if (old)
+            {
+                if (old === 1)
+                    this._map.delete(ele);
+                else
+                    this._map.set(ele, old - 1);
+            }
+        }
+        return this;
+    }
+    count(element)
+    {
+        return this._map.get(element) | 0;
+    }
+    removeAll(...elements)
+    {
+        for (let idx = 0; idx < elements.length; ++idx)
+        {
+            const ele = elments[idx];
+            this._map.delete(ele);
+        }
+        return this;
+    }
+    toArray(config)
+    {
+        const array = [];
+        for (const ele of this._map)
+            array.push({ "key": ele[0], "count": ele[1] });
+        if (config === "desc")
+            return array.sort((x, y) => y.count - x.count);
+        else if (config === "asc")
+            return array.sort((x, y) => x.count - y.count);
+        return array;
+    }
+    get size() { return this._map.size; }
 }
 
 function _sleep(ms)

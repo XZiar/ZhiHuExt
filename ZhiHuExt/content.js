@@ -17,9 +17,10 @@ function checkUserState(uid)
     ContentBase._get("https://www.zhihu.com/people/" + uid + "/activities")
         .done((data) =>
         {
-            const html = document.createElement("html");
-            html.innerHTML = data;
-            const dataElement = html.querySelector("#data");
+            const newData = ContentBase.keepOnlyDataDiv(data);
+            const div = document.createElement("div");
+            div.innerHTML = newData;
+            const dataElement = div.querySelector("#data");
             if (!dataElement)
             {
                 pms.resolve(null);
@@ -53,44 +54,6 @@ function checkSpam(target, data)
     else
         chrome.runtime.sendMessage({ action: "chkspam", target: target, data: data },
             ret => pms.resolve(ret));
-    return pms;
-}
-function getAnsVoters(ansId, offset, limit, pms)
-{
-    if (!pms)
-    {
-        pms = $.Deferred();
-        pms.extraData = [];
-        pms.voterEnd = false;
-    }
-    ContentBase._get("https://www.zhihu.com/api/v4/answers/" + ansId + "/voters?include=data[*].answer_count&limit=20&offset=" + offset)
-        .done((data, status, xhr) =>
-        {
-            pms.voterEnd = data.paging.is_end;
-            data.data.forEach(item =>
-            {
-                const user = new User();
-                user.id = item.url_token;
-                user.name = item.name;
-                user.anscnt = item.answer_count;
-                user.head = item.avatar_url.split("/").pop().removeSuffix(7);
-                pms.extraData.push(user);
-            });
-        })
-        .fail((data, status, xhr) =>
-        {
-            if (data.responseJSON)
-                console.warn("getAnsVoter fail:" + xhr.status, data.responseJSON.error.message);
-            else
-                console.warn("getAnsVoter fail:" + xhr.status);
-        })
-        .always(() =>
-        {
-            if (!pms.voterEnd && offset < limit)
-                getAnsVoters(ansId, offset + 20, limit, pms);
-            else//finish
-                pms.resolve(pms.extraData);
-        });
     return pms;
 }
 function reportSpam(id, type)
@@ -139,7 +102,7 @@ function parseUser(node)
     user.name = nameLink.innerText;
     user.head = node.querySelector("img.UserLink-avatar").src
         .split("/").pop()
-        .removeSuffix(7);
+        .replace(/_[\w]*.[\w]*$/, "");
     const info = node.querySelectorAll("span.ContentItem-statusItem")
         .forEach(span =>
         {
@@ -324,11 +287,12 @@ $("body").on("click", ".Btn-ReportSpam", function ()
                 btn.style.backgroundColor = "rgb(224,0,32)";
         });
 });
-$("body").on("click", ".Btn-CheckSpam", async function ()
+$("body").on("click", ".Btn-CheckSpam", async function (e)
 {
     const btn = $(this)[0];
     const ansId = btn.dataset.id;
-    const voters = await getAnsVoters(ansId, 0, 1300);
+    const voters = await ContentBase.getAnsVoters(ansId, 1300, e.ctrlKey ? "old" : "new",
+        (cur, all) => btn.innerText = "=>" + cur + "/" + all);
 
     btn.addClass("Button--blue");
     ContentBase._report("users", voters);
