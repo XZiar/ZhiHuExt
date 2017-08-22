@@ -129,11 +129,15 @@ class SimpleBag
         if (!arg)
             return;
         if (arg instanceof Array)
-            this.add(...arg);
+            this.adds(arg);
         else if (arg instanceof Set)
-            this.add(...arg.entries);
+        {
+            for (const ele of arg)
+                this._map[ele] = 1;
+        }
     }
-    add(...elements)
+    add(...elements) { add(elements); }
+    adds(elements)
     {
         for (let idx = 0; idx < elements.length; ++idx)
         {
@@ -152,7 +156,8 @@ class SimpleBag
         else
             this._map[element] = count;
     }
-    remove(...elements)
+    remove(...elements) { removes(elements); }
+    removes(elements)
     {
         for (let idx = 0; idx < elements.length; ++idx)
         {

@@ -19,12 +19,12 @@ class User
         Object.assign(this, data);
     }
 
-    static assigns(array)
+    static assigns(data)
     {
-        if (array instanceof Array)
-            return array.map(dat => new User(dat));
+        if (data instanceof Array)
+            return data.map(dat => new User(dat));
         else
-            return [new User(dat)];
+            return [new User(data)];
     }
     static fromRawJson(theuser)
     {
@@ -66,10 +66,15 @@ class Question
     {
         this.id = id + "";
         this.title = title;
-        if (topic instanceof Array)
-            this.topics = topic;
+        if (topic)
+        {
+            if (topic instanceof Array)
+                this.topics = topic;
+            else
+                this.topics = [topic];
+        }
         else
-            this.topics = [topic];
+            this.topics = null;
     }
 }
 
@@ -77,8 +82,16 @@ class Topic
 {
     constructor(id, name)
     {
-        this.id = id;
+        this.id = "" + id;
         this.name = name;
+    }
+
+    static assigns(data)
+    {
+        if (data instanceof Array)
+            return data.map(dat => new Topic(dat.id, dat.name));
+        else
+            return [new Topic(data.id, data.name)];
     }
 }
 
@@ -98,12 +111,12 @@ class Answer
         Object.assign(this, data);
     }
 
-    static assigns(array)
+    static assigns(data)
     {
-        if (array instanceof Array)
-            return array.map(dat => new Answer(dat));
+        if (data instanceof Array)
+            return data.map(dat => new Answer(dat));
         else
-            return [new Answer(dat)];
+            return [new Answer(data)];
     }
 }
 

@@ -59,6 +59,16 @@ db.users.hook("updating", (mods, primKey, obj, trans) =>
     //console.log("compare", mods, ret);
     return ret;
 });
+db.questions.hook("creating", (primKey, obj, trans) =>
+{
+    if (obj.topics === null)
+        obj.topics = [];
+});
+db.questions.hook("updating", (mods, primKey, obj, trans) =>
+{
+    if (!mods.topics && !mods["topics.0"])
+        return { topics: obj.topics };
+});
 db.open()
     .then(async () => { BAN_UID = new Set(await db.users.where("status").equals("ban").primaryKeys()); })
     .catch(e => console.error("cannot open db", e));
@@ -76,6 +86,16 @@ function clearBadge()
     chrome.browserAction.setBadgeText({ text: "" });
 }
 
+
+function fetchTopic(tid)
+{
+    $.ajax("https://www.zhihu.com/api/v4/topics/" + tid, { type: "GET" })
+        .done(data =>
+        {
+            const topic = new Topic(data.id, data.name);
+            insertDB("topics", topic);
+        });
+}
 
 function getTargetTable(target)
 {

@@ -99,7 +99,7 @@ class ContentBase
             if (qst.author)
                 users.push(User.fromRawJson(qst.author));
 
-            const quest = new Question(qst.id, qst.title, qst.boundTopicIds);
+            const quest = new Question(qst.id, qst.title/*, qst.boundTopicIds*/);
             quests.push(quest);
             const answer = new Answer();
             answer.id = "" + ans.id;

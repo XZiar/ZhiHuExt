@@ -386,7 +386,7 @@ function procInQuestion()
         .find(div => div.className == "")
         .dataset.zopQuestion);
     const topics = qstData.topics;
-    const quest = new Question(qstData.id, qstData.title, topics.map(tp => tp.id));
+    const quest = new Question(qstData.id, qstData.title, topics.mapToProp("id"));
     CUR_QUESTION = quest;
     ContentBase._report("questions", quest);
     ContentBase._report("topics", topics);
