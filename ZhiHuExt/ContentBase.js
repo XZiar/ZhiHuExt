@@ -134,4 +134,39 @@ class ContentBase
         }
         return ret;
     }
+
+    static checkUserState(uid)
+    {
+        const pms = $.Deferred();
+        ContentBase._get("https://www.zhihu.com/people/" + uid + "/activities")
+            .done((data) =>
+            {
+                const newData = ContentBase.keepOnlyDataDiv(data);
+                const div = document.createElement("div");
+                div.innerHTML = newData;
+                const dataElement = div.querySelector("#data");
+                if (!dataElement)
+                {
+                    pms.resolve(null);
+                    return;
+                }
+                const state = JSON.parse(dataElement.dataset.state);
+                const theuser = state.entities.users[uid];
+                if (!theuser)
+                {
+                    pms.resolve(null);
+                    return;
+                }
+                const user = User.fromRawJson(theuser);
+                pms.resolve(user);
+                console.log(theuser);
+                {
+                    const entities = ContentBase.parseEntities(state.entities);
+                    ContentBase._report("batch", entities);
+                    console.log(entities);
+                }
+            })
+            .fail((e) => { console.warn(e); pms.resolve(null); });
+        return pms;
+    }
 }

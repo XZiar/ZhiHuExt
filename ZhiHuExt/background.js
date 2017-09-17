@@ -35,7 +35,7 @@ db.users.hook("creating", (primKey, obj, trans) =>
 {
     if (obj.status === null)
         obj.status = "";
-    else if (obj.status === "ban")
+    else if (obj.status === "ban" || obj.status === "sban")
         BAN_UID.add(obj.id);
 });
 db.users.hook("updating", (mods, primKey, obj, trans) =>
@@ -44,7 +44,7 @@ db.users.hook("updating", (mods, primKey, obj, trans) =>
     if (keys.length === 0) return;
     const ret = {};
     {
-        if (mods.status === "ban")
+        if (mods.status === "ban" || mods.status === "sban")
             BAN_UID.add(obj.id);
         else if (mods.status === "")
             BAN_UID.delete(obj.id);
@@ -66,11 +66,12 @@ db.questions.hook("creating", (primKey, obj, trans) =>
 });
 db.questions.hook("updating", (mods, primKey, obj, trans) =>
 {
-    if (!mods.topics && !mods["topics.0"])
+    const hasModTopic = Object.keys(mods).find(key => key.startsWith("topics."));
+    if (!mods.topics && !hasModTopic)
         return { topics: obj.topics };
 });
 db.open()
-    .then(async () => { BAN_UID = new Set(await db.users.where("status").equals("ban").primaryKeys()); })
+    .then(async () => { BAN_UID = new Set(await db.users.where("status").anyOf(["ban","sban"])/*.equals("ban")*/.primaryKeys()); })
     .catch(e => console.error("cannot open db", e));
 
 
