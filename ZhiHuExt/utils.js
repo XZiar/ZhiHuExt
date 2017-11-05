@@ -121,6 +121,27 @@ Node.prototype.removeClasses = function (...names)
         this.classList.remove(names[idx]);
 }
 
+
+window.getQueryString = function (qurl)
+{
+    if (!qurl)
+    {
+        const url = window.location.href;
+        const idx = url.indexOf("?") + 1;
+        qurl = idx > 0 ? url.substring(idx) : "";
+    }
+    const querys = qurl.split("&");
+    var ret = {};
+    for (var i = 0; i < querys.length; ++i)
+    {
+        var p = querys[i].split('=');
+        if (p.length != 2) continue;
+        ret[p[0]] = decodeURIComponent(p[1].replace(/\+/g, " "));
+    }
+    return ret;
+};
+
+
 class SimpleBag
 {
     constructor(arg)
@@ -274,3 +295,11 @@ function _sleep(ms)
 {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
+
+async function SendMsgAsync(data)
+{
+    const pms = $.Deferred();
+    chrome.runtime.sendMessage(data, ret => pms.resolve(ret));
+    return pms;
+}
+

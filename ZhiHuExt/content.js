@@ -11,16 +11,6 @@ function formColor(red, green, blue)
 
 
 
-function checkSpam(target, data)
-{
-    const pms = $.Deferred();
-    if (!data || (data instanceof Array && data.length === 0))
-        pms.resolve({ banned: [], spamed: [] });
-    else
-        chrome.runtime.sendMessage({ action: "chkspam", target: target, data: data },
-            ret => pms.resolve(ret));
-    return pms;
-}
 function reportSpam(id, type)
 {
     const payload = { "resource_id": id, "type": type, "reason_type": "spam", "source": "web" };
@@ -133,9 +123,9 @@ async function addSpamVoterBtns(voterNodes)
         ContentBase._report("zans", zans);
     }
 
-    const result = await checkSpam("users", users);
-    const banned = result.banned.mapToProp("id");
-    const spamed = result.spamed.mapToProp("id");
+    const result = await ContentBase.checkSpam("users", users);
+    const banned = result.banned;//.mapToProp("id");
+    const spamed = result.spamed;//.mapToProp("id");
     for (let idx = 0; idx < btnMap.length; ++idx)
     {
         const btn = btnMap[idx];
@@ -168,8 +158,10 @@ function monitorVoter(voterPopup)
     const title = $(voterPopup).siblings(".Topbar").find(".Topbar-title")[0];
     if (title)
     {
-        const btn = createButton(["Btn-CheckAllStatus", "Button--primary"], "检测全部");
-        title.appendChild(btn);
+        const btn1 = createButton(["Btn-CheckAllStatus", "Button--primary"], "检测全部");
+        const btn2 = createButton(["Btn-AssocAns", "Button--primary"], "启发");
+        title.appendChild(btn1);
+        title.appendChild(btn2);
     }
 }
 
@@ -287,7 +279,7 @@ $("body").on("click", ".Btn-CheckSpam", async function (e)
     const zans = voters.map(user => new Zan(user, ansId));
     ContentBase._report("zans", zans);
 
-    const result = await checkSpam("users", voters);
+    const result = await ContentBase.checkSpam("users", voters);
     const total = voters.length, ban = result.banned.length, spm = result.spamed.length;
     btn.innerText = "(" + ban + "+" + spm + ")/" + total;
     if (total === 0)
@@ -358,7 +350,7 @@ $("body").on("click", ".Btn-CheckAllStatus", async function (e)
             return;
         btnList.push({ name: btnChk.dataset.id, btn: btnChk });
     });
-    console.log("detech " + btnList.length + "user");
+    console.log("detect " + btnList.length + " user");
     for (let idx = 0; idx < btnList.length; ++idx)
     {
         btn.textContent = btnList[idx].name;
@@ -375,6 +367,10 @@ $("body").on("click", "span.Voters", function ()
         return;
 
     CUR_ANSWER = JSON.parse(ansNode.dataset.zaModuleInfo).card.content.token;
+});
+$("body").on("click", "button.Btn-AssocAns", function ()
+{
+    chrome.runtime.sendMessage({ action: "openanalyse", target: CUR_ANSWER });
 });
 $("body").on("click", "button.Modal-closeButton", function ()
 {
@@ -466,10 +462,6 @@ if (pathname.startsWith("/question/"))
 {
     procInQuestion();
 }
-else if (pathname.startsWith("/people/"))
-{
-    procInPeople();
-}
 else if (pathname.startsWith("/community") && !pathname.includes("reported"))
 {
     console.log("community report page");
@@ -485,7 +477,17 @@ else if (pathname.startsWith("/inbox/8912224000"))
     console.log("init " + curAnswers.length + " answers");
     addSpamAnsBtns(curAnswers);
 }
-
+{
+    const fbtns = document.body.querySelector(".CornerButtons");
+    const btn = createButton(["CornerButton", "Button--plain"]);
+    btn.dataset.tooltip = "回答池";
+    btn.dataset.tooltipPosition = "left";
+    const btndiv = document.createElement("div");
+    btndiv.addClass("CornerAnimayedFlex");
+    btndiv.appendChild(btn);
+    if(fbtns)
+        fbtns.prepend(btndiv);
+}
 
 bodyObserver.observe(document.body, { "childList": true, "subtree": true });
 

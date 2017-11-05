@@ -17,6 +17,7 @@ Dexie.addons.push(x => x.Collection.prototype.toPropMap = toPropMap);
 
 const db = new Dexie("ZhihuDB");
 let BAN_UID = new Set();
+let SPAM_UID = new Set();
 
 db.version(1).stores(
     {
@@ -31,6 +32,11 @@ db.version(1).stores(
     .upgrade(trans =>
     {
     });
+db.spams.hook("creating", (primKey, obj, trans) =>
+{
+    if (obj.type === "member")
+        SPAM_UID.add(obj.id);
+});
 db.users.hook("creating", (primKey, obj, trans) =>
 {
     if (obj.status === null)
@@ -71,7 +77,11 @@ db.questions.hook("updating", (mods, primKey, obj, trans) =>
         return { topics: obj.topics };
 });
 db.open()
-    .then(async () => { BAN_UID = new Set(await db.users.where("status").anyOf(["ban","sban"])/*.equals("ban")*/.primaryKeys()); })
+    .then(async () =>
+    {
+        BAN_UID = new Set(await db.users.where("status").anyOf(["ban", "sban"])/*.equals("ban")*/.primaryKeys());
+        SPAM_UID = new Set(await db.spams.where("type").equals("member").primaryKeys());
+    })
     .catch(e => console.error("cannot open db", e));
 
 
@@ -225,47 +235,20 @@ async function checkSpamUser(waitUsers)
     const ret = { banned: [], spamed: [] };
     const ids = waitUsers.mapToProp("id");
     const [bannedPart, unbannedPart] = splitInOutSide(ids, BAN_UID);
-    ret.banned = await db.users.where("id").anyOf(bannedPart).toArray();
+    ret.banned = bannedPart;
 
-    const spamedIds = await db.spams.where("id").anyOf(unbannedPart)
-        .filter(spam => spam.type == "member").primaryKeys();
-    ret.spamed = await db.users.where("id").anyOf(spamedIds).toArray();
+    const [spamedIds, dummy] = await splitInOutSide(unbannedPart, SPAM_UID);
+    ret.spamed = spamedIds;
     return ret;
 }
-/*
-function tmpk(data, filename)
-{
-    const pms = $.Deferred();
-    const isBlob = data instanceof Blob;
-    var url = isBlob ? URL.createObjectURL(data) : data;
-    if (isBlob)
-        console.log("export blob data to:", url);
-    else if (!(data instanceof string))
-    {
-        console.warn("unknown data type", data);
-        pms.reject("unknown data type:[" + typeof (data) + "]");
-        return pms;
-    }
 
-    chrome.downloads.download({ url: url, filename: filename }, id =>
-    {
-        if (id === undefined)
-        {
-            const errMsg = chrome.runtime.lastError;
-            console.warn("download wrong", errMsg);
-            pms.reject(errMsg);
-        }
-        else
-        {
-            console.log("start download [" + id + "]");
-            if (isBlob)
-                DOWNLOAD_QUEUE[id] = url;
-            pms.resolve(id);
-        }
-    });
-    return pms;
+async function openanalyse(ansid)
+{
+    const zans = await db.zans.where("to").equals(ansid).toArray();
+    const uids = "users=" + zans.mapToProp("from").join("*");
+    chrome.tabs.create({ active: true, url: "AssocAns.html?" + uids });
 }
-*/
+
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) =>
 {
     switch (request.action)
@@ -280,12 +263,12 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) =>
         case "chkspam":
             {
                 checkSpamUser(request.data instanceof Array ? request.data : [request.data])
-                .then(result =>
-                {
-                    console.log("check-spam result:", result);
-                    sendResponse(result);
-                });
-            }return true;
+                    .then(result =>
+                    {
+                        console.log("check-spam result:", result);
+                        sendResponse(result);
+                    });
+            } return true;
         case "export":
             exportDB().done(dbjson =>
             {
@@ -322,6 +305,24 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) =>
             break;
         case "openpage":
             chrome.tabs.create({ active: !request.isBackground, url: request.target });
+            break;
+        case "openanalyse":
+            openanalyse(request.target);
+            break;
+        case "analyse":
+            {
+                const fn = Analyse[request.method];
+                if (fn)
+                {
+                    fn(...request.argument).then(
+                        ret => sendResponse(ret),
+                        error => console.warn("calling analyse fail", error));
+                }
+                else
+                    break;
+            } return true;
+        case "hey":
+            sendResponse("hi");
             break;
         default:
             console.log("unknown action:" + request.action, request);

@@ -26,6 +26,8 @@ class ContentBase
 {
     static get CUR_USER() { return _CUR_USER; }
     static set CUR_USER(user) { _CUR_USER = user; }
+    static get CUR_ANSWER() { return _CUR_ANSWER; }
+    static set CUR_ANSWER(ans) { _CUR_ANSWER = ans; }
 
     static _get(url, data, type)
     {
@@ -167,6 +169,17 @@ class ContentBase
                 }
             })
             .fail((e) => { console.warn(e); pms.resolve(null); });
+        return pms;
+    }
+
+    static checkSpam(target, data)
+    {
+        const pms = $.Deferred();
+        if (!data || (data instanceof Array && data.length === 0))
+            pms.resolve({ banned: [], spamed: [] });
+        else
+            chrome.runtime.sendMessage({ action: "chkspam", target: target, data: data },
+                ret => pms.resolve(ret));
         return pms;
     }
 }

@@ -67,5 +67,6 @@
       ],
       "run_at": "document_end"
     }
-  ]
+  ],
+  "content_security_policy": "script-src 'self' https://cdn.datatables.net/; object-src 'self'"
 } 

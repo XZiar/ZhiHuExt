@@ -43,7 +43,7 @@ class User
         {
             if (statuss.find(x => x.name === "hang" || x.name === "lock"))
                 user.status = "ban";
-            else if (statuss.find(x => x.name === "ban" && x.expiredAt < x.createdAt))
+            else if (statuss.find(x => x.name === "ban" && x.expiredAt === 864000000))
                 user.status = "sban";//shutup-ban
             else
                 user.status = "";
