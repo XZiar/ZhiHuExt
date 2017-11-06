@@ -1,4 +1,5 @@
 "use strict"
+//import { Dexie } from "./dexie.min.js"
 
 async function toNameMap(prop)
 {
@@ -86,6 +87,7 @@ db.open()
 
 
 let TIMER_CLEAR_BADGE = setTimeout(clearBadge, 0);
+/**@param {number} num */
 function putBadge(num)
 {
     clearTimeout(TIMER_CLEAR_BADGE);
@@ -98,6 +100,7 @@ function clearBadge()
 }
 
 
+/**@param {number | string} tid */
 function fetchTopic(tid)
 {
     $.ajax("https://www.zhihu.com/api/v4/topics/" + tid, { type: "GET" })
@@ -108,41 +111,13 @@ function fetchTopic(tid)
         });
 }
 
-function getTargetTable(target)
-{
-    let table;
-    switch (target)
-    {
-        case "spam":
-            table = db.spams;
-            break;
-        case "users":
-            table = db.users;
-            break;
-        case "follows":
-            table = db.follows;
-            break;
-        case "zans":
-            table = db.zans;
-            break;
-        case "answers":
-            table = db.answers;
-            break;
-        case "questions":
-            table = db.questions;
-            break;
-        case "topics":
-            table = db.topics;
-            break;
-        default:
-            console.warn("unknown target:" + target);
-            break;
-    }
-    return table;
-}
+/**
+ * @param {string} target
+ * @param {object | object[]} data
+ */
 function insertDB(target, data)
 {
-    const table = getTargetTable(target);
+    const table = db[target];
     if (!table)
         return false;
     console.log(target, data);
@@ -162,9 +137,13 @@ function insertDB(target, data)
     pms.catch(error => console.warn("[insert] failed!", error, target, data));
     return true;
 }
+/**
+ * @param {string} target
+ * @param {{obj: object | object[], key: string, updator: object}} data
+ */
 function updateDB(target, data)
 {
-    const table = getTargetTable(target);
+    const table = db[target];
     if (!table)
         return false;
     console.log(target, data);
@@ -180,12 +159,13 @@ function updateDB(target, data)
 function countDB()
 {
     const pms = $.Deferred();
-    db.transaction("r", ...db.tables, () =>
+    db.transaction("r", db.tables, () =>
     {
         const ret = { ban: BAN_UID.size };
         const tabpmss = db.tables.map(async table =>
         {
             ret[table.name] = await table.count();
+            console.log("table counted", table.name);
         });
         Promise.all(tabpmss)
             .then(() => pms.resolve(ret))
@@ -196,13 +176,13 @@ function countDB()
 function exportDB()
 {
     const pms = $.Deferred();
-    db.transaction("r", ...db.tables, () =>
+    db.transaction("r", db.tables, () =>
     {
+        const ret = {};
         const tabpmss = db.tables.map(async table =>
         {
-            const ret = {};
             ret[table.name] = await table.toArray();
-            console.log("export table [" + table.name + "] success", ret);
+            console.log("export table [" + table.name + "] success");
             return ret;
         });
         Promise.all(tabpmss)
@@ -212,41 +192,19 @@ function exportDB()
     return pms;
 }
 
-function splitInOutSide(array, set)
-{
-    if (!(array instanceof Array) || !(set instanceof Set))
-    {
-        console.warn("argument wrong", array, set);
-        return;
-    }
-    const inside = [], outside = [];
-    for (let idx = 0; idx < array.length; ++idx)
-    {
-        let obj = array[idx];
-        if (set.has(obj))
-            inside.push(obj);
-        else
-            outside.push(obj);
-    }
-    return [inside, outside];
-}
+/**
+ * @param {string[] | object[]} waitUsers
+ */
 async function checkSpamUser(waitUsers)
 {
     const ret = { banned: [], spamed: [] };
-    const ids = waitUsers.mapToProp("id");
+    const ids = (typeof(waitUsers[0]) === "string") ? waitUsers : waitUsers.mapToProp("id");
     const [bannedPart, unbannedPart] = splitInOutSide(ids, BAN_UID);
     ret.banned = bannedPart;
 
     const [spamedIds, dummy] = await splitInOutSide(unbannedPart, SPAM_UID);
     ret.spamed = spamedIds;
     return ret;
-}
-
-async function openanalyse(ansid)
-{
-    const zans = await db.zans.where("to").equals(ansid).toArray();
-    const uids = "users=" + zans.mapToProp("from").join("*");
-    chrome.tabs.create({ active: true, url: "AssocAns.html?" + uids });
 }
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) =>
@@ -272,19 +230,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) =>
         case "export":
             exportDB().done(dbjson =>
             {
-                //console.log("export db outputs:", dbjson);
                 const blob = new Blob([JSON.stringify(dbjson)], { type: "application/json" });
-                const blobUrl = URL.createObjectURL(blob);
-                console.log("export to:", blobUrl);
                 const time = new Date().Format("yyyyMMdd-hhmm");
                 const fname = "ZhiHuExtDB-" + time + ".json";
-                chrome.downloads.download({ url: blobUrl, filename: fname }, did =>
-                {
-                    if (did === undefined)
-                    { console.warn("download wrong", chrome.runtime.lastError); return; }
-                    DOWNLOAD_QUEUE[did] = blobUrl;
-                    console.log("start download [" + did + "]");
-                });
+                DownloadMan.download(blob, fname);
             }).fail(error => console.warn("exportDB fail", error));
             break;
         case "insert":
@@ -306,9 +255,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) =>
         case "openpage":
             chrome.tabs.create({ active: !request.isBackground, url: request.target });
             break;
-        case "openanalyse":
-            openanalyse(request.target);
-            break;
         case "analyse":
             {
                 const fn = Analyse[request.method];
@@ -329,7 +275,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) =>
             break;
     }
 });
-
+/*
 const DOWNLOAD_QUEUE = {};
 chrome.downloads.onChanged.addListener((delta) =>
 {
@@ -343,10 +289,9 @@ chrome.downloads.onChanged.addListener((delta) =>
         console.log("finish download [" + delta.id + "], revoke:", url);
     }
 })
-
+*/
 $(document).ready(function ()
 {
     new Clipboard('#copyBtn');
 });
 
-//import Dexie from "./Dependency/dexie.js"

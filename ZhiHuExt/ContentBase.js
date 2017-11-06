@@ -161,7 +161,7 @@ class ContentBase
                 }
                 const user = User.fromRawJson(theuser);
                 pms.resolve(user);
-                console.log(theuser);
+                //console.log(theuser);
                 {
                     const entities = ContentBase.parseEntities(state.entities);
                     ContentBase._report("batch", entities);

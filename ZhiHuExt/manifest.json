@@ -59,6 +59,17 @@
     {
       "matches":
       [
+        "*://www.zhihu.com/inbox/8912224000"
+      ],
+      "js":
+      [
+        "RepResPage.js"
+      ],
+      "run_at": "document_end"
+    },
+    {
+      "matches":
+      [
         "*://www.zhihu.com/*"
       ],
       "js":

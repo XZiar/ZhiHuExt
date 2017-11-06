@@ -1,6 +1,6 @@
 "use strict"
 
-/*
+
 const DOWNLOAD_QUEUE = {};
 chrome.downloads.onChanged.addListener((delta) =>
 {
@@ -13,10 +13,14 @@ chrome.downloads.onChanged.addListener((delta) =>
         URL.revokeObjectURL(url);
         console.log("finish download [" + delta.id + "], revoke:", url);
     }
-});*/
+});
 
 class DownloadMan
 {
+    /**
+     * @param {Blob|string} data
+     * @param {string} filename
+     */
     static download(data, filename)
     {
         const pms = $.Deferred();

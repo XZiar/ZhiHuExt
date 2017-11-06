@@ -1,20 +1,10 @@
 "use strict"
 
-function formColor(red, green, blue)
-{
-    const sred = red.toString(16), sgreen = green.toString(16), sblue = blue.toString(16);
-    if (sred.length < 2) sred = "0" + sred;
-    if (sgreen.length < 2) sgreen = "0" + sgreen;
-    if (sblue.length < 2) sblue = "0" + sblue;
-    return "#" + sred + sgreen + sblue;
-}
-
-
 
 function reportSpam(id, type)
 {
     const payload = { "resource_id": id, "type": type, "reason_type": "spam", "source": "web" };
-    ContentBase._report("spam", { id: id, type: type });
+    ContentBase._report("spams", { id: id, type: type });
     //req.setRequestHeader("Referer", "https://www.zhihu.com/people/" + id + "/activities");
     const pms = $.Deferred();
     ContentBase._post("https://www.zhihu.com/api/v4/reports", payload)
@@ -31,16 +21,6 @@ function reportSpam(id, type)
                 pms.reject({ code: xhr.status, error: "unknown error" });
         })
     return pms;
-}
-
-function createButton(extraClass, text)
-{
-    const btn = document.createElement('button');
-    btn.addClass("Button");
-    btn.addClasses(...extraClass);
-    btn.setAttribute("type", "button");
-    btn.innerText = text;
-    return btn;
 }
 
 
@@ -143,7 +123,7 @@ const voterObserver = new MutationObserver(records =>
         records.filter(record => (record.type == "childList" && record.target.nodeName == "DIV"))
             .map(record => $.makeArray(record.addedNodes)))
         .filter(node => node.hasClass("List-item") && !node.hasChild(".Btn-ReportSpam"));
-    console.log("added " + voterNodes.length + " voters", voterNodes);
+    //console.log("added " + voterNodes.length + " voters", voterNodes);
     addSpamVoterBtns(voterNodes);
 });
 function monitorVoter(voterPopup)
@@ -244,6 +224,7 @@ const bodyObserver = new MutationObserver(records =>
         if (answerNodes.length > 0)
             addSpamAnsBtns(answerNodes);
     }
+    if(false)
     {
         const feedbackNodes = $(addNodes).filter(".zm-pm-item").toArray()
             .filter(ele => ele.dataset.name === "知乎管理员" && ele.dataset.type === "feedback");
@@ -253,7 +234,7 @@ const bodyObserver = new MutationObserver(records =>
 });
     
 
-$("body").on("click", ".Btn-ReportSpam", function ()
+$("body").on("click", "button.Btn-ReportSpam", function ()
 {
     const btn = $(this)[0];
     reportSpam(btn.dataset.id, btn.dataset.type)
@@ -267,11 +248,11 @@ $("body").on("click", ".Btn-ReportSpam", function ()
                 btn.style.backgroundColor = "rgb(224,0,32)";
         });
 });
-$("body").on("click", ".Btn-CheckSpam", async function (e)
+$("body").on("click", "button.Btn-CheckSpam", async function (e)
 {
     const btn = $(this)[0];
     const ansId = btn.dataset.id;
-    const voters = await ContentBase.getAnsVoters(ansId, 1300, e.ctrlKey ? "old" : "new",
+    const voters = await ContentBase.getAnsVoters(ansId, 2500, e.ctrlKey ? "old" : "new",
         (cur, all) => btn.innerText = "=>" + cur + "/" + all);
 
     btn.addClass("Button--blue");
@@ -291,24 +272,7 @@ $("body").on("click", ".Btn-CheckSpam", async function (e)
     const green = ratio < 0 ? 224 : 224 - Math.ceil(ratio * 192);
     btn.style.backgroundColor = "rgb(" + red + "," + green + "," + blue + ")";
 });
-$("body").on("click", ".Btn-QCheckStatus", async function (e)
-{
-    const btn = $(this)[0];
-    const uid = btn.dataset.id;
-    const user = await ContentBase.checkUserState(uid);
-    if (!user)
-        return;
-    if (user.status === "ban" || user.status === "sban")
-    {
-        btn.style.background = "black";
-    }
-    else
-    {
-        btn.style.background = "rgb(0,224,32)";
-    }
-    ContentBase._report("users", user);
-});
-$("body").on("click", ".Btn-CheckStatus", async function (e)
+$("body").on("click", "button.Btn-CheckStatus", async function (e)
 {
     const btn = $(this)[0];
     const uid = btn.dataset.id;
@@ -332,7 +296,7 @@ $("body").on("click", ".Btn-CheckStatus", async function (e)
     }
     ContentBase._report("users", user);
 });
-$("body").on("click", ".Btn-CheckAllStatus", async function (e)
+$("body").on("click", "button.Btn-CheckAllStatus", async function (e)
 {
     const btn = $(this)[0];
     const isCtrl = e.ctrlKey;
@@ -355,7 +319,7 @@ $("body").on("click", ".Btn-CheckAllStatus", async function (e)
     {
         btn.textContent = btnList[idx].name;
         btnList[idx].btn.click();
-        await _sleep(500);
+        await _sleep(600);
     }
     btn.textContent = "检测全部";
 });
@@ -370,7 +334,7 @@ $("body").on("click", "span.Voters", function ()
 });
 $("body").on("click", "button.Btn-AssocAns", function ()
 {
-    chrome.runtime.sendMessage({ action: "openanalyse", target: CUR_ANSWER });
+    chrome.runtime.sendMessage({ action: "openpage", isBackground: false, target: "AssocAns.html?ansid=" + CUR_ANSWER });
 });
 $("body").on("click", "button.Modal-closeButton", function ()
 {
@@ -453,7 +417,7 @@ const cmrepotObserver = new MutationObserver(records =>
                 userUpds.push(uid);
         }
     }
-    ContentBase._report("spam", spams);
+    ContentBase._report("spams", spams);
     ContentBase._update("users", "id", userUpds, { status: "ban" });
 });
 
@@ -469,8 +433,8 @@ else if (pathname.startsWith("/community") && !pathname.includes("reported"))
 }
 else if (pathname.startsWith("/inbox/8912224000"))
 {
-    const curNodes = $(".zm-pm-item", document).toArray();
-    addQuickCheckBtns(curNodes);
+    //const curNodes = $(".zm-pm-item", document).toArray();
+    //addQuickCheckBtns(curNodes);
 }
 {
     const curAnswers = $(".AnswerItem").toArray();

@@ -2,19 +2,31 @@
 
 !async function ()
 {
-    const qs = window.getQueryString();
-    const users = qs.users.split("*");
+    /**
+     * @param {string} method
+     * @param {any[]} args
+     */
+    function payload(method, ...args)
+    {
+        return { "action": "analyse", "method": method, "argument": args };
+    }
+    const qs = _getQueryString();
+    const ansid = qs.ansid.includes("*") ? qs.ansid.split("*") : qs.ansid;
+    const users = await SendMsgAsync(payload("getAnsVoters", qs.ansid))
     console.log(users);
-    const anss = await SendMsgAsync({ "action": "analyse", "method": "findAnsIdOfUserVote", "argument": [users, "desc"] });
+    const anss = await SendMsgAsync(payload("findAnsIdOfUserVote", users, "desc"));
     console.log(anss);
-    const qstMap = await SendMsgAsync({ "action": "analyse", "method": "findQuestMapOfAnswers", "argument": [anss, "question"] });
+    const ansMap = await SendMsgAsync(payload("getPropMapOfIds", "answers", anss.mapToProp("key"), "question"));
+    const qstMap = await SendMsgAsync(payload("getDetailMapOfIds", "questions", Object.values(ansMap), "id"));
     const data = [];
     for (let idx = 0; idx < anss.length; ++idx)
     {
         const cur = anss[idx];
-        const qst = qstMap[cur.key];
-        const link = "https://www.zhihu.com/question/" + qst[0] + "/answer/" + cur.key;
-        const dat = { "ansid": cur.key, "qst": { "title": qst[1], "link": link }, "times": cur.count };
+        const qstid = ansMap[cur.key];
+        const link = "https://www.zhihu.com/question/" + qstid + "/answer/" + cur.key;
+        const qst = qstMap[qstid];
+        const title = qst == null ? qstid : qst.title;
+        const dat = { "ansid": cur.key, "qst": { "title": title, "link": link }, "times": cur.count };
         data.push(dat);
     }
 

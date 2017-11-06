@@ -27,7 +27,10 @@ Array.prototype.findInArray = function(array)
     }
     return ret;
 }
-Array.prototype.mapToProp = function(keyName)
+/**@memberof Array.prototype
+ * @param {string} keyName
+ */
+Array.prototype.mapToProp = function (keyName)
 {
     const ret = [];
     for (let idx = 0; idx < this.length; ++idx)
@@ -120,26 +123,6 @@ Node.prototype.removeClasses = function (...names)
     for (let idx = 0, len = names.length; idx < len; ++idx)
         this.classList.remove(names[idx]);
 }
-
-
-window.getQueryString = function (qurl)
-{
-    if (!qurl)
-    {
-        const url = window.location.href;
-        const idx = url.indexOf("?") + 1;
-        qurl = idx > 0 ? url.substring(idx) : "";
-    }
-    const querys = qurl.split("&");
-    var ret = {};
-    for (var i = 0; i < querys.length; ++i)
-    {
-        var p = querys[i].split('=');
-        if (p.length != 2) continue;
-        ret[p[0]] = decodeURIComponent(p[1].replace(/\+/g, " "));
-    }
-    return ret;
-};
 
 
 class SimpleBag
@@ -291,9 +274,83 @@ class SimpleBag2
     get size() { return this._map.size; }
 }
 
+
+/**@description parse query string to key-value object
+ * @param {string} [qurl] URL's query string
+ * @returns {{[x:string]: string}} key-value object
+ */
+function _getQueryString(qurl)
+{
+    if (!qurl)
+    {
+        const url = window.location.href;
+        const idx = url.indexOf("?") + 1;
+        qurl = idx > 0 ? url.substring(idx) : "";
+    }
+    const querys = qurl.split("&");
+    var ret = {};
+    for (var i = 0; i < querys.length; ++i)
+    {
+        var p = querys[i].split('=');
+        if (p.length != 2) continue;
+        ret[p[0]] = decodeURIComponent(p[1].replace(/\+/g, " "));
+    }
+    return ret;
+};
+/**
+ * @param {number} ms
+ */
 function _sleep(ms)
 {
     return new Promise(resolve => setTimeout(resolve, ms));
+}
+/**
+ * @param {any[]} array
+ * @param {Set<any>} set
+ */
+function splitInOutSide(array, set)
+{
+    if (!(array instanceof Array) || !(set instanceof Set))
+    {
+        console.warn("argument wrong", array, set);
+        return;
+    }
+    const inside = [], outside = [];
+    for (let idx = 0; idx < array.length; ++idx)
+    {
+        const obj = array[idx];
+        if (set.has(obj))
+            inside.push(obj);
+        else
+            outside.push(obj);
+    }
+    return [inside, outside];
+}
+/**
+ * @param {number} red
+ * @param {number} green
+ * @param {number} blue
+ */
+function formColor(red, green, blue)
+{
+    const sred = red.toString(16), sgreen = green.toString(16), sblue = blue.toString(16);
+    if (sred.length < 2) sred = "0" + sred;
+    if (sgreen.length < 2) sgreen = "0" + sgreen;
+    if (sblue.length < 2) sblue = "0" + sblue;
+    return "#" + sred + sgreen + sblue;
+}
+/**
+ * @param {string[]} extraClass
+ * @param {string} text
+ */
+function createButton(extraClass, text)
+{
+    const btn = document.createElement('button');
+    btn.addClass("Button");
+    btn.addClasses(...extraClass);
+    btn.setAttribute("type", "button");
+    btn.innerText = text;
+    return btn;
 }
 
 async function SendMsgAsync(data)

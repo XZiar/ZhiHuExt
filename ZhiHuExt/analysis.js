@@ -37,6 +37,14 @@ class Analyse
         const dat4 = dat3[0].hasOwnProperty("count") ? dat3.mapToProp("key") : dat3;
         return dat4;
     }
+    /**@param {string | object} table*/
+    static toTable(table)
+    {
+        if (typeof (table) === "string")
+            return db[table];
+        else
+            return table;
+    }
     static async getSpamBanId(uid)
     {
         const uids = await Analyse.toPureArray(uid);
@@ -48,22 +56,28 @@ class Analyse
         const uids = await Analyse.toPureArray(uid);
         return await db.users.where("id").anyOf(uids).toNameMap("id");
     }
-    static async getPropMapOfIds(table, id, prop)
+    static async getPropMapOfIds(tab, id, prop)
     {
         const ids = await Analyse.toPureArray(id);
+        const table = Analyse.toTable(tab);
         const retMap = await table.where("id").anyOf(ids).toPropMap("id", prop);
         return retMap;
     }
-    static async getDetailMapOfIds(table, id, name)
+    static async getDetailMapOfIds(tab, id, name)
     {
         const ids = await Analyse.toPureArray(id);
+        const table = Analyse.toTable(tab);
         const retMap = await table.where("id").anyOf(ids).toNameMap(name);
         return retMap;
     }
-    static async getDetailQstMap(ansid)
+    static async getAnsVoters(ansid)
     {
-        const ansMap = await getPropMapOfIds(db.answers, id, "question");
-        Object.values(ansMap);
+        const ansids = await Analyse.toPureArray(ansid);
+        console.log("here [" + ansids.length + "] ansids");
+        const zans = await db.zans.where("to").anyOf(ansids).toArray();
+        console.log("get [" + zans.length + "] zans");
+        const zanUsers = new SimpleBag(zans.mapToProp("from")).toArray("desc");
+        return zanUsers;
     }
 
     static async findAnsIdOfUserVote(uid, order)
@@ -80,56 +94,44 @@ class Analyse
     static async findQuestOfUserVote(uid)
     {
         const zanAnss = await Analyse.findAnsIdOfUserVote(uid);
-        const ansMap = await getPropMapOfIds(db.answers, zanAnss, "question");
+        const ansMap = await Analyse.getPropMapOfIds(db.answers, zanAnss, "question");
         console.log("get [" + Object.keys(ansMap).length + "] answers");
         const questBag = new SimpleBag();
         zanAnss.forEach(zanans => questBag.addMany(ansMap[zanans.key], zanans.count));
         const qsts = questBag.toArray("desc");
         console.log("reduce to [" + qsts.length + "] questions");
-        const qstMap = await getDetailMapOfIds(db.questions, qsts, "id");
+        const qstMap = await Analyse.getDetailMapOfIds(db.questions, qsts, "id");
         console.log("get [" + Object.keys(qstMap).length + "] questions");
         return tryReplaceDetailed(qsts, qstMap, "question");
     }
     static async findAuthorOfUserVote(uid)
     {
         const zanAnss = await Analyse.findAnsIdOfUserVote(uid);
-        const ansMap = await getPropMapOfIds(db.answers, zanAnss, "author");
+        const ansMap = await Analyse.getPropMapOfIds(db.answers, zanAnss, "author");
         console.log("get [" + Object.keys(ansMap).length + "] answers");
         const authorBag = new SimpleBag();
         zanAnss.forEach(zanans => authorBag.addMany(ansMap[zanans.key], zanans.count));
         const aths = authorBag.toArray("desc");
         console.log("reduce to [" + aths.length + "] authors");
-        const athMap = await Analyse.getUserMap(aths.mapToProp("key"));
+        const athMap = await Analyse.getUserMap(aths);
         console.log("get [" + Object.keys(athMap).length + "] authors");
         return tryReplaceDetailed(aths, athMap, "user");
     }
     static async findSimilarUserOfAnswerVote(ansid)
     {
-        const ansids = await Analyse.toPureArray(ansid);
-        console.log("here [" + ansids.length + "] ansids");
-
-        const zans = await db.zans.where("to").anyOf(ansids).toArray();
-        console.log("get [" + zans.length + "] zans");
-        const zanUsers = new SimpleBag(zans.mapToProp("from")).toArray("desc");
-        console.log("reduce to [" + zanUsers.length + "] voters");
-        const userMap = await Analyse.getUserMap(zanUsers.mapToProp("key"));
+        const zanUsers = await Analyse.getAnsVoters(ansid);
+        const userMap = await Analyse.getUserMap(zanUsers);
         console.log("get [" + Object.keys(userMap).length + "] users");
         return tryReplaceDetailed(zanUsers, userMap, "user");
     }
     static async findSimilarUserInAnsOfAnswerVote(objAns, refAns)
     {
-        const refAnss = await Analyse.toPureArray(refAns);
-        console.log("here [" + refAnss.length + "] ref answers");
-
-        const zans = await db.zans.where("to").anyOf(refAnss).toArray();
-        console.log("get [" + zans.length + "] zans");
-        const zanUsers = new SimpleBag(zans.mapToProp("from")).toArray("desc");
-        console.log("reduce to [" + zanUsers.length + "] voters");
+        const zanUsers = await Analyse.getAnsVoters(refAns);
         const objUsers = new Set((await db.zans.where("to").equals(objAns).toArray()).mapToProp("from"));
         console.log("get [" + objUsers.size + "] obj voters");
         const resUsers = zanUsers.filter(usr => objUsers.has(usr.key));
         console.log("restrict to [" + resUsers.length + "] target voters");
-        const userMap = await Analyse.getUserMap(resUsers.mapToProp("key"));
+        const userMap = await Analyse.getUserMap(resUsers);
         console.log("get [" + Object.keys(userMap).length + "] users");
         return tryReplaceDetailed(resUsers, userMap, "user");
     }
@@ -144,7 +146,7 @@ class Analyse
         });
         const tps = topicBag.toArray("desc");
         console.log("reduce to [" + tps.length + "] topics");
-        const topicMap = await getDetailMapOfIds(db.topics, tps, "id");
+        const topicMap = await Analyse.getDetailMapOfIds(db.topics, tps, "id");
         console.log("get [" + Object.keys(topicMap).length + "] topics");
         return tryReplaceDetailed(tps, topicMap, "topic");
     }

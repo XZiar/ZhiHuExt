@@ -25,6 +25,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ZhiHuExt", "ZhiHuExt", "{93
 		ZhiHuExt\popup.html = ZhiHuExt\popup.html
 		ZhiHuExt\popup.js = ZhiHuExt\popup.js
 		README.md = README.md
+		ZhiHuExt\RepResPage.js = ZhiHuExt\RepResPage.js
 		ZhiHuExt\utils.js = ZhiHuExt\utils.js
 	EndProjectSection
 	ProjectSection(FolderGlobals) = preProject
