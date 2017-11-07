@@ -34,7 +34,8 @@
     {
       "matches":
       [
-        "*://www.zhihu.com/*"
+        "*://www.zhihu.com/*",
+        "*://zhuanlan.zhihu.com/p/*"
       ],
       "js":
       [
@@ -42,6 +43,17 @@
         "pod.js",
         "utils.js",
         "ContentBase.js"
+      ],
+      "run_at": "document_start"
+    },
+    {
+      "matches":
+      [
+        "*://zhuanlan.zhihu.com/p/*"
+      ],
+      "js":
+      [
+        "ArticlePage.js"
       ],
       "run_at": "document_start"
     },
@@ -71,6 +83,10 @@
       "matches":
       [
         "*://www.zhihu.com/*"
+      ],
+      "exclude_matches":
+      [
+        "*://www.zhihu.com/inbox/8912224000"
       ],
       "js":
       [

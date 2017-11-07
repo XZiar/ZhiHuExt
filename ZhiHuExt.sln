@@ -6,6 +6,7 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ZhiHuExt", "ZhiHuExt", "{93675B82-EC6C-4F02-80C6-4872E07264D3}"
 	ProjectSection(SolutionItems) = preProject
 		ZhiHuExt\analysis.js = ZhiHuExt\analysis.js
+		ZhiHuExt\ArticlePage.js = ZhiHuExt\ArticlePage.js
 		ZhiHuExt\AssocAns.html = ZhiHuExt\AssocAns.html
 		ZhiHuExt\AssocAns.js = ZhiHuExt\AssocAns.js
 		ZhiHuExt\background.html = ZhiHuExt\background.html

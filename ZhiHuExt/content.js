@@ -53,23 +53,24 @@ function parseUser(node)
     return user;
 }
 
-//node is div of class"AnswerItem"
+/**
+ * @param {HTMLDivElement} node -div of ".AnswerItem"
+ */
 function parseAnswer(node)
 {
     if (!node)
         return null;
+
+    /**@type {{type: string, token: string, upvote_num: number, comment_num: number, parent_token: string, author_member_hash_id: string}}*/
     const ansInfo = JSON.parse(node.dataset.zaModuleInfo).card.content;
     if (ansInfo.type != "Answer")
         return null;
-    const answer = new Answer();
-    answer.id = ansInfo.token;
-    answer.question = ansInfo.parent_token;
-    answer.zancnt = ansInfo.upvote_num;
 
     const nameLink = node.querySelector("a.UserLink-link");
-    if (nameLink)
-        answer.author = nameLink.getAttribute("href").split("/").pop();
+    /**@type {string | null}*/
+    const author = nameLink ? nameLink.getAttribute("href").split("/").pop() : null;
 
+    const answer = new Answer(ansInfo.token, ansInfo.parent_token, author, ansInfo.upvote_num);
     return answer;
 }
 
@@ -102,17 +103,17 @@ async function addSpamVoterBtns(voterNodes)
         const zans = users.map(user => new Zan(user, CUR_ANSWER));
         ContentBase._report("zans", zans);
     }
-
+    /**@type {{banned: string[], spamed: string[]}}*/
     const result = await ContentBase.checkSpam("users", users);
-    const banned = result.banned;//.mapToProp("id");
-    const spamed = result.spamed;//.mapToProp("id");
+    const banned = new Set(result.banned);
+    const spamed = new Set(result.spamed);
     for (let idx = 0; idx < btnMap.length; ++idx)
     {
         const btn = btnMap[idx];
         const id = btn.dataset.id;
-        if (banned.includes(id))
+        if (banned.has(id))
             btn.style.backgroundColor = "black";
-        else if (spamed.includes(id))
+        else if (spamed.has(id))
             btn.style.backgroundColor = "cornsilk";
     }
 };
@@ -224,13 +225,6 @@ const bodyObserver = new MutationObserver(records =>
         if (answerNodes.length > 0)
             addSpamAnsBtns(answerNodes);
     }
-    if(false)
-    {
-        const feedbackNodes = $(addNodes).filter(".zm-pm-item").toArray()
-            .filter(ele => ele.dataset.name === "知乎管理员" && ele.dataset.type === "feedback");
-        if (feedbackNodes.length > 0)
-            addQuickCheckBtns(feedbackNodes);
-    }
 });
     
 
@@ -242,8 +236,10 @@ $("body").on("click", "button.Btn-ReportSpam", function ()
         .fail((e) =>
         {
             console.warn("report fail:" + e.code, e.error);
-            if (e.code === 103001)
+            if (e.code === 103001)//repeat
                 btn.style.backgroundColor = "rgb(224,224,32)";
+            else if (e.code === 4039)//need verify
+                btn.style.backgroundColor = "rgb(32,64,192)";
             else
                 btn.style.backgroundColor = "rgb(224,0,32)";
         });
@@ -252,7 +248,7 @@ $("body").on("click", "button.Btn-CheckSpam", async function (e)
 {
     const btn = $(this)[0];
     const ansId = btn.dataset.id;
-    const voters = await ContentBase.getAnsVoters(ansId, 2500, e.ctrlKey ? "old" : "new",
+    const voters = await ContentBase.getAnsVoters(ansId, 6000, e.ctrlKey ? "old" : "new",
         (cur, all) => btn.innerText = "=>" + cur + "/" + all);
 
     btn.addClass("Button--blue");
@@ -350,7 +346,7 @@ function procInQuestion()
         .filter(node => node instanceof HTMLDivElement)
         .find(div => div.className == "")
         .dataset.zopQuestion);
-    const topics = qstData.topics;
+    const topics = qstData.topics.map(t => new Topic(t.id, t.name));
     const quest = new Question(qstData.id, qstData.title, topics.mapToProp("id"));
     CUR_QUESTION = quest;
     ContentBase._report("questions", quest);
@@ -364,19 +360,7 @@ function procInQuestion()
         qstArea.prepend(btn);
     }
 }
-function procInPeople()
-{
-    console.log("people page");
-    const user = ContentBase.CUR_USER;
-    const header = $("#ProfileHeader")[0];
-    if (!user || !header)
-        return;
 
-    const btn = createButton(["Btn-ReportSpam", "Button--primary"], "广告");
-    btn.dataset.id = user.id;
-    btn.dataset.type = "member";
-    setTimeout(() => $(".ProfileButtonGroup", header).prepend(btn), 500);
-}
 
 const cmrepotObserver = new MutationObserver(records =>
 {
@@ -431,27 +415,31 @@ else if (pathname.startsWith("/community") && !pathname.includes("reported"))
     console.log("community report page");
     cmrepotObserver.observe($(".zu-main-content-inner")[0], { "childList": true, "subtree": true });
 }
-else if (pathname.startsWith("/inbox/8912224000"))
-{
-    //const curNodes = $(".zm-pm-item", document).toArray();
-    //addQuickCheckBtns(curNodes);
-}
+
 {
     const curAnswers = $(".AnswerItem").toArray();
     console.log("init " + curAnswers.length + " answers");
     addSpamAnsBtns(curAnswers);
 }
+$(document).ready(() =>
 {
     const fbtns = document.body.querySelector(".CornerButtons");
-    const btn = createButton(["CornerButton", "Button--plain"]);
+    const svg = createSVG(24, 24, "0 0 100 91",
+        "M53.29 80.035l7.32.002 2.41 8.24 13.128-8.24h15.477v-67.98H53.29v67.978zm7.79-60.598h22.756v53.22h-8.73l-8.718 5.473-1.587-5.46-3.72-.012v-53.22zM46.818 43.162h-16.35c.545-8.467.687-16.12.687-22.955h15.987s.615-7.05-2.68-6.97H16.807c1.09-4.1 2.46-8.332 4.1-12.708 0 0-7.523 0-10.085 6.74-1.06 2.78-4.128 13.48-9.592 24.41 1.84-.2 7.927-.37 11.512-6.94.66-1.84.785-2.08 1.605-4.54h9.02c0 3.28-.374 20.9-.526 22.95H6.51c-3.67 0-4.863 7.38-4.863 7.38H22.14C20.765 66.11 13.385 79.24 0 89.62c6.403 1.828 12.784-.29 15.937-3.094 0 0 7.182-6.53 11.12-21.64L43.92 85.18s2.473-8.402-.388-12.496c-2.37-2.788-8.768-10.33-11.496-13.064l-4.57 3.627c1.363-4.368 2.183-8.61 2.46-12.71H49.19s-.027-7.38-2.372-7.38zm128.752-.502c6.51-8.013"
+    );
+    svg.addClasses("ZiExt--Main");
+    svg.setAttribute("fill", "#ff7000");
+    svg.title = "回答池";
+    const btn = createButton(["CornerButton", "Button--plain"], "");
     btn.dataset.tooltip = "回答池";
     btn.dataset.tooltipPosition = "left";
+    btn.appendChild(svg);
     const btndiv = document.createElement("div");
     btndiv.addClass("CornerAnimayedFlex");
     btndiv.appendChild(btn);
-    if(fbtns)
+    if (fbtns)
         fbtns.prepend(btndiv);
-}
+});
 
 bodyObserver.observe(document.body, { "childList": true, "subtree": true });
 

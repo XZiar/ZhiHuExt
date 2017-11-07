@@ -1,5 +1,45 @@
 "use strict"
 
+/**
+ * @typedef { Object } UserType
+ * @property { string } avatarUrl
+ * @property { {id: string, template: string} } avatar
+ * @property { [] } badge
+ * @property { number } gender
+ * @property { string } headline
+ * @property { string } id
+ * @property { boolean } isFollowed
+ * @property { boolean } isFollowing
+ * @property { boolean } isOrg
+ * @property { string } name
+ * @property { string } type
+ * @property { string } url
+ * @property { string } urlToken
+ * @property { string } slug
+ * @property { string } userType
+ * @property { { name: string, expiredAt: number }[]= } accountStatus optional
+ * @property { number= } answerCount optional
+ * @property { number= } followerCount optional
+ * @property { number= } articlesCount optional
+ * @property { string= } description optional
+ * @property { number= } uid optional
+ * @property { number= } thankedCount optional
+ * @property { number= } visitsCount optional
+ */
+/**
+ * @typedef {{actionText: string, actor: object, createdTime: number, id: string, target: {id: number, schema: string}, type: string, verb: string}} Activity
+ * @typedef {{answerCount: number, author: UserType, boundTopicIds: number[], commentCount: number, created: number, followerCount: number, createdTime: number, id: number, isFollowing: boolean, title: string, type: string, url: string}} QuestType
+ * @typedef {{author: UserType, canComment: {reason: string, status: boolean}, commentCount: number, commentPermission: string, content: string, createdTime: number, excerpt: string, excerptNew: string, id: number, isCopyable: boolean, question: QuestType, thanksCount: number, type: "answer", updatedTime: number, url: string, voteupCount: number}} AnswerType
+ * @typedef {{author: UserType, commentCount: number, commentPermission: string, content: string, created: number, excerpt: string, excerptNew: string, excerptTitle: string, id: number, imageUrl: string, title: string, type: "article", updated: number, url: string, voteupCount: number, voting: number}} ArticleType
+ * @typedef {Object} Entities
+ * @property {{[id:string]: Activity}} activities
+ * @property {{[id:string]: AnswerType}} answers
+ * @property {{[id:string]: ArticleType}} articles
+ * @property {{[id:string]: UserType}} users
+ * @property {{[id:string]: QuestType}} questions
+ */
+
+
 class User
 {
     constructor(data)
@@ -26,6 +66,7 @@ class User
         else
             return [new User(data)];
     }
+    /**@param {UserType} theuser*/
     static fromRawJson(theuser)
     {
         const user = new User();
@@ -50,7 +91,18 @@ class User
         }
         return user;
     }
-    static fromRawJson2(theuser)
+    static fromArticleJson(theuser)
+    {
+        const user = new User();
+        user.id = theuser.slug;;
+        user.name = theuser.name;
+        user.head = theuser.avatar.id;
+        if (theuser.answer_count)
+            user.anscnt = theuser.answer_count;
+        user.status = theuser.isBanned ? "sban" : "";
+        return user;
+    }
+    static fromAnsVoterJson(theuser)
     {
         const user = new User();
         user.id = theuser.url_token;
@@ -64,9 +116,14 @@ class User
 
 class Question
 {
+    /**
+     * @param {number | string} id
+     * @param {string} title
+     * @param {number | number[]} [topic]
+     */
     constructor(id, title, topic)
     {
-        this.id = id + "";
+        this.id = Number(id);// + "";
         this.title = title;
         if (topic)
         {
@@ -80,11 +137,34 @@ class Question
     }
 }
 
+class Article
+{
+    /**
+     * @param {number | string} id
+     * @param {string} title
+     * @param {string} author
+     * @param {string} [excerpt]
+     * @param {number} [zancnt]
+     */
+    constructor(id, title, author, excerpt, zancnt)
+    {
+        this.id = Number(id);
+        this.title = title;
+        this.author = author;
+        this.excerpt = excerpt == null ? "" : excerpt;
+        this.zancnt = zancnt == null ? -1 : zancnt;
+    }
+}
+
 class Topic
 {
+    /**
+     * @param {number | string} id
+     * @param {string} name
+     */
     constructor(id, name)
     {
-        this.id = "" + id;
+        this.id = Number(id);// + "";
         this.name = name;
     }
 
@@ -99,13 +179,20 @@ class Topic
 
 class Answer
 {
-    constructor(data)
+    /**
+     * @param {number | string} id
+     * @param {number | string} quest
+     * @param {string} [author]
+     * @param {number} [zancnt]
+     * @param {string} [excerpt]
+     */
+    constructor(id, quest, author, zancnt, excerpt)
     {
-        this.id = "";
-        this.question = "";
-        this.author = "";
-        this.zancnt = 0;
-        this.assign(data);
+        this.id = Number(id);// + "";
+        this.question = Number(quest);
+        this.author = author == null ? null : author;
+        this.zancnt = zancnt == null ? -1 : zancnt;
+        this.excerpt = excerpt == null ? null : excerpt;
     }
 
     assign(data)
@@ -124,12 +211,23 @@ class Answer
 
 class Zan
 {
-    constructor(user, answer)
+    /**
+     * @param {User} user
+     * @param {string | number | Answer | Article} target
+     * @param {number} [time]
+     */
+    constructor(user, target, time)
     {
         this.from = user.id;
-        if (answer instanceof Answer)
-            this.to = answer.id;
+        if (target instanceof Answer)
+            this.to = target.id;
+        else if (target instanceof Article)
+            this.to = Number(target.id);// + "";
         else
-            this.to = "" + answer;
+            this.to = Number(target);// + "";
+        if (time == null)
+            this.time = -1;
+        else
+            this.time = time;
     }
 }

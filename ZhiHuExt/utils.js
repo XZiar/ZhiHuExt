@@ -345,12 +345,28 @@ function formColor(red, green, blue)
  */
 function createButton(extraClass, text)
 {
-    const btn = document.createElement('button');
+    const btn = document.createElement("button");
     btn.addClass("Button");
     btn.addClasses(...extraClass);
     btn.setAttribute("type", "button");
     btn.innerText = text;
     return btn;
+}
+/**
+ * @param {number} width
+ * @param {number} height
+ * @param {string} viewbox
+ * @param {string[]} path
+ */
+function createSVG(width, height, viewbox, ...path)
+{
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    const pathstrs = path.map(x => "<path d='" + x + "'></path>").join("");
+    svg.innerHTML = pathstrs;
+    svg.setAttribute("width", width);
+    svg.setAttribute("height", height);
+    svg.setAttribute("viewBox", viewbox)
+    return svg;
 }
 
 async function SendMsgAsync(data)

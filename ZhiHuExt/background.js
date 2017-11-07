@@ -16,11 +16,12 @@ async function toPropMap(keyProp, valProp)
 Dexie.addons.push(x => x.Collection.prototype.toNameMap = toNameMap);
 Dexie.addons.push(x => x.Collection.prototype.toPropMap = toPropMap);
 
-const db = new Dexie("ZhihuDB");
+const db2 = new Dexie("ZhihuDB");
+const db = new Dexie("ZhihuDB2");
 let BAN_UID = new Set();
 let SPAM_UID = new Set();
 
-db.version(1).stores(
+db2.version(1).stores(
     {
         spams: "id,type",
         users: "id,status,anscnt,followcnt",
@@ -29,10 +30,42 @@ db.version(1).stores(
         answers: "id,author,question",
         questions: "id",
         topics: "id"
+    });
+db2.version(2).stores(
+    {
+        spams: "id,type",
+        users: "id,status,anscnt,followcnt",
+        follows: "[from+to],from,to",
+        zans: "[from+to],from,to,time",
+        zanarts: "[from+to],from,to,time",
+        answers: "id,author,question",
+        questions: "id",
+        articles: "id,author",
+        topics: "id"
     })
     .upgrade(trans =>
     {
+        console.log("begin update");
+        trans.zans.toCollection().modify(zan =>
+        {
+            if (zan.time == null)
+                zan.time = -1;
+        });
     });
+
+db.version(1).stores(
+    {
+        spams: "id,type",
+        users: "id,status,anscnt,followcnt",
+        follows: "[from+to],from,to",
+        zans: "[from+to],from,to,time",
+        zanarts: "[from+to],from,to,time",
+        answers: "id,author,question",
+        questions: "id",
+        articles: "id,author",
+        topics: "id"
+    });
+db2.open();
 db.spams.hook("creating", (primKey, obj, trans) =>
 {
     if (obj.type === "member")
@@ -64,6 +97,45 @@ db.users.hook("updating", (mods, primKey, obj, trans) =>
                 ret[key] = obj[key];//skip unset values
     }
     //console.log("compare", mods, ret);
+    return ret;
+});
+db.zans.hook("updating", (mods, primKey, obj, trans) =>
+{
+    if (mods.time === -1 && obj.hasOwnProperty("time"))
+        return { time: obj.time };//skip empty time
+    return;
+});
+db.zanarts.hook("updating", (mods, primKey, obj, trans) =>
+{
+    if (mods.time === -1 && obj.hasOwnProperty("time"))
+        return { time: obj.time };//skip empty time
+    return;
+});
+db.articles.hook("updating", (mods, primKey, obj, trans) =>
+{
+    const keys = Object.keys(mods);
+    if (keys.length === 0) return;
+    for (let idx = 0; idx < keys.length; idx++)
+    {
+        const key = keys[idx], val = mods[key];
+        if ((val === -1 || val === null))
+            if (obj.hasOwnProperty(key))
+                ret[key] = obj[key];//skip unset values
+    }
+    return ret;
+});
+db.answers.hook("updating", (mods, primKey, obj, trans) =>
+{
+    const keys = Object.keys(mods);
+    if (keys.length === 0) return;
+    const ret = {};
+    for (let idx = 0; idx < keys.length; idx++)
+    {
+        const key = keys[idx], val = mods[key];
+        if ((val === -1 || val === null))
+            if (obj.hasOwnProperty(key))
+                ret[key] = obj[key];//skip unset values
+    }
     return ret;
 });
 db.questions.hook("creating", (primKey, obj, trans) =>
@@ -120,7 +192,7 @@ function insertDB(target, data)
     const table = db[target];
     if (!table)
         return false;
-    console.log(target, data);
+    //console.log(target, data);
     let pms;
     if (!(data instanceof Array))
     {

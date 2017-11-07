@@ -6,7 +6,7 @@ function _getAnsVoters(ansId, offset)
     ContentBase._get("https://www.zhihu.com/api/v4/answers/" + ansId + "/voters?include=data[*].answer_count&limit=20&offset=" + offset)
         .done((data, status, xhr) =>
         {
-            const users = data.data.map(User.fromRawJson2);
+            const users = data.data.map(User.fromAnsVoterJson);
             pms.resolve({ "users": users, "end": data.paging.is_end, "start": data.paging.is_start, "total": data.paging.totals });
         })
         .fail((data, status, xhr) =>
@@ -77,19 +77,28 @@ class ContentBase
         return rawhtml.substring(rawhtml.indexOf('<div id="data"'), rawhtml.lastIndexOf('</div><script'));
     }
 
+    /**
+     * @param {Entities} data
+     */
     static parseEntities(data)
     {
+        /**@type {Activity[]}*/
         const acts = Object.values(data.activities);
-        const users = [], zans = [], answers = [], quests = [];
+        const users = [], zans = [], zanarts = [], answers = [], quests = [], articles = [];
         for (let i = 0; i < acts.length; ++i)
         {
             const act = acts[i];
-            let user = User.fromRawJson(act.actor);
-            if (user && act.verb === "ANSWER_VOTE_UP" && act.target.schema === "answer")
+            const user = User.fromRawJson(act.actor);
+            if (user)
             {
-                zans.push(new Zan(user, act.target.id));
+                if (act.verb === "ANSWER_VOTE_UP" && act.target.schema === "answer")
+                    zans.push(new Zan(user, act.target.id, act.createdTime));
+                else if (act.verb === "MEMBER_VOTEUP_ARTICLE" && act.target.schema === "article")
+                    zanarts.push(new Zan(user, act.target.id, act.createdTime));
             }
+            
         }
+        /**@type {AnswerType[]}*/
         const anss = Object.values(data.answers);
         for (let i = 0; i < anss.length; ++i)
         {
@@ -103,14 +112,32 @@ class ContentBase
 
             const quest = new Question(qst.id, qst.title/*, qst.boundTopicIds*/);
             quests.push(quest);
-            const answer = new Answer();
-            answer.id = "" + ans.id;
-            answer.author = ansUser.id;
-            answer.zancnt = ans.voteupCount;
-            answer.question = quest.id;
+            const answer = new Answer(ans.id, quest.id, ansUser.id, ans.voteupCount, ans.excerptNew);
             answers.push(answer);
         }
-        return { "users": users, "zans": zans, "answers": answers, "questions": quests };
+        /**@type {QuestType[]}*/
+        const qsts = Object.values(data.questions);
+        for (let i = 0; i < qsts.length; ++i)
+        {
+            const qst = qsts[i];
+            if (qst.author)
+                users.push(User.fromRawJson(qst.author));
+            const quest = new Question(qst.id, qst.title);
+            quests.push(quest);
+        }
+        /**@type {ArticleType[]}*/
+        const arts = Object.values(data.articles);
+        for (let i = 0; i < arts.length; ++i)
+        {
+            const art = arts[i];
+            const artUser = User.fromRawJson(art.author);
+            if (!_CUR_USER || artUser.id != _CUR_USER.id)
+                users.push(artUser);
+
+            const article = new Article(art.id, art.title, artUser.id, art.excerptNew, art.voteupCount);
+            articles.push(article);
+        }
+        return { "users": users, "zans": zans, "zanarts": zanarts, "answers": answers, "questions": quests, "articles": articles };
     }
 
 

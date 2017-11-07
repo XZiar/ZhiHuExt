@@ -16,10 +16,10 @@
                     .filter(aNode => aNode.href.includes("/people/"))[0];
                 if (!hrefNode)
                     return;
-                let uid = hrefNode.href.split("/").pop();
                 const btnNode = node.children[2];
                 const btn = createButton(["Btn-QCheckStatus"], "检测");
-                btn.dataset.id = uid;
+                btn.dataset.id = hrefNode.href.split("/").pop();
+                btn.dataset.name = hrefNode.text;
                 btnNode.insertBefore(btn, btnNode.children[1]);
             });
     }
@@ -36,7 +36,7 @@
             addQuickCheckBtns(feedbackNodes);
     });
 
-    $("body").on("click", ".Btn-QCheckStatus", async function (e)
+    $("body").on("click", "button.Btn-QCheckStatus", async function (e)
     {
         const btn = $(this)[0];
         const uid = btn.dataset.id;
@@ -53,6 +53,27 @@
         }
         ContentBase._report("users", user);
     });
+    $("body").on("click", "button.Btn-QCheckStatusAll", async function (e)
+    {
+        const thisbtn = $(this)[0];
+        /**@type {HTMLButtonElement[]}*/
+        const btns = $("button.Btn-QCheckStatus", document).toArray()
+            .filter(x => x.style.background === "");
+        for (let i = 0; i < btns.length; ++i)
+        {
+            btns[i].click();
+            thisbtn.textContent = btns[i].dataset.name;
+            await _sleep(640);
+        }
+        thisbtn.textContent = "检测全部";
+    });
+
+
+    const chkAll = createButton(["Btn-QCheckStatusAll"], "检测全部");
+    const dummydiv = document.createElement("div");
+    dummydiv.style.textAlign = "center";
+    dummydiv.appendChild(chkAll);
+    $("#zh-pm-detail-item-wrap").prepend(dummydiv);
 
     const curNodes = $(".zm-pm-item", document).toArray();
     addQuickCheckBtns(curNodes);
