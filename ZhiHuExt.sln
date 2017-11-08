@@ -14,12 +14,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ZhiHuExt", "ZhiHuExt", "{93
 		ZhiHuExt\base64.js = ZhiHuExt\base64.js
 		ZhiHuExt\content.js = ZhiHuExt\content.js
 		ZhiHuExt\ContentBase.js = ZhiHuExt\ContentBase.js
-		ZhiHuExt\dexie.min.js = ZhiHuExt\dexie.min.js
-		ZhiHuExt\dexie.min.js.map = ZhiHuExt\dexie.min.js.map
 		ZhiHuExt\DownloadMan.js = ZhiHuExt\DownloadMan.js
 		ZhiHuExt\icon.png = ZhiHuExt\icon.png
-		ZhiHuExt\jquery-3.2.1.min.js = ZhiHuExt\jquery-3.2.1.min.js
-		ZhiHuExt\jquery-3.2.1.min.map = ZhiHuExt\jquery-3.2.1.min.map
 		ZhiHuExt\manifest.json = ZhiHuExt\manifest.json
 		ZhiHuExt\PeoplePage.js = ZhiHuExt\PeoplePage.js
 		ZhiHuExt\pod.js = ZhiHuExt\pod.js
@@ -36,7 +32,16 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Dependecy", "Dependecy", "{E476A3D7-D0E1-40EA-990A-D165CFDB83D7}"
 	ProjectSection(SolutionItems) = preProject
 		Dependency\dexie.js = Dependency\dexie.js
+		ZhiHuExt\dexie.min.js = ZhiHuExt\dexie.min.js
+		ZhiHuExt\dexie.min.js.map = ZhiHuExt\dexie.min.js.map
 		Dependency\jquery-3.2.1.js = Dependency\jquery-3.2.1.js
+		ZhiHuExt\jquery-3.2.1.min.js = ZhiHuExt\jquery-3.2.1.min.js
+		ZhiHuExt\jquery-3.2.1.min.map = ZhiHuExt\jquery-3.2.1.min.map
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "TypeDoc", "TypeDoc", "{BFFEC1DB-48AB-4FFA-B5E1-8273096F39F8}"
+	ProjectSection(SolutionItems) = preProject
+		ZhiHuExt\dexie.min.d.ts = ZhiHuExt\dexie.min.d.ts
 	EndProjectSection
 EndProject
 Global

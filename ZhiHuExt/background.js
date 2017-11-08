@@ -65,7 +65,7 @@ db.version(1).stores(
         articles: "id,author",
         topics: "id"
     });
-db2.open();
+//db2.open();
 db.spams.hook("creating", (primKey, obj, trans) =>
 {
     if (obj.type === "member")
@@ -115,6 +115,7 @@ db.articles.hook("updating", (mods, primKey, obj, trans) =>
 {
     const keys = Object.keys(mods);
     if (keys.length === 0) return;
+    const ret = {};
     for (let idx = 0; idx < keys.length; idx++)
     {
         const key = keys[idx], val = mods[key];
@@ -152,8 +153,12 @@ db.questions.hook("updating", (mods, primKey, obj, trans) =>
 db.open()
     .then(async () =>
     {
-        BAN_UID = new Set(await db.users.where("status").anyOf(["ban", "sban"])/*.equals("ban")*/.primaryKeys());
-        SPAM_UID = new Set(await db.spams.where("type").equals("member").primaryKeys());
+        console.log("initializing reading");
+        const loader = [db.users.where("status").anyOf(["ban", "sban"]).primaryKeys(), db.spams.where("type").equals("member").primaryKeys()];
+        const [ban, spam] = await Promise.all(loader);
+        BAN_UID = new Set(ban);
+        SPAM_UID = new Set(spam);
+        console.log("readed", "BAN_UID:" + BAN_UID.size, "SPAM_UID:" + SPAM_UID.size);
     })
     .catch(e => console.error("cannot open db", e));
 
@@ -265,7 +270,7 @@ function exportDB()
 }
 
 /**
- * @param {string[] | object[]} waitUsers
+ * @param {string[] | User[]} waitUsers
  */
 async function checkSpamUser(waitUsers)
 {
@@ -277,6 +282,18 @@ async function checkSpamUser(waitUsers)
     const [spamedIds, dummy] = await splitInOutSide(unbannedPart, SPAM_UID);
     ret.spamed = spamedIds;
     return ret;
+}
+
+/**
+ * @param {"answer" | "article"} target
+ * @param {number | string} id
+ */
+async function checkUserSimilarity(target, id)
+{
+    const theid = Number(id);
+    const voters = target === "answer" ? await Analyse.getAnsVoters(theid) : await Analyse.getArtVoters(theid);
+    const result = await Analyse.findUserSimilarityInVote(voters);
+    return result;
 }
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) =>
@@ -298,6 +315,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) =>
                         console.log("check-spam result:", result);
                         sendResponse(result);
                     });
+            } return true;
+        case "chksim":
+            {
+                checkUserSimilarity(request.target, request.data)
+                    .then(res => sendResponse(res), err => console.warn(err));
             } return true;
         case "export":
             exportDB().done(dbjson =>

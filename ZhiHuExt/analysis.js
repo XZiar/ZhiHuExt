@@ -1,5 +1,10 @@
 "use strict"
 
+/**
+ * @param {BagArray} bagArray
+ * @param {{}} detailMap
+ * @param {string} newProp
+ */
 function tryReplaceDetailed(bagArray, detailMap, newProp)
 {
     const ret = [];
@@ -42,8 +47,9 @@ class Analyse
         return dat4;
     }
     /**
-     * @param {Promise<Any> | SimpleBag | Any[]} dat
-     * @returns {Promise<{key: Any, count: number}[]>}
+     * @template T
+     * @param {Promise<T> | SimpleBag | T[]} dat
+     * @returns {Promise<BagArray[]>}
      */
     static async toSimpleBagArray(dat)
     {
@@ -53,7 +59,10 @@ class Analyse
         const dat3 = dat2[0].hasOwnProperty("count") ? dat3 : dat3.map(x => ({ key: x, count: 1 }));
         return dat3;
     }
-    /**@param {string | object} table*/
+    /**
+     * @param {string | object} table
+     * @returns {Dexie.Table}
+     */
     static toTable(table)
     {
         if (typeof (table) === "string")
@@ -92,7 +101,18 @@ class Analyse
     {
         const ansids = await Analyse.toPureArray(ansid);
         console.log("here [" + ansids.length + "] ansids");
+        /**@type {Zan[]}*/
         const zans = await db.zans.where("to").anyOf(ansids).toArray();
+        console.log("get [" + zans.length + "] zans");
+        const zanUsers = new SimpleBag(zans.mapToProp("from")).toArray("desc");
+        return zanUsers;
+    }
+    static async getArtVoters(artid)
+    {
+        const artids = await Analyse.toPureArray(artid);
+        console.log("here [" + artids.length + "] artids");
+        /**@type {Zan[]}*/
+        const zans = await db.zanarts.where("to").anyOf(artids).toArray();
         console.log("get [" + zans.length + "] zans");
         const zanUsers = new SimpleBag(zans.mapToProp("from")).toArray("desc");
         return zanUsers;
@@ -180,5 +200,28 @@ class Analyse
         const topicMap = await Analyse.getDetailMapOfIds(db.topics, tps, "id");
         console.log("get [" + Object.keys(topicMap).length + "] topics");
         return tryReplaceDetailed(tps, topicMap, "topic");
+    }
+    static async findUserSimilarityInVote(uid)
+    {
+        const uids = await Analyse.toPureArray(uid);
+        console.log("here [" + uids.length + "] uids");
+
+        const zanquerys = [db.zans.where("from").anyOf(uids).toArray(), db.zanarts.where("from").anyOf(uids).toArray()];
+        /**@type {[Zan[], Zan[]]}*/
+        const [anszan, artzan] = await Promise.all(zanquerys);
+        /**@type {string[]}*/
+        const ansids = anszan.mapToProp("to").filterUnique(), artids = artzan.mapToProp("to").filterUnique();
+        console.log("get [" + ansids.length + "] ansids", "get [" + artids.length + "] artids");
+
+        const voterquerys = [db.zans.where("to").anyOf(ansids).toArray(), db.zanarts.where("to").anyOf(artids).toArray()];
+        const uidset = new Set(uids);
+        /**@type {[Zan[], Zan[]]}*/
+        const [anszan2, artzan2] = await Promise.all(voterquerys);
+        console.log("get [" + anszan2.length + "] answer zan", "get [" + artzan2.length + "] article zan");
+
+        const voterbag = new SimpleBag(anszan2.mapToProp("from"));
+        const voters = voterbag.adds(artzan2.mapToProp("from")).toArray("desc");
+        console.log("reduce to [" + voters.length + "] user covered");
+        return voters.filter(x => uidset.has(x.key));
     }
 }

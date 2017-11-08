@@ -27,7 +27,7 @@ Array.prototype.findInArray = function(array)
     }
     return ret;
 }
-/**@memberof Array.prototype
+/**
  * @param {string} keyName
  */
 Array.prototype.mapToProp = function (keyName)
@@ -49,6 +49,10 @@ Array.fromArray = function (array)
         return Array.fromArrays(...array);
     else
         return [array];
+}
+Array.prototype.filterUnique = function ()
+{
+    return Array.from(new Set(this));
 }
 
 Set.prototype.toArray = function ()
@@ -125,11 +129,23 @@ Node.prototype.removeClasses = function (...names)
 }
 
 
+/**
+ * @template T
+ * @typedef {{key: T, count: number}[]} BagArray<T>
+ */
+/**
+ * @template T
+ */
 class SimpleBag
 {
+    /**
+     * @template T
+     * @param {T[] | Set<T>} [arg]
+     */
     constructor(arg)
     {
-        this._map = {};
+        /**@type {Map<T, number>}*/
+        this._map = new Map();
         if (!arg)
             return;
         if (arg instanceof Array)
@@ -137,86 +153,14 @@ class SimpleBag
         else if (arg instanceof Set)
         {
             for (const ele of arg)
-                this._map[ele] = 1;
+                this._map.set(ele, 1);
         }
     }
-    add(...elements) { add(elements); }
+    /**
+     * @template T
+     * @param {T[]} elements
+     */
     adds(elements)
-    {
-        for (let idx = 0; idx < elements.length; ++idx)
-        {
-            const ele = elements[idx];
-            if (this._map.hasOwnProperty(ele))
-                this._map[ele] += 1;
-            else
-                this._map[ele] = 1;
-        }
-        return this;
-    }
-    addMany(element, count)
-    {
-        if (this._map.hasOwnProperty(element))
-            this._map[element] += count;
-        else
-            this._map[element] = count;
-    }
-    remove(...elements) { removes(elements); }
-    removes(elements)
-    {
-        for (let idx = 0; idx < elements.length; ++idx)
-        {
-            const ele = elements[idx];
-            if (this._map.hasOwnProperty(ele))
-            {
-                const count = this._map[ele];
-                if (count === 1)
-                    delete this._map[ele];
-                else
-                    this._map[ele] = count - 1;
-            }
-        }
-        return this;
-    }
-    count(element)
-    {
-        return this._map[element] | 0;
-    }
-    removeAll(...elements)
-    {
-        for (let idx = 0; idx < elements.length; ++idx)
-        {
-            const ele = elments[idx];
-            delete this._map[ele];
-        }
-    }
-    toArray(config)
-    {
-        const array = [];
-        const data = Object.entries(this._map);
-        for (let i = 0; i < data.length; ++i)
-            array.push({ "key": data[i][0], "count": data[i][1] });
-        if (config === "desc")
-            return array.sort((x, y) => y.count - x.count);
-        else if (config === "asc")
-            return array.sort((x, y) => x.count - y.count);
-        return array;
-    }
-    get size() { return Object.keys(this._map).length; }
-}
-
-class SimpleBag2
-{
-    constructor(arg)
-    {
-        this._map = new Map();
-        if (!arg)
-            return;
-        if (arg instanceof Array)
-            this.add(...arg);
-        else if (arg instanceof Set)
-            this.add(...arg.entries);
-    }
-    add(...elements)
     {
         for (let idx = 0; idx < elements.length; ++idx)
         {
@@ -226,12 +170,32 @@ class SimpleBag2
         }
         return this;
     }
+    /**
+     * @template T
+     * @param {...T} elements
+     */
+    add(...elements) { return this.adds(elements); }
+    /**
+     * @template T
+     * @param {T} element
+     * @param {number} count
+     */
     addMany(element, count)
     {
         const old = this._map.get(element) | 0;
         this._map.set(element, old + count);
+        return this;
     }
-    remove(...elements)
+    /**
+     * @template T
+     * @param {...T} elements
+     */
+    remove(...elements) { return this.removes(elements); }
+    /**
+     * @template T
+     * @param {T[]} elements
+     */
+    removes(elements)
     {
         for (let idx = 0; idx < elements.length; ++idx)
         {
@@ -247,10 +211,18 @@ class SimpleBag2
         }
         return this;
     }
+    /**
+     * @template T
+     * @param {T} element
+     */
     count(element)
     {
         return this._map.get(element) | 0;
     }
+    /**
+     * @template T
+     * @param {...T} elements
+     */
     removeAll(...elements)
     {
         for (let idx = 0; idx < elements.length; ++idx)
@@ -260,6 +232,10 @@ class SimpleBag2
         }
         return this;
     }
+    /**
+     * @param {"desc" | "asc"} [config]
+     * @returns {BagArray<T>}
+     */
     toArray(config)
     {
         const array = [];

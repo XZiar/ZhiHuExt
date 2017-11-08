@@ -12,12 +12,23 @@
     }
 
     /**
-     * @param {string[]} ansids
+     * @param {number | number[]} ids
+     * @param {"Answer" | "Article"} target
+     * @returns {BagArray}
      */
-    async function AssocAns(ansids)
+    async function getVoters(ids, target)
     {
-        const voters = await SendMsgAsync(payload("getAnsVoters", ansids))
-        console.log(voters);
+        const method = target === "Answer" ? "getAnsVoters" : "getArtVoters";
+        const voters = await SendMsgAsync(payload(method, ids));
+        console.log("voters", voters);
+        return voters;
+    }
+
+    /**
+     * @param {string[] | string | BagArray} voters
+     */
+    async function AssocByVoters(voters)
+    {
         const anss = await SendMsgAsync(payload("getAnswerByVoter", voters, "desc"));
         console.log(anss);
         const ansMap = await SendMsgAsync(payload("getPropMapOfIds", "answers", anss.mapToProp("key"), "question"));
@@ -57,19 +68,40 @@
             });
     }
 
-
+    /**@type {{[x: string]: string}}*/
     const qs = _getQueryString();
-    let ansid;
-    if (qs.ansid != null)
-    {
-        ansid = qs.ansid.includes("*") ? qs.ansid.split("*") : qs.ansid;
-    }
-    else if (qs.authorid != null)
-    {
-        const athid = qs.authorid.includes("*") ? qs.authorid.split("*") : qs.ansid;
-        ansid = (await SendMsgAsync(payload("getAnswerByVoter", athid))).mapToProp("key");
-    }
-    if (ansid != null)
-        AssocAns(ansid);
 
+    let voters;
+
+    if (qs.artid != null)
+    {
+        const artid = qs.artid.includes("*") ? qs.artid.split("*").map(Number) : Number(qs.artid);
+        voters = await getVoters(artid, "Article");
+    }
+    else if (qs.votid != null)
+    {
+        voters = qs.votid.includes("*") ? qs.votid.split("*") : qs.votid;
+    }
+    else
+    {
+        /**@type {number[] | number}*/
+        let ansid;
+        if (qs.ansid != null)
+        {
+            if (qs.ansid.includes("*"))
+                ansid = qs.ansid.split("*").map(Number);
+            else
+                ansid = Number(qs.ansid);
+        }
+        else if (qs.authorid != null)
+        {
+            const athid = qs.authorid.includes("*") ? qs.authorid.split("*") : qs.ansid;
+            ansid = (await SendMsgAsync(payload("getAnswerByVoter", athid))).mapToProp("key");
+        }
+        else
+            return;
+        voters = await getVoters(ansid, "Answer");
+    }
+    if (voters != null)
+        AssocByVoters(voters);
 }()

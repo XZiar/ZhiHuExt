@@ -26,6 +26,7 @@ function reportSpam(id, type)
 
 let CUR_QUESTION = null;
 let CUR_ANSWER = null;
+let CUR_ARTICLE = null;
 
 function parseUser(node)
 {
@@ -103,6 +104,11 @@ async function addSpamVoterBtns(voterNodes)
         const zans = users.map(user => new Zan(user, CUR_ANSWER));
         ContentBase._report("zans", zans);
     }
+    else if (CUR_ARTICLE)
+    {
+        const zans = users.map(user => new Zan(user, CUR_ARTICLE));
+        ContentBase._report("zanarts", zans);
+    }
     /**@type {{banned: string[], spamed: string[]}}*/
     const result = await ContentBase.checkSpam("users", users);
     const banned = new Set(result.banned);
@@ -141,8 +147,10 @@ function monitorVoter(voterPopup)
     {
         const btn1 = createButton(["Btn-CheckAllStatus", "Button--primary"], "检测全部");
         const btn2 = createButton(["Btn-AssocAns", "Button--primary"], "启发");
+        const btn3 = createButton(["Btn-Similarity", "Button--primary"], "相似性");
         title.appendChild(btn1);
         title.appendChild(btn2);
+        title.appendChild(btn3);
     }
 }
 
@@ -218,6 +226,7 @@ const bodyObserver = new MutationObserver(records =>
         {
             console.log("here removed", delNodes);
             CUR_ANSWER = null;
+            CUR_ARTICLE = null;
         }
     }
     {
@@ -322,19 +331,69 @@ $("body").on("click", "button.Btn-CheckAllStatus", async function (e)
 $("body").on("click", "span.Voters", function ()
 {
     const span = $(this)[0];
-    const ansNode = $(span).parents("div.AnswerItem")[0];
-    if (!ansNode)
+    const itemNode = $(span).parents("div.AnswerItem")[0] || $(span).parents("div.ArticleItem")[0];
+    if (!itemNode)
         return;
 
-    CUR_ANSWER = JSON.parse(ansNode.dataset.zaModuleInfo).card.content.token;
+    /**
+     * @type {{type: "Post"|"Answer", token: string, upvote_num: number, comment_num: number, publish_timestamp: number, author_member_hash_id: string}}
+     */
+    const itemContent = JSON.parse(itemNode.dataset.zaModuleInfo).card.content;
+    if (itemContent.type === "Answer")
+        CUR_ANSWER = itemContent.token;
+    else if (itemContent.type === "Post")
+        CUR_ARTICLE = itemContent.token;
 });
 $("body").on("click", "button.Btn-AssocAns", function ()
 {
-    chrome.runtime.sendMessage({ action: "openpage", isBackground: false, target: "AssocAns.html?ansid=" + CUR_ANSWER });
+    let query;
+    if (CUR_ANSWER)
+        query = "ansid=" + CUR_ANSWER;
+    else if (CUR_ARTICLE)
+        query = "artid=" + CUR_ARTICLE;
+    else
+        return;
+    chrome.runtime.sendMessage({ action: "openpage", isBackground: false, target: "AssocAns.html?" + query });
+});
+$("body").on("click", "button.Btn-Similarity", function ()
+{
+    const thisbtn = $(this)[0];
+    const msg = { action: "chksim", target: "", data: null };
+    if (CUR_ANSWER)
+        msg.target = "answer", msg.data = CUR_ANSWER;
+    else if (CUR_ARTICLE)
+        msg.target = "article", msg.data = CUR_ARTICLE;
+    else
+        return;
+    const voterList = thisbtn.parentNode.parentNode.parentNode;
+    /**@type {Map<string, HTMLButtonElement>}*/
+    const btnMap = new Map();
+    $(voterList).find(".ContentItem").each((idx, item) =>
+    {
+        const extraArea = item.querySelector(".ContentItem-extra");
+        if (!extraArea)
+            return;
+        const btnSpam = extraArea.children[1];
+        btnMap.set(btnSpam.dataset.id, btnSpam);
+    });
+    console.log("detect " + btnMap.size + " user");
+    chrome.runtime.sendMessage(msg, /**@type {BagArray}*/result =>
+    {
+        const maxcnt = result[0].count;
+        thisbtn.textContent = maxcnt + "";
+        result.forEach(x =>
+        {
+            const btn = btnMap.get(x.key);
+            if (btn == null)
+                return;
+            btn.textContent = x.count + "/" + maxcnt;
+        });
+    });
 });
 $("body").on("click", "button.Modal-closeButton", function ()
 {
     CUR_ANSWER = null;
+    CUR_ARTICLE = null;
 });
 
 
