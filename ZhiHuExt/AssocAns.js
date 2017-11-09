@@ -25,10 +25,17 @@
     }
 
     /**
-     * @param {string[] | string | BagArray} voters
+     * @param {string[] | BagArray} voters
      */
     async function AssocByVoters(voters)
     {
+        if (voters[0].hasOwnProperty("count"))
+            voters = voters.mapToProp("key");
+        const uid0 = new Set(voters);
+        uid0.delete("");//except anonymous user
+        /**@type {string[]}*/
+        const uids = uid0.toArray();
+
         const anss = await SendMsgAsync(payload("getAnswerByVoter", voters, "desc"));
         console.log(anss);
         const ansMap = await SendMsgAsync(payload("getPropMapOfIds", "answers", anss.mapToProp("key"), "question"));
@@ -75,27 +82,24 @@
 
     if (qs.artid != null)
     {
-        const artid = qs.artid.includes("*") ? qs.artid.split("*").map(Number) : Number(qs.artid);
+        const artid = qs.artid.split("*").map(Number);
         voters = await getVoters(artid, "Article");
     }
     else if (qs.votid != null)
     {
-        voters = qs.votid.includes("*") ? qs.votid.split("*") : qs.votid;
+        voters = qs.votid.split("*");
     }
     else
     {
-        /**@type {number[] | number}*/
+        /**@type {number[]}*/
         let ansid;
         if (qs.ansid != null)
         {
-            if (qs.ansid.includes("*"))
-                ansid = qs.ansid.split("*").map(Number);
-            else
-                ansid = Number(qs.ansid);
+            ansid = qs.ansid.split("*").map(Number);
         }
         else if (qs.authorid != null)
         {
-            const athid = qs.authorid.includes("*") ? qs.authorid.split("*") : qs.ansid;
+            const athid = qs.authorid.split("*");
             ansid = (await SendMsgAsync(payload("getAnswerByVoter", athid))).mapToProp("key");
         }
         else

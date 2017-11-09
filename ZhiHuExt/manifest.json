@@ -82,6 +82,21 @@
     {
       "matches":
       [
+        "*://www.zhihu.com/community/*"
+      ],
+      "exclude_matches":
+      [
+        "*://www.zhihu.com/community/reported/*"
+      ],
+      "js":
+      [
+        "CommunityRep.js"
+      ],
+      "run_at": "document_end"
+    },
+    {
+      "matches":
+      [
         "*://www.zhihu.com/*"
       ],
       "exclude_matches":

@@ -109,17 +109,14 @@ async function addSpamVoterBtns(voterNodes)
         const zans = users.map(user => new Zan(user, CUR_ARTICLE));
         ContentBase._report("zanarts", zans);
     }
-    /**@type {{banned: string[], spamed: string[]}}*/
     const result = await ContentBase.checkSpam("users", users);
-    const banned = new Set(result.banned);
-    const spamed = new Set(result.spamed);
     for (let idx = 0; idx < btnMap.length; ++idx)
     {
         const btn = btnMap[idx];
         const id = btn.dataset.id;
-        if (banned.has(id))
+        if (result.banned.has(id))
             btn.style.backgroundColor = "black";
-        else if (spamed.has(id))
+        else if (result.spamed.has(id))
             btn.style.backgroundColor = "cornsilk";
     }
 };
@@ -257,7 +254,7 @@ $("body").on("click", "button.Btn-CheckSpam", async function (e)
 {
     const btn = $(this)[0];
     const ansId = btn.dataset.id;
-    const voters = await ContentBase.getAnsVoters(ansId, 6000, e.ctrlKey ? "old" : "new",
+    const voters = await ContentBase.fetchAnsVoters(ansId, 6000, e.ctrlKey ? "old" : "new",
         (cur, all) => btn.innerText = "=>" + cur + "/" + all);
 
     btn.addClass("Button--blue");
@@ -266,7 +263,7 @@ $("body").on("click", "button.Btn-CheckSpam", async function (e)
     ContentBase._report("zans", zans);
 
     const result = await ContentBase.checkSpam("users", voters);
-    const total = voters.length, ban = result.banned.length, spm = result.spamed.length;
+    const total = voters.length, ban = result.banned.size, spm = result.spamed.size;
     btn.innerText = "(" + ban + "+" + spm + ")/" + total;
     if (total === 0)
         return;
@@ -304,7 +301,7 @@ $("body").on("click", "button.Btn-CheckStatus", async function (e)
 $("body").on("click", "button.Btn-CheckAllStatus", async function (e)
 {
     const btn = $(this)[0];
-    const isCtrl = e.ctrlKey;
+    const isCtrl = e.ctrlKey, isShift = e.shiftKey;
     const voterList = btn.parentNode.parentNode.parentNode;
     const btnList = [];
     $(voterList).find(".ContentItem").each((idx, item) =>
@@ -313,7 +310,9 @@ $("body").on("click", "button.Btn-CheckAllStatus", async function (e)
         if (!extraArea)
             return;
         const btnChk = extraArea.children[0], btnSpam = extraArea.children[1];
-        if (btnChk.style.backgroundColor != "" || btnSpam.style.backgroundColor == "black")//has result
+        if (btnChk.style.backgroundColor != "")//has result
+            return;
+        if (!isShift && btnSpam.style.backgroundColor == "black")
             return;
         if (!isCtrl && btnSpam.style.backgroundColor != "")
             return;
@@ -366,27 +365,27 @@ $("body").on("click", "button.Btn-Similarity", function ()
     else
         return;
     const voterList = thisbtn.parentNode.parentNode.parentNode;
-    /**@type {Map<string, HTMLButtonElement>}*/
-    const btnMap = new Map();
+    /**@type {HTMLButtonElement[]}*/
+    const btns = [];
     $(voterList).find(".ContentItem").each((idx, item) =>
     {
         const extraArea = item.querySelector(".ContentItem-extra");
         if (!extraArea)
             return;
-        const btnSpam = extraArea.children[1];
-        btnMap.set(btnSpam.dataset.id, btnSpam);
+        btns.push(extraArea.children[1]);
     });
-    console.log("detect " + btnMap.size + " user");
-    chrome.runtime.sendMessage(msg, /**@type {BagArray}*/result =>
+    console.log("detect " + btns.length + " user");
+    chrome.runtime.sendMessage(msg, result =>
     {
-        const maxcnt = result[0].count;
-        thisbtn.textContent = maxcnt + "";
-        result.forEach(x =>
+        console.log(result);
+        /**@type {Map<string, number>}*/
+        const retmap = SimpleBag.backToMap(result.data);
+        const maxcnt = Math.max(...retmap.values());
+        thisbtn.textContent = maxcnt + "(" + result.limit + ")";
+        btns.forEach(btn =>
         {
-            const btn = btnMap.get(x.key);
-            if (btn == null)
-                return;
-            btn.textContent = x.count + "/" + maxcnt;
+            const count = retmap.get(btn.dataset.id) || 0;
+            btn.textContent = count + "/" + maxcnt;
         });
     });
 });
@@ -420,59 +419,10 @@ function procInQuestion()
     }
 }
 
-
-const cmrepotObserver = new MutationObserver(records =>
-{
-    //console.log("detect add community report", records);
-    let rows = [];
-    for (let ridx = 0; ridx < records.length; ++ridx)
-    {
-        const record = records[ridx];
-        if (record.type != "childList")
-            continue;
-        const nodes = record.addedNodes;
-        for (let nidx = 0; nidx < nodes.length; ++nidx)
-        {
-            const node = nodes[nidx];
-            if (node instanceof HTMLTableRowElement)
-                rows.push(node);
-            else
-                rows = rows.concat(Array.from(node.querySelectorAll("tr")));
-        }
-    }
-    if (rows.length === 0)
-        return;
-    console.log("find " + rows.length + " table-row", rows);
-    const spams = [];
-    const userUpds = [];
-    for (let ridx = 0; ridx < rows.length; ++ridx)
-    {
-        const tds = Array.from(rows[ridx].childNodes)
-            .filter(child => child instanceof HTMLTableCellElement);
-        if (tds.length !== 5)
-            continue;
-        if (tds[2].innerText == "用户")
-        {
-            const link = tds[3].querySelector("a").href;
-            const uid = link.split("/").pop();
-            spams.push({ id: uid, type: "member" });
-            if (tds[4].innerText.includes("已封禁"))
-                userUpds.push(uid);
-        }
-    }
-    ContentBase._report("spams", spams);
-    ContentBase._update("users", "id", userUpds, { status: "ban" });
-});
-
 const pathname = document.location.pathname;
 if (pathname.startsWith("/question/"))
 {
     procInQuestion();
-}
-else if (pathname.startsWith("/community") && !pathname.includes("reported"))
-{
-    console.log("community report page");
-    cmrepotObserver.observe($(".zu-main-content-inner")[0], { "childList": true, "subtree": true });
 }
 
 {

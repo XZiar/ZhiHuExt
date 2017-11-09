@@ -203,25 +203,36 @@ class Analyse
     }
     static async findUserSimilarityInVote(uid)
     {
-        const uids = await Analyse.toPureArray(uid);
+        const uid0 = await Analyse.toPureArray(uid);
+        const uid1 = new Set(uid0);
+        uid1.delete("");//except anonymous user
+        const uids = uid1.toArray();
         console.log("here [" + uids.length + "] uids");
 
         const zanquerys = [db.zans.where("from").anyOf(uids).toArray(), db.zanarts.where("from").anyOf(uids).toArray()];
         /**@type {[Zan[], Zan[]]}*/
         const [anszan, artzan] = await Promise.all(zanquerys);
-        /**@type {string[]}*/
-        const ansids = anszan.mapToProp("to").filterUnique(), artids = artzan.mapToProp("to").filterUnique();
-        console.log("get [" + ansids.length + "] ansids", "get [" + artids.length + "] artids");
+        console.log("get [" + anszan.length + "] answer records", "get [" + artzan.length + "] article records");
 
-        const voterquerys = [db.zans.where("to").anyOf(ansids).toArray(), db.zanarts.where("to").anyOf(artids).toArray()];
-        const uidset = new Set(uids);
-        /**@type {[Zan[], Zan[]]}*/
-        const [anszan2, artzan2] = await Promise.all(voterquerys);
-        console.log("get [" + anszan2.length + "] answer zan", "get [" + artzan2.length + "] article zan");
+        const minrepeat = Math.floor((Math.sqrt(uids.length) / 2 + 3) / 2);
+        const ansbag = new SimpleBag(anszan.mapToProp("to")).above(minrepeat), artbag = new SimpleBag(artzan.mapToProp("to")).above(minrepeat);
+        const ansset = ansbag.toSet(), artset = artbag.toSet();
+        console.log("reduce to [" + ansset.size + "] answer records", "get [" + artset.size + "] article records");
 
-        const voterbag = new SimpleBag(anszan2.mapToProp("from"));
-        const voters = voterbag.adds(artzan2.mapToProp("from")).toArray("desc");
-        console.log("reduce to [" + voters.length + "] user covered");
-        return voters.filter(x => uidset.has(x.key));
+        const voterbag = new SimpleBag();
+        for (let i = 0; i < anszan.length; ++i)
+        {
+            const zan = anszan[i];
+            if (ansset.has(zan.to))
+                voterbag.add(zan.from);
+        }
+        for (let i = 0; i < artzan.length; ++i)
+        {
+            const zan = artzan[i];
+            if (artset.has(zan.to))
+                voterbag.add(zan.from);
+        }
+
+        return { data: voterbag.toArray(), limit: minrepeat };
     }
 }

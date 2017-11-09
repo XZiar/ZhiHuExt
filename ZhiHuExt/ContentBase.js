@@ -22,12 +22,38 @@ function _getAnsVoters(ansId, offset)
 
 let _CUR_USER;
 let _CUR_ANSWER;
+const fetchVoters = Symbol("_fetchAnsVoters");
 class ContentBase
 {
     static get CUR_USER() { return _CUR_USER; }
     static set CUR_USER(user) { _CUR_USER = user; }
     static get CUR_ANSWER() { return _CUR_ANSWER; }
     static set CUR_ANSWER(ans) { _CUR_ANSWER = ans; }
+
+    /**
+     * @param {number | string} ansId
+     * @param {number} offset
+     * @returns {Promise<{users: User[], end:boolean, start: boolean, total: number}>}
+     */
+    static [fetchVoters](ansId, offset)
+    {
+        const pms = $.Deferred();
+        ContentBase._get("https://www.zhihu.com/api/v4/answers/" + ansId + "/voters?include=data[*].answer_count&limit=20&offset=" + offset)
+            .done((data, status, xhr) =>
+            {
+                const users = data.data.map(User.fromAnsVoterJson);
+                pms.resolve({ "users": users, "end": data.paging.is_end, "start": data.paging.is_start, "total": data.paging.totals });
+            })
+            .fail((data, status, xhr) =>
+            {
+                if (data.responseJSON)
+                    console.warn("getAnsVoter fail:" + xhr.status, data.responseJSON.error.message);
+                else
+                    console.warn("getAnsVoter fail:" + xhr.status);
+                pms.reject();
+            })
+        return pms;
+    }
 
     static _get(url, data, type)
     {
@@ -84,7 +110,7 @@ class ContentBase
     {
         /**@type {Activity[]}*/
         const acts = Object.values(data.activities);
-        const users = [], zans = [], zanarts = [], answers = [], quests = [], articles = [];
+        const users = [], zans = [], zanarts = [], answers = [], quests = [], articles = [], topics = [];
         for (let i = 0; i < acts.length; ++i)
         {
             const act = acts[i];
@@ -137,13 +163,27 @@ class ContentBase
             const article = new Article(art.id, art.title, artUser.id, art.excerptNew, art.voteupCount);
             articles.push(article);
         }
-        return { "users": users, "zans": zans, "zanarts": zanarts, "answers": answers, "questions": quests, "articles": articles };
+        /**@type {TopicType[]}*/
+        const tps = Object.values(data.topics);
+        for (let i = 0; i < tps.length; ++i)
+        {
+            const tp = tps[i];
+            topics.push(new Topic(tp.id, tp.name));
+        }
+        return { users: users, zans: zans, zanarts: zanarts, topics: topics, answers: answers, questions: quests, articles: articles };
     }
 
-
-    static async getAnsVoters(ansId, limit, config, onProgress)
+    /**
+     * fetch answer's voter
+     * @param {string | number} ansId
+     * @param {number} limit
+     * @param {"old" | "new"} config
+     * @param {function(number, number):void} onProgress
+     */
+    static async fetchAnsVoters(ansId, limit, config, onProgress)
     {
-        const first = await _getAnsVoters(ansId, 0);
+        const first = await ContentBase[fetchVoters](ansId, 0);
+        /**@type {User[]}*/
         let ret = first.users;
         const total = Math.min(first.total, limit);
         let left = total - first.users.length;
@@ -154,7 +194,7 @@ class ContentBase
             offset = first.total - left;
         while (left > 0)
         {
-            const part = await _getAnsVoters(ansId, offset);
+            const part = await ContentBase[fetchVoters](ansId, offset);
             ret = ret.concat(part.users);
             const len = part.users.length;
             offset += len, left -= len;
@@ -163,7 +203,10 @@ class ContentBase
         }
         return ret;
     }
-
+    /**
+     * @param {number | string} uid
+     * @returns {Promise<User>}
+     */
     static checkUserState(uid)
     {
         const pms = $.Deferred();
@@ -199,14 +242,19 @@ class ContentBase
         return pms;
     }
 
+    /**
+     * @param {"users"} target
+     * @param {string | string[] | User | User[]} data
+     * @returns {{banned: Set<string>, spamed: Set<string>}}
+     */
     static checkSpam(target, data)
     {
         const pms = $.Deferred();
         if (!data || (data instanceof Array && data.length === 0))
-            pms.resolve({ banned: [], spamed: [] });
+            pms.resolve({ banned: new Set(), spamed: new Set() });
         else
-            chrome.runtime.sendMessage({ action: "chkspam", target: target, data: data },
-                ret => pms.resolve(ret));
+            chrome.runtime.sendMessage({ action: "chkspam", target: target, data: data instanceof Array ? data : [data] },
+                ret => pms.resolve({ banned: new Set(ret.banned), spamed: new Set(ret.spamed) }));
         return pms;
     }
 }

@@ -101,13 +101,13 @@ db.users.hook("updating", (mods, primKey, obj, trans) =>
 });
 db.zans.hook("updating", (mods, primKey, obj, trans) =>
 {
-    if (mods.time === -1 && obj.hasOwnProperty("time"))
+    if (mods.time === -1)
         return { time: obj.time };//skip empty time
     return;
 });
 db.zanarts.hook("updating", (mods, primKey, obj, trans) =>
 {
-    if (mods.time === -1 && obj.hasOwnProperty("time"))
+    if (mods.time === -1)
         return { time: obj.time };//skip empty time
     return;
 });
@@ -309,7 +309,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) =>
             return true;
         case "chkspam":
             {
-                checkSpamUser(request.data instanceof Array ? request.data : [request.data])
+                checkSpamUser(request.data)
                     .then(result =>
                     {
                         console.log("check-spam result:", result);
@@ -361,9 +361,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) =>
                 else
                     break;
             } return true;
-        case "hey":
-            sendResponse("hi");
-            break;
         default:
             console.log("unknown action:" + request.action, request);
             break;

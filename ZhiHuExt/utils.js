@@ -158,6 +158,22 @@ class SimpleBag
     }
     /**
      * @template T
+     * @param {...T} elements
+     */
+    add(...elements)
+    {
+        if (elements.length === 1)
+        {
+            const ele = elements[0];
+            const old = this._map.get(ele) | 0;
+            this._map.set(ele, old + 1);
+            return this;
+        }
+        else
+            return this.adds(elements);
+    }
+    /**
+     * @template T
      * @param {T[]} elements
      */
     adds(elements)
@@ -170,11 +186,6 @@ class SimpleBag
         }
         return this;
     }
-    /**
-     * @template T
-     * @param {...T} elements
-     */
-    add(...elements) { return this.adds(elements); }
     /**
      * @template T
      * @param {T} element
@@ -190,7 +201,23 @@ class SimpleBag
      * @template T
      * @param {...T} elements
      */
-    remove(...elements) { return this.removes(elements); }
+    remove(...elements)
+    {
+        if (elements.length === 1)
+        {
+            const ele = elements[0];
+            const old = this._map.get(ele);
+            if (old)
+            {
+                if (old === 1)
+                    this._map.delete(ele);
+                else
+                    this._map.set(ele, old - 1);
+            }
+            return this;
+        }
+        return this.removes(elements);
+    }
     /**
      * @template T
      * @param {T[]} elements
@@ -233,6 +260,41 @@ class SimpleBag
         return this;
     }
     /**
+     * @template T
+     * @param {function(T, number): boolean} filtor
+     */
+    filter(filtor)
+    {
+        const newbag = new SimpleBag();
+        const themap = newbag._map;
+        for (const ele of this._map)
+            if (filtor(ele[0], ele[1]))
+                themap.set(ele[0], ele[1]);
+        return newbag;
+    }
+    /** @param {number} maxcount*/
+    below(maxcount)
+    {
+        const newbag = new SimpleBag();
+        const themap = newbag._map;
+        for (const ele of this._map)
+            if (ele[1] < maxcount)
+                themap.set(ele[0], ele[1]);
+        return newbag;
+    }
+    /** @param {number} mincount*/
+    above(mincount)
+    {
+        const newbag = new SimpleBag();
+        const themap = newbag._map;
+        for (const ele of this._map)
+            if (ele[1] > mincount)
+                themap.set(ele[0], ele[1]);
+        return newbag;
+    }
+    toMap() { return new Map(this._map); }
+    toSet() { return new Set(this._map.keys()); }
+    /**
      * @param {"desc" | "asc"} [config]
      * @returns {BagArray<T>}
      */
@@ -248,6 +310,18 @@ class SimpleBag
         return array;
     }
     get size() { return this._map.size; }
+    /**
+     * @template T
+     * @param {BagArray} bagArray
+     * @returns {Map<T, number>}
+     */
+    static backToMap(bagArray)
+    {
+        const themap = new Map();
+        for (let i = 0; i < bagArray.length; ++i)
+            themap.set(bagArray[i].key, bagArray[i].count);
+        return themap;
+    }
 }
 
 
