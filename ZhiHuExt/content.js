@@ -68,8 +68,8 @@ function parseAnswer(node)
         return null;
 
     const nameLink = node.querySelector("a.UserLink-link");
-    /**@type {string | null}*/
-    const author = nameLink ? nameLink.getAttribute("href").split("/").pop() : null;
+    /**@type {string}*/
+    const author = nameLink ? nameLink.getAttribute("href").split("/").pop() : "";
 
     const answer = new Answer(ansInfo.token, ansInfo.parent_token, author, ansInfo.upvote_num);
     return answer;

@@ -1,15 +1,12 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.27004.2006
+VisualStudioVersion = 15.0.27004.2008
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ZhiHuExt", "ZhiHuExt", "{93675B82-EC6C-4F02-80C6-4872E07264D3}"
 	ProjectSection(SolutionItems) = preProject
 		ZhiHuExt\analysis.js = ZhiHuExt\analysis.js
 		ZhiHuExt\ArticlePage.js = ZhiHuExt\ArticlePage.js
-		ZhiHuExt\AssocAns.html = ZhiHuExt\AssocAns.html
-		ZhiHuExt\AssocAns.js = ZhiHuExt\AssocAns.js
-		ZhiHuExt\background.html = ZhiHuExt\background.html
 		ZhiHuExt\background.js = ZhiHuExt\background.js
 		ZhiHuExt\base64.js = ZhiHuExt\base64.js
 		ZhiHuExt\CommunityRep.js = ZhiHuExt\CommunityRep.js
@@ -20,8 +17,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ZhiHuExt", "ZhiHuExt", "{93
 		ZhiHuExt\manifest.json = ZhiHuExt\manifest.json
 		ZhiHuExt\PeoplePage.js = ZhiHuExt\PeoplePage.js
 		ZhiHuExt\pod.js = ZhiHuExt\pod.js
-		ZhiHuExt\popup.html = ZhiHuExt\popup.html
-		ZhiHuExt\popup.js = ZhiHuExt\popup.js
 		README.md = README.md
 		ZhiHuExt\RepResPage.js = ZhiHuExt\RepResPage.js
 		ZhiHuExt\utils.js = ZhiHuExt\utils.js
@@ -45,9 +40,35 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "TypeDoc", "TypeDoc", "{BFFE
 		ZhiHuExt\dexie.min.d.ts = ZhiHuExt\dexie.min.d.ts
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DBExportor", "DBExportor\DBExportor.csproj", "{772249B6-6F17-4997-9A6D-CE98688727C1}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Pages", "Pages", "{E8E9AB37-4664-46E6-9213-3E924CD6B125}"
+	ProjectSection(SolutionItems) = preProject
+		ZhiHuExt\AssocAns.html = ZhiHuExt\AssocAns.html
+		ZhiHuExt\AssocAns.js = ZhiHuExt\AssocAns.js
+		ZhiHuExt\background.html = ZhiHuExt\background.html
+		ZhiHuExt\Export.html = ZhiHuExt\Export.html
+		ZhiHuExt\Export.js = ZhiHuExt\Export.js
+		ZhiHuExt\popup.html = ZhiHuExt\popup.html
+		ZhiHuExt\popup.js = ZhiHuExt\popup.js
+	EndProjectSection
+EndProject
 Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{772249B6-6F17-4997-9A6D-CE98688727C1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{772249B6-6F17-4997-9A6D-CE98688727C1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{772249B6-6F17-4997-9A6D-CE98688727C1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{772249B6-6F17-4997-9A6D-CE98688727C1}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{E8E9AB37-4664-46E6-9213-3E924CD6B125} = {93675B82-EC6C-4F02-80C6-4872E07264D3}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {032E8EC3-655A-4377-BA13-6692BB5DC119}

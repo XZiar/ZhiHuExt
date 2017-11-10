@@ -192,7 +192,7 @@ class Answer
     {
         this.id = Number(id);// + "";
         this.question = Number(quest);
-        this.author = author == null ? null : author;
+        this.author = author;//should not be null
         this.zancnt = zancnt == null ? -1 : zancnt;
         this.excerpt = excerpt == null ? null : excerpt;
     }

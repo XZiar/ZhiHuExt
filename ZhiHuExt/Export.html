@@ -1,0 +1,32 @@
+﻿<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta charset="UTF-8">
+    <script src="jquery-3.2.1.min.js"></script>
+    <script src="pod.js"></script>
+    <script src="utils.js"></script>
+    <title>发送数据库</title>
+</head>
+<body>
+    <div>
+        Address<input type="text" id="ip" value="127.0.0.1"/>:<input type="number" id="port" value="8913"/>
+    </div>
+    <div>分段大小<input type="number" id="partlen" min="100" max="500000" value="100000"/></div>
+    <div>
+        <table id="maintable" class="cell-border" width="50%">
+            <thead>
+                <tr>
+                    <th width="70%">Table</th>
+                    <th>Y/N</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td></td><td><input type="checkbox" class="tabchooser" data-tname="" checked/></td></tr>
+            </tbody>
+        </table>
+    </div>
+    <button id="send">开始发送</button>
+    <script src="Export.js"></script>
+</body>
+</html>

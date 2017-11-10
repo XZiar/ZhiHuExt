@@ -1,0 +1,583 @@
+{
+    "database": {
+        "Post": {
+            "30773636": {
+                "isPending": false,
+                "contributes": [
+                    {
+                        "sourceColumn": {
+                            "lastUpdated": 1480327130,
+                            "description": "360 基础架构团队技术文章",
+                            "permission": "COLUMN_PUBLIC",
+                            "memberId": 17607,
+                            "contributePermission": "COLUMN_PUBLIC",
+                            "translatedCommentPermission": "all",
+                            "canManage": true,
+                            "intro": "360 基础架构团队技术文章",
+                            "urlToken": "360infra",
+                            "id": 23004,
+                            "imagePath": "v2-35680ef9f139541a91ca3330d05820ab.jpg",
+                            "slug": "360infra",
+                            "applyReason": "0",
+                            "name": "360 基础架构组",
+                            "title": "360 基础架构组",
+                            "url": "https:\u002F\u002Fzhuanlan.zhihu.com\u002F360infra",
+                            "commentPermission": "COLUMN_ALL_CAN_COMMENT",
+                            "canPost": true,
+                            "created": 1479981189,
+                            "state": "COLUMN_NORMAL",
+                            "followers": 2074,
+                            "avatar": {
+                                "id": "v2-35680ef9f139541a91ca3330d05820ab",
+                                "template": "https:\u002F\u002Fpic4.zhimg.com\u002F{id}_{size}.jpg"
+                            },
+                            "activateAuthorRequested": false,
+                            "following": false,
+                            "imageUrl": "https:\u002F\u002Fpic4.zhimg.com\u002Fv2-35680ef9f139541a91ca3330d05820ab_l.jpg",
+                            "articlesCount": 5
+                        },
+                        "state": "accepted",
+                        "targetPost": {
+                            "titleImage": "https:\u002F\u002Fpic4.zhimg.com\u002Fv2-54259b5796d9e49e45842874270e7de3_r.jpg",
+                            "lastUpdated": 1509939149,
+                            "imagePath": "v2-54259b5796d9e49e45842874270e7de3.jpg",
+                            "permission": "ARTICLE_PUBLIC",
+                            "topics": [
+                                164028,
+                                182044,
+                                4154
+                            ],
+                            "summary": "近年来，以LevelDB和Rocksdb为代表的LSM（Log-Structured Merge-Tree）存储引擎凭借其优异的写性能及不俗的读性能成为众多分布式组件的存储基石，包括我们近两年开发的类Redis大容量存储Pika和分布式KV存储Zeppelin，在享受LSM的高效的同时也开始逐渐体会到…",
+                            "copyPermission": "ARTICLE_COPYABLE",
+                            "translatedCommentPermission": "all",
+                            "likes": 0,
+                            "origAuthorId": 0,
+                            "publishedTime": "2017-11-06T11:32:29+08:00",
+                            "sourceUrl": "",
+                            "urlToken": 30773636,
+                            "id": 4498038,
+                            "withContent": false,
+                            "slug": 30773636,
+                            "bigTitleImage": false,
+                            "title": "LSM upon SSD",
+                            "url": "\u002Fp\u002F30773636",
+                            "commentPermission": "ARTICLE_ALL_CAN_COMMENT",
+                            "snapshotUrl": "",
+                            "created": 1509939149,
+                            "comments": 0,
+                            "columnId": 23004,
+                            "content": "",
+                            "parentId": 0,
+                            "state": "ARTICLE_PUBLISHED",
+                            "imageUrl": "https:\u002F\u002Fpic4.zhimg.com\u002Fv2-54259b5796d9e49e45842874270e7de3_r.jpg",
+                            "author": {
+                                "bio": "Distribute the future",
+                                "isFollowing": false,
+                                "hash": "dd42c8e2fcde8a82098cc0363cca02fb",
+                                "uid": 26848557793280,
+                                "isOrg": false,
+                                "slug": "meng-fei-76",
+                                "isFollowed": false,
+                                "description": "王康 https:\u002F\u002Fgithub.com\u002FCatKang",
+                                "name": "CatKang",
+                                "profileUrl": "https:\u002F\u002Fwww.zhihu.com\u002Fpeople\u002Fmeng-fei-76",
+                                "avatar": {
+                                    "id": "v2-feb75a52cd66b9dd728c57c5e66a5319",
+                                    "template": "https:\u002F\u002Fpic2.zhimg.com\u002F50\u002F{id}_{size}.jpg"
+                                },
+                                "isOrgWhiteList": false,
+                                "isBanned": false
+                            },
+                            "memberId": 41195,
+                            "excerptTitle": "",
+                            "voteType": "ARTICLE_VOTE_CLEAR"
+                        },
+                        "id": 906964
+                    }
+                ],
+                "title": "LSM upon SSD",
+                "author": "meng-fei-76",
+                "content": "\u003Cp\u003E近年来，以LevelDB和Rocksdb为代表的LSM（Log-Structured Merge-Tree）存储引擎凭借其优异的写性能及不俗的读性能成为众多分布式组件的存储基石，包括我们近两年开发的类Redis大容量存储Pika和分布式KV存储Zeppelin，在享受LSM的高效的同时也开始逐渐体会到它的不足，比如它在大Value场景下的差强人意以及对磁盘的反复擦写。正如之前的博客\u003Ca href=\"http:\u002F\u002Flink.zhihu.com\u002F?target=http%3A\u002F\u002Fcatkang.github.io\u002F2017\u002F01\u002F07\u002Fleveldb-summary.html\" class=\" wrap external\" target=\"_blank\" rel=\"nofollow noreferrer\"\u003E庖丁解LevelDB之概览\u003Ci class=\"icon-external\"\u003E\u003C\u002Fi\u003E\u003C\u002Fa\u003E中已经介绍了的LevelDB的设计思路，其最大的优势便是将磁盘的随机写转化为顺序写，但随着在系统中越来越多的使用SSD，这种设计是否仍然能带来如此大的收益，在SSD统治的世界里是否有更合理的存储结构。\u003C\u002Fp\u003E\u003Cp\u003E2016年，FAST会议发表了论文\u003Ca href=\"http:\u002F\u002Flink.zhihu.com\u002F?target=https%3A\u002F\u002Fwww.usenix.org\u002Fsystem\u002Ffiles\u002Fconference\u002Ffast16\u002Ffast16-papers-lu.pdf\" class=\" wrap external\" target=\"_blank\" rel=\"nofollow noreferrer\"\u003EWiscKey: Separating Keys from Valuesin SSD-conscious Storage\u003Ci class=\"icon-external\"\u003E\u003C\u002Fi\u003E\u003C\u002Fa\u003E，阐述了一种对SSD更友好的基于LSM的引擎设计方案。\u003C\u002Fp\u003E\u003Ch2\u003E\u003Cb\u003E问题\u003C\u002Fb\u003E\u003C\u002Fh2\u003E\u003Cp\u003E大家知道，LSM Tree是一种对写优化的系统，将随机写转化为顺序写，从而获得非常优秀的写性能，但一定的LSM也损失了一些东西作为交换，这个损失就是写放大，即实际的磁盘写跟用户请求写的比值，就是说：\u003C\u002Fp\u003E\u003Cp\u003E\u003Cb\u003ELSM Tree 将随机写转化为顺序写，而作为代价带来了大量的重复写入\u003C\u002Fb\u003E\u003C\u002Fp\u003E\u003Cp\u003E那么这种交换是否值得呢，先来看损失，以LevelDB为例，在最坏的情况下：\u003C\u002Fp\u003E\u003Cul\u003E\u003Cli\u003E写放大：10 * Level（Level N-1向Level N的Compact可能涉及多达10个Level N-1层文件）\u003C\u002Fli\u003E\u003C\u002Ful\u003E\u003Cp\u003E也就是说，这个写放大的系数大概在几十到几百之间。那么收获的呢，通过下表中针对不同存储介质的写入测试数据，可以看出在传统的机械盘上顺序写的性能远远好于其随机写性能，这个性能差异接近一千倍。用数十倍的磁盘带宽损失换取近千倍的性能提升，在写入敏感的场景下这种交换的效果毋庸置疑。但不同的是，SSD盘相对具有较高的随机写能力，与顺序写的差距本身只有十倍左右，并且还可以通过并行IO进一步提升，因此这种交换就显得有些得不偿失。同时，由于反复的写入会带来SSD的磨损从而降低寿命。\u003C\u002Fp\u003E\u003Cp\u003E\u003Cbr\u003E\u003C\u002Fp\u003E\u003Cnoscript\u003E\u003Cimg src=\"https:\u002F\u002Fpic2.zhimg.com\u002Fv2-a20fb54bc2b73aee29ffa42ea2296cf5_b.jpg\" data-caption=\"\" data-rawwidth=\"630\" data-rawheight=\"576\" class=\"origin_image zh-lightbox-thumb\" width=\"630\" data-original=\"https:\u002F\u002Fpic2.zhimg.com\u002Fv2-a20fb54bc2b73aee29ffa42ea2296cf5_r.jpg\"\u003E\u003C\u002Fnoscript\u003E\u003Cimg src=\"data:image\u002Fsvg+xml;utf8,&lt;svg%20xmlns='http:\u002F\u002Fwww.w3.org\u002F2000\u002Fsvg'%20width='630'%20height='576'&gt;&lt;\u002Fsvg&gt;\" data-caption=\"\" data-rawwidth=\"630\" data-rawheight=\"576\" class=\"origin_image zh-lightbox-thumb lazy\" width=\"630\" data-original=\"https:\u002F\u002Fpic2.zhimg.com\u002Fv2-a20fb54bc2b73aee29ffa42ea2296cf5_r.jpg\" data-actualsrc=\"https:\u002F\u002Fpic2.zhimg.com\u002Fv2-a20fb54bc2b73aee29ffa42ea2296cf5_b.jpg\"\u003E\u003Cp\u003E\u003Cbr\u003E\u003C\u002Fp\u003E\u003Cp\u003E\u003Cbr\u003E\u003C\u002Fp\u003E\u003Ch2\u003E\u003Cb\u003E思路\u003C\u002Fb\u003E\u003C\u002Fh2\u003E\u003Cp\u003E回顾上面的问题，当LSM中数据的长度很大时，这个问题变得尤为突出，这是因为：\u003C\u002Fp\u003E\u003Cul\u003E\u003Cli\u003E数据长度越大，越容易触发Compaction，从而造成写放大；\u003C\u002Fli\u003E\u003Cli\u003E如果把上层文件看做下层文件的cache，大数据长度会造成这个cache能cache的数据个数变少，从而读请求更大概率的需要访问下层数据，从而造成读放大；\u003C\u002Fli\u003E\u003Cli\u003E每条数据每次Merge需要更多的写入量\u003C\u002Fli\u003E\u003C\u002Ful\u003E\u003Cp\u003E进一步分析，LSM需要的其实是key的有序，而跟value无关。所以自然而然的思路是：\u003C\u002Fp\u003E\u003Cp\u003E\u003Cb\u003EKey Value 分离存储\u003C\u002Fb\u003E\u003C\u002Fp\u003E\u003Cp\u003E\u003Cbr\u003E\u003C\u002Fp\u003E\u003Cnoscript\u003E\u003Cimg src=\"https:\u002F\u002Fpic3.zhimg.com\u002Fv2-295609fe3003aa8c2c3c6f3abb9150f6_b.jpg\" data-caption=\"\" data-rawwidth=\"674\" data-rawheight=\"280\" class=\"origin_image zh-lightbox-thumb\" width=\"674\" data-original=\"https:\u002F\u002Fpic3.zhimg.com\u002Fv2-295609fe3003aa8c2c3c6f3abb9150f6_r.jpg\"\u003E\u003C\u002Fnoscript\u003E\u003Cimg src=\"data:image\u002Fsvg+xml;utf8,&lt;svg%20xmlns='http:\u002F\u002Fwww.w3.org\u002F2000\u002Fsvg'%20width='674'%20height='280'&gt;&lt;\u002Fsvg&gt;\" data-caption=\"\" data-rawwidth=\"674\" data-rawheight=\"280\" class=\"origin_image zh-lightbox-thumb lazy\" width=\"674\" data-original=\"https:\u002F\u002Fpic3.zhimg.com\u002Fv2-295609fe3003aa8c2c3c6f3abb9150f6_r.jpg\" data-actualsrc=\"https:\u002F\u002Fpic3.zhimg.com\u002Fv2-295609fe3003aa8c2c3c6f3abb9150f6_b.jpg\"\u003E\u003Cp\u003E\u003Cbr\u003E\u003C\u002Fp\u003E\u003Cp\u003E仅将Key值存储在LSM中，而将Value区分存储在Log中，数据访问就变成了：\u003C\u002Fp\u003E\u003Cul\u003E\u003Cli\u003E修改：先append到vLog末尾，再将Key，Value地址插入LSM\u003C\u002Fli\u003E\u003Cli\u003E删除：直接从LSM中删除，无效Value交给之后的垃圾回收\u003C\u002Fli\u003E\u003Cli\u003E查询：LSM中获得地址，vLog中读取\u003C\u002Fli\u003E\u003C\u002Ful\u003E\u003Cp\u003E这样带来显而易见的好处：\u003C\u002Fp\u003E\u003Cul\u003E\u003Cli\u003E避免了归并时无效的value而移动，从而极大的降低了读写放大\u003C\u002Fli\u003E\u003Cli\u003E显著减少了LSM的大小，以获得更好的cache效果\u003C\u002Fli\u003E\u003C\u002Ful\u003E\u003Ch2\u003E\u003Cb\u003E挑战\u003C\u002Fb\u003E\u003C\u002Fh2\u003E\u003Cp\u003E这种思路是否可行呢，分析可知，Key Value分开存储会导致以下三种问题，如果能解决或者容忍，那么这种设计就是成功的。\u003C\u002Fp\u003E\u003Ch2\u003E\u003Cb\u003E1，Key Value分离带来的Range操作的低效\u003C\u002Fb\u003E\u003C\u002Fh2\u003E\u003Cp\u003E由于Key Value的分离，Range操作从顺序读变成了顺序度加多次随机读，从而变得低效。利用SSD并行IO的能力，可以将这种损失尽量抵消，这正是得益于SSD较强的随机访问性能。\u003C\u002Fp\u003E\u003Ch2\u003E\u003Cb\u003E2，被用户删除或者过期版本的Value的空间回收\u003C\u002Fb\u003E\u003C\u002Fh2\u003E\u003Cp\u003ECompaction过程需要被删除的数据由于只是删除了Key，Value还保留在分开的Log中，这就需要异步的回收。可以看出LSM本身的Compaction其实也是垃圾回收的思路，所以通过良好设计的Value回收方式其实并不会过多的增加系统的额外负担。离线回收比较简单，扫描整个LSM对Value Log进行mark and sweep，但这相当于给系统带来了负载带来了陡峭的波峰，WiscKey论文又提出来了巧妙的在线回收方式：\u003C\u002Fp\u003E\u003Cp\u003E\u003Cbr\u003E\u003C\u002Fp\u003E\u003Cnoscript\u003E\u003Cimg src=\"https:\u002F\u002Fpic4.zhimg.com\u002Fv2-c358992d92638a82e37aa29dc5ba8ba7_b.jpg\" data-caption=\"\" data-rawwidth=\"742\" data-rawheight=\"314\" class=\"origin_image zh-lightbox-thumb\" width=\"742\" data-original=\"https:\u002F\u002Fpic4.zhimg.com\u002Fv2-c358992d92638a82e37aa29dc5ba8ba7_r.jpg\"\u003E\u003C\u002Fnoscript\u003E\u003Cimg src=\"data:image\u002Fsvg+xml;utf8,&lt;svg%20xmlns='http:\u002F\u002Fwww.w3.org\u002F2000\u002Fsvg'%20width='742'%20height='314'&gt;&lt;\u002Fsvg&gt;\" data-caption=\"\" data-rawwidth=\"742\" data-rawheight=\"314\" class=\"origin_image zh-lightbox-thumb lazy\" width=\"742\" data-original=\"https:\u002F\u002Fpic4.zhimg.com\u002Fv2-c358992d92638a82e37aa29dc5ba8ba7_r.jpg\" data-actualsrc=\"https:\u002F\u002Fpic4.zhimg.com\u002Fv2-c358992d92638a82e37aa29dc5ba8ba7_b.jpg\"\u003E\u003Cp\u003E\u003Cbr\u003E\u003C\u002Fp\u003E\u003Cp\u003E其中head的位置是新的Block插入的位置，tail是Value回收操作的开始位置，垃圾回收过程被触发后，顺序从Tail开始读取Block，将有效的Block插入到Head。删除空间并后移Tail。可以看出，这里的回收方式由于需要将有效的数据重新Append，其实也带来了写放大，这就需要很好的权衡空间放大和写放大了，WiscKey建议系统根据删除修改请求的多少决定触发垃圾回收的时机。\u003C\u002Fp\u003E\u003Ch2\u003E\u003Cb\u003E3，Crash Consistency\u003C\u002Fb\u003E\u003C\u002Fh2\u003E\u003Cp\u003E正式由于Key，Value的分离带来了不可避免的在程序Crash发生时不一致的情况，WiscKey需要像标准的LSM一样提供如下保证：\u003C\u002Fp\u003E\u003Cul\u003E\u003Cli\u003Ekey-value的原子性：要成功都成功，要失败都失败\u003C\u002Fli\u003E\u003Cli\u003E重启后的顺序恢复\u003C\u002Fli\u003E\u003C\u002Ful\u003E\u003Cp\u003EWicsKey给出的解决方案，是在启动时对Key， Value进行检查：\u003C\u002Fp\u003E\u003Cul\u003E\u003Cli\u003EKey成功写入，Value没有，则从LSM中删除Key，并返回不存在\u003C\u002Fli\u003E\u003Cli\u003EKey没有成功写入，Value写入，返回不存在，并在后续的垃圾回收中清楚Value。\u003C\u002Fli\u003E\u003C\u002Ful\u003E\u003Ch2\u003E\u003Cb\u003E优化\u003C\u002Fb\u003E\u003C\u002Fh2\u003E\u003Cul\u003E\u003Cli\u003EValue-Log Write Buffer: 给vLog维护一个缓存，来将短value合并为长value来提高磁盘吞吐\u003C\u002Fli\u003E\u003Cli\u003EOptimizing the LSM-tree Log：去掉LSM的Log，并周期性的更新Value Log的head值进LSM。crash后的恢复仅需要从head开始遍历所有的vLog同样能保证上面提到的Crash Consistency\u003C\u002Fli\u003E\u003C\u002Ful\u003E\u003Ch2\u003E\u003Cb\u003E总结\u003C\u002Fb\u003E\u003C\u002Fh2\u003E\u003Cp\u003E通过上面的介绍，可以看出WiscKey并不是一个全方位的解决方案，其不得不面对Key Value分离带来的不一致和处理效率的下降，这种增加的负担会在小Value的场景下尤为明显。所以WiscKey针对的仅仅是Value长度远远大于Key的情况。我们的Zeppelin向上支持的S3需求很契合这样一种场景，所以WiscKey也是我们未来在引擎层的一种发展方向。\u003C\u002Fp\u003E\u003Cp\u003E最后抒情一下，WiscKey不完美，但他启示我们在硬件更替的现在，人们做到的还远远不够，还有更多的潜力和宝藏等待去发掘，属于LevelDB和RocksDB的容光可能会逐渐褪去，但人类对更好的存储的追求永不停歇，而我们工程师所要做的就是追逐先行者的脚步，搭建起连接未来和现实的桥梁。\u003C\u002Fp\u003E\u003Cp\u003E\u003Cbr\u003E\u003C\u002Fp\u003E\u003Cp\u003E\u003Cbr\u003E\u003C\u002Fp\u003E\u003Ch2\u003E\u003Cb\u003E参考\u003C\u002Fb\u003E\u003C\u002Fh2\u003E\u003Cp\u003E\u003Ca href=\"http:\u002F\u002Flink.zhihu.com\u002F?target=https%3A\u002F\u002Fwww.usenix.org\u002Fsystem\u002Ffiles\u002Fconferenc\u002Ffast16\u002Ffast16-papers-lu.pdf\" class=\" wrap external\" target=\"_blank\" rel=\"nofollow noreferrer\"\u003EWiscKey: Separating Keys from Valuesin SSD-conscious Storage\u003Ci class=\"icon-external\"\u003E\u003C\u002Fi\u003E\u003C\u002Fa\u003E\u003C\u002Fp\u003E\u003Cp\u003E\u003Ca href=\"http:\u002F\u002Flink.zhihu.com\u002F?target=http%3A\u002F\u002Fblog.omega-prime.co.uk\u002F%3Fp%3D197\" class=\" wrap external\" target=\"_blank\" rel=\"nofollow noreferrer\"\u003EDatastructures for external memory\u003Ci class=\"icon-external\"\u003E\u003C\u002Fi\u003E\u003C\u002Fa\u003E\u003C\u002Fp\u003E\u003Cp\u003E\u003Ca href=\"http:\u002F\u002Flink.zhihu.com\u002F?target=http%3A\u002F\u002Fcatkang.github.io\u002F2017\u002F01\u002F07\u002Fleveldb-summary.html\" class=\" wrap external\" target=\"_blank\" rel=\"nofollow noreferrer\"\u003E庖丁解LevelDB之概览\u003Ci class=\"icon-external\"\u003E\u003C\u002Fi\u003E\u003C\u002Fa\u003E\u003C\u002Fp\u003E\u003Cp\u003E\u003Ca href=\"http:\u002F\u002Flink.zhihu.com\u002F?target=https%3A\u002F\u002Fgithub.com\u002FQihoo360\u002Fzeppelin\" class=\" wrap external\" target=\"_blank\" rel=\"nofollow noreferrer\"\u003EQihoo360 Zeppelin\u003Ci class=\"icon-external\"\u003E\u003C\u002Fi\u003E\u003C\u002Fa\u003E\u003C\u002Fp\u003E\u003Cp\u003E\u003Ca href=\"http:\u002F\u002Flink.zhihu.com\u002F?target=https%3A\u002F\u002Fgithub.com\u002FQihoo360\u002Fpika\" class=\" wrap external\" target=\"_blank\" rel=\"nofollow noreferrer\"\u003EQihoo360 Pika\u003Ci class=\"icon-external\"\u003E\u003C\u002Fi\u003E\u003C\u002Fa\u003E\u003C\u002Fp\u003E",
+                "updated": "2017-11-06T03:32:29.000Z",
+                "canComment": true,
+                "commentPermission": "anyone",
+                "commentCount": 5,
+                "collapsedCount": 0,
+                "likeCount": 47,
+                "state": "published",
+                "isLiked": false,
+                "slug": "30773636",
+                "isTitleImageFullScreen": false,
+                "rating": "none",
+                "titleImage": "https:\u002F\u002Fpic4.zhimg.com\u002Fv2-54259b5796d9e49e45842874270e7de3_r.jpg",
+                "links": {
+                    "comments": "\u002Fapi\u002Fposts\u002F30773636\u002Fcomments"
+                },
+                "reviewers": [],
+                "topics": [
+                    {
+                        "url": "https:\u002F\u002Fwww.zhihu.com\u002Ftopic\u002F20035475",
+                        "id": "20035475",
+                        "name": "LSM (Log Structured Merge)"
+                    },
+                    {
+                        "url": "https:\u002F\u002Fwww.zhihu.com\u002Ftopic\u002F20087597",
+                        "id": "20087597",
+                        "name": "RocksDB"
+                    },
+                    {
+                        "url": "https:\u002F\u002Fwww.zhihu.com\u002Ftopic\u002F19562697",
+                        "id": "19562697",
+                        "name": "固态硬盘"
+                    }
+                ],
+                "adminClosedComment": false,
+                "titleImageSize": {
+                    "width": 1200,
+                    "height": 800
+                },
+                "href": "\u002Fapi\u002Fposts\u002F30773636",
+                "excerptTitle": "",
+                "column": {
+                    "slug": "360infra",
+                    "name": "360 基础架构组"
+                },
+                "tipjarState": "inactivated",
+                "annotationAction": [],
+                "sourceUrl": "",
+                "pageCommentsCount": 5,
+                "hasPublishingDraft": false,
+                "snapshotUrl": "",
+                "publishedTime": "2017-11-06T11:32:29+08:00",
+                "url": "\u002Fp\u002F30773636",
+                "lastestLikers": [
+                    {
+                        "bio": "全折腾攻城师",
+                        "isFollowing": false,
+                        "hash": "888fbd9251a403bbc05a6212bb470586",
+                        "uid": 26721520713728,
+                        "isOrg": false,
+                        "slug": "inextime",
+                        "isFollowed": false,
+                        "description": "微信：inextime",
+                        "name": "曾杰瑜",
+                        "profileUrl": "https:\u002F\u002Fwww.zhihu.com\u002Fpeople\u002Finextime",
+                        "avatar": {
+                            "id": "42ec35fd8c19e2a48c86be2463f332b7",
+                            "template": "https:\u002F\u002Fpic4.zhimg.com\u002F50\u002F{id}_{size}.jpg"
+                        },
+                        "isOrgWhiteList": false,
+                        "isBanned": false
+                    },
+                    {
+                        "bio": "软件工程师",
+                        "isFollowing": false,
+                        "hash": "b23875599a4f01a3db959aa4b1174445",
+                        "uid": 37221541347328,
+                        "isOrg": false,
+                        "slug": "sun-chao-77-33",
+                        "isFollowed": false,
+                        "description": "Distributed Systems, Database, Programming Languages",
+                        "name": "孙超",
+                        "profileUrl": "https:\u002F\u002Fwww.zhihu.com\u002Fpeople\u002Fsun-chao-77-33",
+                        "avatar": {
+                            "id": "21a020925",
+                            "template": "https:\u002F\u002Fpic2.zhimg.com\u002F50\u002F{id}_{size}.jpg"
+                        },
+                        "isOrgWhiteList": false,
+                        "isBanned": false
+                    },
+                    {
+                        "bio": "sale",
+                        "isFollowing": false,
+                        "hash": "9cea1de35759c5420c7e7853e7820858",
+                        "uid": 29092070031360,
+                        "isOrg": false,
+                        "slug": "sale-48",
+                        "isFollowed": false,
+                        "description": "",
+                        "name": "sale",
+                        "profileUrl": "https:\u002F\u002Fwww.zhihu.com\u002Fpeople\u002Fsale-48",
+                        "avatar": {
+                            "id": "2dc0dba76",
+                            "template": "https:\u002F\u002Fpic3.zhimg.com\u002F50\u002F{id}_{size}.jpg"
+                        },
+                        "isOrgWhiteList": false,
+                        "isBanned": false
+                    },
+                    {
+                        "bio": "马桶上思考如何成为一个小有名气的软件工程师",
+                        "isFollowing": false,
+                        "hash": "c74b543f993deb9914897b8ad483710f",
+                        "uid": 791357919311597600,
+                        "isOrg": false,
+                        "slug": "fang-sheng-62-75",
+                        "isFollowed": false,
+                        "description": "软件工程师",
+                        "name": "方丈",
+                        "profileUrl": "https:\u002F\u002Fwww.zhihu.com\u002Fpeople\u002Ffang-sheng-62-75",
+                        "avatar": {
+                            "id": "v2-18f0d16216f8f9338d0433340921e69b",
+                            "template": "https:\u002F\u002Fpic4.zhimg.com\u002F50\u002F{id}_{size}.jpg"
+                        },
+                        "isOrgWhiteList": false,
+                        "isBanned": false
+                    },
+                    {
+                        "bio": "写几行烂代码的小朋友",
+                        "isFollowing": false,
+                        "hash": "a9093de6c8fc1dd4890364b5fb9ad4b0",
+                        "uid": 632532117255622700,
+                        "isOrg": false,
+                        "slug": "streamers",
+                        "isFollowed": false,
+                        "description": "分布式计算\u002F存储系统",
+                        "name": "流光",
+                        "profileUrl": "https:\u002F\u002Fwww.zhihu.com\u002Fpeople\u002Fstreamers",
+                        "avatar": {
+                            "id": "abefba66446d9485d07e03613e7592c6",
+                            "template": "https:\u002F\u002Fpic3.zhimg.com\u002F50\u002F{id}_{size}.jpg"
+                        },
+                        "isOrgWhiteList": false,
+                        "isBanned": false
+                    }
+                ],
+                "summary": "\u003Cimg src=\"http:\u002F\u002Fpic2.zhimg.com\u002Fv2-a20fb54bc2b73aee29ffa42ea2296cf5_200x112.jpg\" data-caption=\"\" data-rawwidth=\"630\" data-rawheight=\"576\" class=\"origin_image inline-img zh-lightbox-thumb\" data-original=\"http:\u002F\u002Fpic2.zhimg.com\u002Fv2-a20fb54bc2b73aee29ffa42ea2296cf5_r.jpg\"\u003E近年来，以LevelDB和Rocksdb为代表的LSM（Log-Structured Merge-Tree）存储引擎凭借其优异的写性能及不俗的读性能成为众多分布式组件的存储基石，包括我们近两年开发的类Redis大容量存储Pika和分布式KV存储Zeppelin，在享受LSM的高效的同时也开始逐渐体会到…",
+                "reviewingCommentsCount": 0,
+                "meta": {
+                    "previous": {
+                        "isTitleImageFullScreen": false,
+                        "rating": "none",
+                        "titleImage": "https:\u002F\u002Fpic1.zhimg.com\u002F50\u002Fv2-67117619a9c6070bb6d86e72b0d3d764_xl.jpg",
+                        "links": {
+                            "comments": "\u002Fapi\u002Fposts\u002F30717524\u002Fcomments"
+                        },
+                        "topics": [
+                            {
+                                "url": "https:\u002F\u002Fwww.zhihu.com\u002Ftopic\u002F20087597",
+                                "id": "20087597",
+                                "name": "RocksDB"
+                            },
+                            {
+                                "url": "https:\u002F\u002Fwww.zhihu.com\u002Ftopic\u002F19558640",
+                                "id": "19558640",
+                                "name": "分布式存储"
+                            },
+                            {
+                                "url": "https:\u002F\u002Fwww.zhihu.com\u002Ftopic\u002F19601705",
+                                "id": "19601705",
+                                "name": "C \u002F C++"
+                            }
+                        ],
+                        "adminClosedComment": false,
+                        "href": "\u002Fapi\u002Fposts\u002F30717524",
+                        "excerptTitle": "",
+                        "author": {
+                            "bio": "码农",
+                            "isFollowing": false,
+                            "hash": "d27b07e8e8f05483fd3fd7bbf7537fa4",
+                            "uid": 599729229546655700,
+                            "isOrg": false,
+                            "slug": "kernelmaker",
+                            "isFollowed": false,
+                            "description": "",
+                            "name": "宋昭",
+                            "profileUrl": "https:\u002F\u002Fwww.zhihu.com\u002Fpeople\u002Fkernelmaker",
+                            "avatar": {
+                                "id": "v2-2c49b918d0d0c70933897b2dc221b0e0",
+                                "template": "https:\u002F\u002Fpic1.zhimg.com\u002F50\u002F{id}_{size}.jpg"
+                            },
+                            "isOrgWhiteList": false,
+                            "isBanned": false
+                        },
+                        "content": "\u003Cp\u003EN次阅读rocksdb和leveldb源码后，我对它们的简答粗暴概括理解如下：\u003C\u002Fp\u003E\u003Cblockquote\u003E跟leveldb学习LSM-Tree及C++（C98）实践\u003Cbr\u003E跟rocksdb学习存储引擎的实现\u003C\u002Fblockquote\u003E\u003Cp\u003Erocksdb在leveldb的基础上做了大量（非常大）的优化，更适合在生产环境使用，我们自己的开源项目（pika、zeppelin）等都使用rocksdb作为存储引擎。\u003C\u002Fp\u003E\u003Cp\u003E所以，我打算积累一个【rocksdb源码分析】系列，详细整理一下rocksdb的实现原理及相比较于leveldb，它在细节处做的优化。\u003C\u002Fp\u003E\u003Cp\u003E本篇就先介绍一下rocksdb在写入时的一个优化点实现。\u003C\u002Fp\u003E\u003Cp\u003E\u003Ci\u003E\u003Cb\u003E注：源码分析主要基于rocksdb v5.0.1及v5.4.5两个版本，后者相较于前者在代码结构及实现上都有较大改动，不过核心一样，后续内容也主要以这两个版本为主\u003C\u002Fb\u003E\u003C\u002Fi\u003E\u003C\u002Fp\u003E\u003Cp\u003E\u003Cbr\u003E\u003C\u002Fp\u003E\u003Ch2\u003E\u003Cb\u003E1. JoinBatchGroup\u003C\u002Fb\u003E\u003C\u002Fh2\u003E\u003Cp\u003E这个函数主要做什么呢，leveldb和rocksdb都支持多线程，不过对于Write是单写者的实现，这就需要使用类似队列的东西将上层多线程的多个Writer进行排列，每次只允许队列头的Writer写db，队头Writer写完后再唤醒队列其他的Writer。leveldb在这里有一个优化，就是队头Writer在写db时，并不是只将自己的WriteBatch写完就拉倒，而是在写之前先将自己和它之后正在等待的其他Writer的WriteBatch一起打包成一个更大的WriteBatch，然后一起再写，这样，当它写完db唤醒其他Writer后，有一部分Writer会发现自己的活已经被做完了，直接返回。这样的实现可以提高写入速度，算是一个不小的优化。那么问题来了，rocksdb基于这之上还能做哪些优化呢？\u003C\u002Fp\u003E\u003Cp\u003E\u003Cbr\u003E\u003C\u002Fp\u003E\u003Ch2\u003E\u003Cb\u003E2. 优化点\u003C\u002Fb\u003E\u003C\u002Fh2\u003E\u003Cp\u003Erocksdb在Writer之间Wait的地方做了优化，先看下leveldb这块是怎么做的：\u003C\u002Fp\u003E\u003Cdiv class=\"highlight\"\u003E\u003Cpre\u003E\u003Ccode class=\"language-cpp\"\u003E\u003Cspan\u003E\u003C\u002Fspan\u003E\u003Cspan class=\"n\"\u003EStatus\u003C\u002Fspan\u003E \u003Cspan class=\"n\"\u003EDBImpl\u003C\u002Fspan\u003E\u003Cspan class=\"o\"\u003E::\u003C\u002Fspan\u003E\u003Cspan class=\"n\"\u003EWrite\u003C\u002Fspan\u003E\u003Cspan class=\"p\"\u003E(\u003C\u002Fspan\u003E\u003Cspan class=\"k\"\u003Econst\u003C\u002Fspan\u003E \u003Cspan class=\"n\"\u003EWriteOptions\u003C\u002Fspan\u003E\u003Cspan class=\"o\"\u003E&amp;\u003C\u002Fspan\u003E \u003Cspan class=\"n\"\u003Eoptions\u003C\u002Fspan\u003E\u003Cspan class=\"p\"\u003E,\u003C\u002Fspan\u003E \u003Cspan class=\"n\"\u003EWriteBatch\u003C\u002Fspan\u003E\u003Cspan class=\"o\"\u003E*\u003C\u002Fspan\u003E \u003Cspan class=\"n\"\u003Emy_batch\u003C\u002Fspan\u003E\u003Cspan class=\"p\"\u003E)\u003C\u002Fspan\u003E \u003Cspan class=\"p\"\u003E{\u003C\u002Fspan\u003E\n  \u003Cspan class=\"p\"\u003E......\u003C\u002Fspan\u003E\n\n  \u003Cspan class=\"n\"\u003EMutexLock\u003C\u002Fspan\u003E \u003Cspan class=\"n\"\u003El\u003C\u002Fspan\u003E\u003Cspan class=\"p\"\u003E(\u003C\u002Fspan\u003E\u003Cspan class=\"o\"\u003E&amp;\u003C\u002Fspan\u003E\u003Cspan class=\"n\"\u003Emutex_\u003C\u002Fspan\u003E\u003Cspan class=\"p\"\u003E);\u003C\u002Fspan\u003E\n  \u003Cspan class=\"n\"\u003Ewriters_\u003C\u002Fspan\u003E\u003Cspan class=\"p\"\u003E.\u003C\u002Fspan\u003E\u003Cspan class=\"n\"\u003Epush_back\u003C\u002Fspan\u003E\u003Cspan class=\"p\"\u003E(\u003C\u002Fspan\u003E\u003Cspan class=\"o\"\u003E&amp;\u003C\u002Fspan\u003E\u003Cspan class=\"n\"\u003Ew\u003C\u002Fspan\u003E\u003Cspan class=\"p\"\u003E);\u003C\u002Fspan\u003E\n  \u003Cspan class=\"k\"\u003Ewhile\u003C\u002Fspan\u003E \u003Cspan class=\"p\"\u003E(\u003C\u002Fspan\u003E\u003Cspan class=\"o\"\u003E!\u003C\u002Fspan\u003E\u003Cspan class=\"n\"\u003Ew\u003C\u002Fspan\u003E\u003Cspan class=\"p\"\u003E.\u003C\u002Fspan\u003E\u003Cspan class=\"n\"\u003Edone\u003C\u002Fspan\u003E \u003Cspan class=\"o\"\u003E&amp;&amp;\u003C\u002Fspan\u003E \u003Cspan class=\"o\"\u003E&amp;\u003C\u002Fspan\u003E\u003Cspan class=\"n\"\u003Ew\u003C\u002Fspan\u003E \u003Cspan class=\"o\"\u003E!=\u003C\u002Fspan\u003E \u003Cspan class=\"n\"\u003Ewriters_\u003C\u002Fspan\u003E\u003Cspan class=\"p\"\u003E.\u003C\u002Fspan\u003E\u003Cspan class=\"n\"\u003Efront\u003C\u002Fspan\u003E\u003Cspan class=\"p\"\u003E())\u003C\u002Fspan\u003E \u003Cspan class=\"p\"\u003E{\u003C\u002Fspan\u003E\n    \u003Cspan class=\"n\"\u003Ew\u003C\u002Fspan\u003E\u003Cspan class=\"p\"\u003E.\u003C\u002Fspan\u003E\u003Cspan class=\"n\"\u003Ecv\u003C\u002Fspan\u003E\u003Cspan class=\"p\"\u003E.\u003C\u002Fspan\u003E\u003Cspan class=\"n\"\u003EWait\u003C\u002Fspan\u003E\u003Cspan class=\"p\"\u003E()\u003C\u002Fspan\u003E\n  \u003Cspan class=\"p\"\u003E}\u003C\u002Fspan\u003E\n  \u003Cspan class=\"k\"\u003Eif\u003C\u002Fspan\u003E \u003Cspan class=\"p\"\u003E(\u003C\u002Fspan\u003E\u003Cspan class=\"n\"\u003Ew\u003C\u002Fspan\u003E\u003Cspan class=\"p\"\u003E.\u003C\u002Fspan\u003E\u003Cspan class=\"n\"\u003Edone\u003C\u002Fspan\u003E\u003Cspan class=\"p\"\u003E)\u003C\u002Fspan\u003E \u003Cspan class=\"p\"\u003E{\u003C\u002Fspan\u003E\n    \u003Cspan class=\"k\"\u003Ereturn\u003C\u002Fspan\u003E \u003Cspan class=\"n\"\u003Ew\u003C\u002Fspan\u003E\u003Cspan class=\"p\"\u003E.\u003C\u002Fspan\u003E\u003Cspan class=\"n\"\u003Estatus\u003C\u002Fspan\u003E\u003Cspan class=\"p\"\u003E;\u003C\u002Fspan\u003E\n  \u003Cspan class=\"p\"\u003E}\u003C\u002Fspan\u003E\n\u003Cspan class=\"p\"\u003E}\u003C\u002Fspan\u003E \n\u003C\u002Fcode\u003E\u003C\u002Fpre\u003E\u003C\u002Fdiv\u003E\u003Cp\u003E很简单，就是pthread_cond_wait。这样做有什么问题吗？呃…貌似有\u003C\u002Fp\u003E\u003Cblockquote\u003EFor reference, on my 4.0 SELinux test server with support for syscall auditing enabled, the minimum latency between FUTEX_WAKE to returning from FUTEX_WAIT is 2.7 usec, and the average is more like 10 usec. That can be a big drag on RockDB’s single-writer design.\u003C\u002Fblockquote\u003E\u003Cp\u003E从FUTEX_WAIT到FUTEX_WAKE平均需要10us的时间，这对于单写着的引擎来说，代价的确不小，因外除过真正写引擎的时间，还有很大一部分时间用在了pthread_cond_wait及pthread_cond_signal上。\u003C\u002Fp\u003E\u003Cp\u003E\u003Cbr\u003E\u003C\u002Fp\u003E\u003Ch2\u003E\u003Cb\u003E2. 如何优化\u003C\u002Fb\u003E\u003C\u002Fh2\u003E\u003Cp\u003E条件锁因为Context Switches而代价高昂，rocksdb通过一系列优化来尽量少用条件锁的使用并且尽可能的减少Context Switches。它将leveldb简单一条pthread_cond_wait拆成3步来做:\u003C\u002Fp\u003E\u003Cul\u003E\u003Cli\u003E\u003Cb\u003ELoop\u003C\u002Fb\u003E\u003C\u002Fli\u003E\u003Cli\u003E\u003Cb\u003EShort-Wait\u003C\u002Fb\u003E: Loop + std::this_thread::yield()\u003C\u002Fli\u003E\u003Cli\u003E\u003Cb\u003ELong-Wait\u003C\u002Fb\u003E: std::condition_variable::wait()\u003C\u002Fli\u003E\u003C\u002Ful\u003E\u003Cp\u003E下面来依次分析\u003C\u002Fp\u003E\u003Ch2\u003E1. Loop\u003C\u002Fh2\u003E\u003Cp\u003E这里主要就是通过循环忙等待一段有限的时间，大约1us，绝大多数的情况下，这1us的忙等足以让state条件满足（Leader Writer的WriteBatch执行完），而忙等待是占着CPU，不会发生Context Switches，这就减小了额外开销；\u003C\u002Fp\u003E\u003Cdiv class=\"highlight\"\u003E\u003Cpre\u003E\u003Ccode class=\"language-cpp\"\u003E\u003Cspan\u003E\u003C\u002Fspan\u003E\u003Cspan class=\"c1\"\u003E\u002F\u002F On a modern Xeon each loop takes about 7 nanoseconds (most of which\u003C\u002Fspan\u003E\n\u003Cspan class=\"c1\"\u003E\u002F\u002F is the effect of the pause instruction), so 200 iterations is a bit\u003C\u002Fspan\u003E\n\u003Cspan class=\"c1\"\u003E\u002F\u002F more than a microsecond.  This is long enough that waits longer than\u003C\u002Fspan\u003E\n\u003Cspan class=\"c1\"\u003E\u002F\u002F this can amortize the cost of accessing the clock and yielding.\u003C\u002Fspan\u003E\n\u003Cspan class=\"k\"\u003Efor\u003C\u002Fspan\u003E \u003Cspan class=\"p\"\u003E(\u003C\u002Fspan\u003E\u003Cspan class=\"kt\"\u003Euint32_t\u003C\u002Fspan\u003E \u003Cspan class=\"n\"\u003Etries\u003C\u002Fspan\u003E \u003Cspan class=\"o\"\u003E=\u003C\u002Fspan\u003E \u003Cspan class=\"mi\"\u003E0\u003C\u002Fspan\u003E\u003Cspan class=\"p\"\u003E;\u003C\u002Fspan\u003E \u003Cspan class=\"n\"\u003Etries\u003C\u002Fspan\u003E \u003Cspan class=\"o\"\u003E&lt;\u003C\u002Fspan\u003E \u003Cspan class=\"mi\"\u003E200\u003C\u002Fspan\u003E\u003Cspan class=\"p\"\u003E;\u003C\u002Fspan\u003E \u003Cspan class=\"o\"\u003E++\u003C\u002Fspan\u003E\u003Cspan class=\"n\"\u003Etries\u003C\u002Fspan\u003E\u003Cspan class=\"p\"\u003E)\u003C\u002Fspan\u003E \u003Cspan class=\"p\"\u003E{\u003C\u002Fspan\u003E\n  \u003Cspan class=\"n\"\u003Estate\u003C\u002Fspan\u003E \u003Cspan class=\"o\"\u003E=\u003C\u002Fspan\u003E \u003Cspan class=\"n\"\u003Ew\u003C\u002Fspan\u003E\u003Cspan class=\"o\"\u003E-&gt;\u003C\u002Fspan\u003E\u003Cspan class=\"n\"\u003Estate\u003C\u002Fspan\u003E\u003Cspan class=\"p\"\u003E.\u003C\u002Fspan\u003E\u003Cspan class=\"n\"\u003Eload\u003C\u002Fspan\u003E\u003Cspan class=\"p\"\u003E(\u003C\u002Fspan\u003E\u003Cspan class=\"n\"\u003Estd\u003C\u002Fspan\u003E\u003Cspan class=\"o\"\u003E::\u003C\u002Fspan\u003E\u003Cspan class=\"n\"\u003Ememory_order_acquire\u003C\u002Fspan\u003E\u003Cspan class=\"p\"\u003E);\u003C\u002Fspan\u003E\n  \u003Cspan class=\"k\"\u003Eif\u003C\u002Fspan\u003E \u003Cspan class=\"p\"\u003E((\u003C\u002Fspan\u003E\u003Cspan class=\"n\"\u003Estate\u003C\u002Fspan\u003E \u003Cspan class=\"o\"\u003E&amp;\u003C\u002Fspan\u003E \u003Cspan class=\"n\"\u003Egoal_mask\u003C\u002Fspan\u003E\u003Cspan class=\"p\"\u003E)\u003C\u002Fspan\u003E \u003Cspan class=\"o\"\u003E!=\u003C\u002Fspan\u003E \u003Cspan class=\"mi\"\u003E0\u003C\u002Fspan\u003E\u003Cspan class=\"p\"\u003E)\u003C\u002Fspan\u003E \u003Cspan class=\"p\"\u003E{\u003C\u002Fspan\u003E\n    \u003Cspan class=\"k\"\u003Ereturn\u003C\u002Fspan\u003E \u003Cspan class=\"n\"\u003Estate\u003C\u002Fspan\u003E\u003Cspan class=\"p\"\u003E;\u003C\u002Fspan\u003E\n  \u003Cspan class=\"p\"\u003E}\u003C\u002Fspan\u003E\n  \u003Cspan class=\"n\"\u003Eport\u003C\u002Fspan\u003E\u003Cspan class=\"o\"\u003E::\u003C\u002Fspan\u003E\u003Cspan class=\"n\"\u003EAsmVolatilePause\u003C\u002Fspan\u003E\u003Cspan class=\"p\"\u003E();\u003C\u002Fspan\u003E\n\u003Cspan class=\"p\"\u003E}\u003C\u002Fspan\u003E\n\u003C\u002Fcode\u003E\u003C\u002Fpre\u003E\u003C\u002Fdiv\u003E\u003Cp\u003E实现非常简单，循坏200次（大约1us），每次循环判断条件是否满足，满足则返回。有个地方值得注意：\u003C\u002Fp\u003E\u003Cdiv class=\"highlight\"\u003E\u003Cpre\u003E\u003Ccode class=\"language-text\"\u003E\u003Cspan\u003E\u003C\u002Fspan\u003Eport::AsmVolatilePause();\n\u003C\u002Fcode\u003E\u003C\u002Fpre\u003E\u003C\u002Fdiv\u003E\u003Cp\u003E这个是做什么用的呢？跟一下，它的实现是这样：\u003C\u002Fp\u003E\u003Cp\u003Epause指令，查了一下文档，如下：\u003C\u002Fp\u003E\u003Cblockquote\u003E\u003Ci\u003EImproves the performance of spin-wait loops. When executing a “spin-wait loop,” a Pentium 4 or Intel Xeon processor suffers a severe performance penalty when exiting the loop because it detects a possible memory order violation. The PAUSE instruction provides a hint to the processor that the code sequence is a spin-wait loop. The processor uses this hint to avoid the memory order violation in most situations, which greatly improves processor performance. For this reason, it is recommended that a PAUSE instruction be placed in all spin-wait loops.\u003C\u002Fi\u003E\u003Cbr\u003E\u003Ci\u003EAn additional function of the PAUSE instruction is to reduce the power consumed by a Pentium 4 processor while executing a spin loop. The Pentium 4 processor can execute a spin-wait loop extremely quickly, causing the processor to consume a lot of power while it waits for the resource it is spinning on to become available. Inserting a pause instruction in a spin-wait loop greatly reduces the processor’s power consumption.\u003C\u002Fi\u003E\u003Cbr\u003E\u003Ci\u003EThis instruction was introduced in the Pentium 4 processors, but is backward compat­ible with all IA-32 processors. In earlier IA-32 processors, the PAUSE instruction operates like a NOP instruction. The Pentium 4 and Intel Xeon processors implement the PAUSE instruction as a pre-defined delay. The delay is finite and can be zero for some processors. This instruction does not change the architectural state of the processor (that is, it performs essentially a delaying no-op operation).\u003C\u002Fi\u003E\u003C\u002Fblockquote\u003E\u003Cp\u003E可以看出，pause指令主要就是提升spin-wait-loop的性能，当执行spin-wait的时候处理器会在退出循坏的时候检测到memory order violation而进行流水线重排，造成性能损失，pause指定则是告诉cpu，当前正处在spin-wait中，绝大多数情况下，处理器根据这个提示来避免violation，提高性能。\u003C\u002Fp\u003E\u003Cp\u003E结合rocksdb，发现上面的200次循环中每次都会load state变量，检查是否符合条件，当Leader Writer的WriteBatch执行完，修改了这个state变量时，会产生store指令，由于处理器是乱序执行的，当有了store指令后，需要重排流水线确保在store之后的load指令在执行store之后再执行，而重排会带来25倍左右的性能损失。pause指令其实就是延迟40左右个clock，这样可以尽可能减少流水线上的load指令，减少重排代价。\u003C\u002Fp\u003E\u003Cp\u003E另外pause指令还可以减少处理器能耗，不过这不是我们关心的。\u003C\u002Fp\u003E\u003Ch2\u003E2. Short-Wait\u003C\u002Fh2\u003E\u003Cp\u003E如果能够准确预测未来，那么rocksdb其实只需要Loop和Long-Wait两种策略即可，预测到等待时间很短就用Loop，等待时间很长则只能用Long-Wait。但没有预言家，不可能每次提前准确知道该用那个，所以rocksdb才有了Short-Wait策略，这个一个灵活测策略，先来看实现：\u003C\u002Fp\u003E\u003Cdiv class=\"highlight\"\u003E\u003Cpre\u003E\u003Ccode class=\"language-cpp\"\u003E\u003Cspan\u003E\u003C\u002Fspan\u003E\u003Cspan class=\"k\"\u003Ewhile\u003C\u002Fspan\u003E \u003Cspan class=\"p\"\u003E((\u003C\u002Fspan\u003E\u003Cspan class=\"n\"\u003Eiter_begin\u003C\u002Fspan\u003E \u003Cspan class=\"o\"\u003E-\u003C\u002Fspan\u003E \u003Cspan class=\"n\"\u003Espin_begin\u003C\u002Fspan\u003E\u003Cspan class=\"p\"\u003E)\u003C\u002Fspan\u003E \u003Cspan class=\"o\"\u003E&lt;=\u003C\u002Fspan\u003E\n         \u003Cspan class=\"n\"\u003Estd\u003C\u002Fspan\u003E\u003Cspan class=\"o\"\u003E::\u003C\u002Fspan\u003E\u003Cspan class=\"n\"\u003Echrono\u003C\u002Fspan\u003E\u003Cspan class=\"o\"\u003E::\u003C\u002Fspan\u003E\u003Cspan class=\"n\"\u003Emicroseconds\u003C\u002Fspan\u003E\u003Cspan class=\"p\"\u003E(\u003C\u002Fspan\u003E\u003Cspan class=\"n\"\u003Emax_yield_usec_\u003C\u002Fspan\u003E\u003Cspan class=\"p\"\u003E))\u003C\u002Fspan\u003E \u003Cspan class=\"p\"\u003E{\u003C\u002Fspan\u003E\n  \u003Cspan class=\"n\"\u003Estd\u003C\u002Fspan\u003E\u003Cspan class=\"o\"\u003E::\u003C\u002Fspan\u003E\u003Cspan class=\"n\"\u003Ethis_thread\u003C\u002Fspan\u003E\u003Cspan class=\"o\"\u003E::\u003C\u002Fspan\u003E\u003Cspan class=\"n\"\u003Eyield\u003C\u002Fspan\u003E\u003Cspan class=\"p\"\u003E();\u003C\u002Fspan\u003E\n\n  \u003Cspan class=\"n\"\u003Estate\u003C\u002Fspan\u003E \u003Cspan class=\"o\"\u003E=\u003C\u002Fspan\u003E \u003Cspan class=\"n\"\u003Ew\u003C\u002Fspan\u003E\u003Cspan class=\"o\"\u003E-&gt;\u003C\u002Fspan\u003E\u003Cspan class=\"n\"\u003Estate\u003C\u002Fspan\u003E\u003Cspan class=\"p\"\u003E.\u003C\u002Fspan\u003E\u003Cspan class=\"n\"\u003Eload\u003C\u002Fspan\u003E\u003Cspan class=\"p\"\u003E(\u003C\u002Fspan\u003E\u003Cspan class=\"n\"\u003Estd\u003C\u002Fspan\u003E\u003Cspan class=\"o\"\u003E::\u003C\u002Fspan\u003E\u003Cspan class=\"n\"\u003Ememory_order_acquire\u003C\u002Fspan\u003E\u003Cspan class=\"p\"\u003E);\u003C\u002Fspan\u003E\n  \u003Cspan class=\"k\"\u003Eif\u003C\u002Fspan\u003E \u003Cspan class=\"p\"\u003E((\u003C\u002Fspan\u003E\u003Cspan class=\"n\"\u003Estate\u003C\u002Fspan\u003E \u003Cspan class=\"o\"\u003E&amp;\u003C\u002Fspan\u003E \u003Cspan class=\"n\"\u003Egoal_mask\u003C\u002Fspan\u003E\u003Cspan class=\"p\"\u003E)\u003C\u002Fspan\u003E \u003Cspan class=\"o\"\u003E!=\u003C\u002Fspan\u003E \u003Cspan class=\"mi\"\u003E0\u003C\u002Fspan\u003E\u003Cspan class=\"p\"\u003E)\u003C\u002Fspan\u003E \u003Cspan class=\"p\"\u003E{\u003C\u002Fspan\u003E\n    \u003Cspan class=\"c1\"\u003E\u002F\u002F success\u003C\u002Fspan\u003E\n    \u003Cspan class=\"n\"\u003Ewould_spin_again\u003C\u002Fspan\u003E \u003Cspan class=\"o\"\u003E=\u003C\u002Fspan\u003E \u003Cspan class=\"nb\"\u003Etrue\u003C\u002Fspan\u003E\u003Cspan class=\"p\"\u003E;\u003C\u002Fspan\u003E\n    \u003Cspan class=\"k\"\u003Ebreak\u003C\u002Fspan\u003E\u003Cspan class=\"p\"\u003E;\u003C\u002Fspan\u003E\n  \u003Cspan class=\"p\"\u003E}\u003C\u002Fspan\u003E\n\n  \u003Cspan class=\"k\"\u003Eauto\u003C\u002Fspan\u003E \u003Cspan class=\"n\"\u003Enow\u003C\u002Fspan\u003E \u003Cspan class=\"o\"\u003E=\u003C\u002Fspan\u003E \u003Cspan class=\"n\"\u003Estd\u003C\u002Fspan\u003E\u003Cspan class=\"o\"\u003E::\u003C\u002Fspan\u003E\u003Cspan class=\"n\"\u003Echrono\u003C\u002Fspan\u003E\u003Cspan class=\"o\"\u003E::\u003C\u002Fspan\u003E\u003Cspan class=\"n\"\u003Esteady_clock\u003C\u002Fspan\u003E\u003Cspan class=\"o\"\u003E::\u003C\u002Fspan\u003E\u003Cspan class=\"n\"\u003Enow\u003C\u002Fspan\u003E\u003Cspan class=\"p\"\u003E();\u003C\u002Fspan\u003E\n  \u003Cspan class=\"k\"\u003Eif\u003C\u002Fspan\u003E \u003Cspan class=\"p\"\u003E(\u003C\u002Fspan\u003E\u003Cspan class=\"n\"\u003Enow\u003C\u002Fspan\u003E \u003Cspan class=\"o\"\u003E==\u003C\u002Fspan\u003E \u003Cspan class=\"n\"\u003Eiter_begin\u003C\u002Fspan\u003E \u003Cspan class=\"o\"\u003E||\u003C\u002Fspan\u003E\n      \u003Cspan class=\"n\"\u003Enow\u003C\u002Fspan\u003E \u003Cspan class=\"o\"\u003E-\u003C\u002Fspan\u003E \u003Cspan class=\"n\"\u003Eiter_begin\u003C\u002Fspan\u003E \u003Cspan class=\"o\"\u003E&gt;=\u003C\u002Fspan\u003E \u003Cspan class=\"n\"\u003Estd\u003C\u002Fspan\u003E\u003Cspan class=\"o\"\u003E::\u003C\u002Fspan\u003E\u003Cspan class=\"n\"\u003Echrono\u003C\u002Fspan\u003E\u003Cspan class=\"o\"\u003E::\u003C\u002Fspan\u003E\u003Cspan class=\"n\"\u003Emicroseconds\u003C\u002Fspan\u003E\u003Cspan class=\"p\"\u003E(\u003C\u002Fspan\u003E\u003Cspan class=\"n\"\u003Eslow_yield_usec_\u003C\u002Fspan\u003E\u003Cspan class=\"p\"\u003E))\u003C\u002Fspan\u003E \u003Cspan class=\"p\"\u003E{\u003C\u002Fspan\u003E\n    \u003Cspan class=\"c1\"\u003E\u002F\u002F conservatively count it as a slow yield if our clock isn't\u003C\u002Fspan\u003E\n    \u003Cspan class=\"c1\"\u003E\u002F\u002F accurate enough to measure the yield duration\u003C\u002Fspan\u003E\n    \u003Cspan class=\"o\"\u003E++\u003C\u002Fspan\u003E\u003Cspan class=\"n\"\u003Eslow_yield_count\u003C\u002Fspan\u003E\u003Cspan class=\"p\"\u003E;\u003C\u002Fspan\u003E\n    \u003Cspan class=\"k\"\u003Eif\u003C\u002Fspan\u003E \u003Cspan class=\"p\"\u003E(\u003C\u002Fspan\u003E\u003Cspan class=\"n\"\u003Eslow_yield_count\u003C\u002Fspan\u003E \u003Cspan class=\"o\"\u003E&gt;=\u003C\u002Fspan\u003E \u003Cspan class=\"n\"\u003EkMaxSlowYieldsWhileSpinning\u003C\u002Fspan\u003E\u003Cspan class=\"p\"\u003E)\u003C\u002Fspan\u003E \u003Cspan class=\"p\"\u003E{\u003C\u002Fspan\u003E\n      \u003Cspan class=\"c1\"\u003E\u002F\u002F Not just one ivcsw, but several.  Immediately update ctx\u003C\u002Fspan\u003E\n      \u003Cspan class=\"c1\"\u003E\u002F\u002F and fall back to blocking\u003C\u002Fspan\u003E\n      \u003Cspan class=\"n\"\u003Eupdate_ctx\u003C\u002Fspan\u003E \u003Cspan class=\"o\"\u003E=\u003C\u002Fspan\u003E \u003Cspan class=\"nb\"\u003Etrue\u003C\u002Fspan\u003E\u003Cspan class=\"p\"\u003E;\u003C\u002Fspan\u003E\n      \u003Cspan class=\"k\"\u003Ebreak\u003C\u002Fspan\u003E\u003Cspan class=\"p\"\u003E;\u003C\u002Fspan\u003E\n    \u003Cspan class=\"p\"\u003E}\u003C\u002Fspan\u003E\n  \u003Cspan class=\"p\"\u003E}\u003C\u002Fspan\u003E\n  \u003Cspan class=\"n\"\u003Eiter_begin\u003C\u002Fspan\u003E \u003Cspan class=\"o\"\u003E=\u003C\u002Fspan\u003E \u003Cspan class=\"n\"\u003Enow\u003C\u002Fspan\u003E\u003Cspan class=\"p\"\u003E;\u003C\u002Fspan\u003E\n\u003Cspan class=\"p\"\u003E}\u003C\u002Fspan\u003E\n\u003C\u002Fcode\u003E\u003C\u002Fpre\u003E\u003C\u002Fdiv\u003E\u003Cp\u003E和Loop一样，还是循环判断state条件是否满足，满足则跳出循环，不满足则std::this_thread::yield()来主动让出时间片，这里的循环不是无止境的，最多持续max_yield_usec_us（需要用enable_write_thread_adaptive_yield=true来打开，打开后默认是100us）。这么做是可取的，因为yield并不一定会发生Context Switches，如果线程数小于CPU的core数, 也就是每个core上只有一个线程的时候，是不会发生Context Switches，花费差不多不到1us。不同于Loop每次固定循环200次，Short-Wait循环的上限是100us，这100us使用CPU的高占用(involuntary context switches)来换取rocksdb可能的高吞吐，如果很不幸每次100us后state还没有满足条件而进去最后的Long-Wait，那么这100us做了很多无谓的Context Switches，消耗了CPU。有没有什么办法来动态判断在Short-Wait中是否需要break出循环直接进行Long-Wait呢？rocksdb是通过yield的持续时长来做的调整，如果yield前后间隔大于3us，并且累计3次，则认为yield已经慢到足够可以通过直接Long-Wait来等待而不用进行无谓的yield。\u003C\u002Fp\u003E\u003Cp\u003E另外，进不进行Short-Wait其实也是有条件的，如下：\u003C\u002Fp\u003E\u003Cdiv class=\"highlight\"\u003E\u003Cpre\u003E\u003Ccode class=\"language-text\"\u003E\u003Cspan\u003E\u003C\u002Fspan\u003Eif (max_yield_usec_ &gt; 0) {\n  update_ctx = Random::GetTLSInstance()-&gt;OneIn(256);\n\n  if (update_ctx || ctx-&gt;value.load(std::memory_order_relaxed) &gt;= 0) {\n    ......\n  }\n  ......\n}\n\u003C\u002Fcode\u003E\u003C\u002Fpre\u003E\u003C\u002Fdiv\u003E\u003Cp\u003E首先max_yield_usec_大于0，其次update_ctx等于true（1\u002F256的概率）或者ctx-&gt;value大于0；ctx-&gt;value就是这个动态的开关，如果在Short-Wait中成功等到state条件满足，则增加value，如果Short-Wait没有成功等到条件满足而最终还是靠Long-Wait来等待，则减少这个value，然后通过它是否大于0来决定下次是否需要进行Short-Wait，可以看到，如果Short-Wait大量命中，则value一定会远大于0，每次都进行Short-Wait。value的更新策略如下：\u003C\u002Fp\u003E\u003Cdiv class=\"highlight\"\u003E\u003Cpre\u003E\u003Ccode class=\"language-text\"\u003E\u003Cspan\u003E\u003C\u002Fspan\u003Eif (update_ctx) {\n  auto v = ctx-&gt;value.load(std::memory_order_relaxed);\n  \u002F\u002F fixed point exponential decay with decay constant 1\u002F1024, with +1\n  \u002F\u002F and -1 scaled to avoid overflow for int32_t\n  v = v + (v \u002F 1024) + (would_spin_again ? 1 : -1) * 16384;\n  ctx-&gt;value.store(v, std::memory_order_relaxed);\n}\n\u003C\u002Fcode\u003E\u003C\u002Fpre\u003E\u003C\u002Fdiv\u003E\u003Ch2\u003E3. Long-Wait\u003C\u002Fh2\u003E\u003Cp\u003E很不幸，前两步的尝试都没有等到条件满足，只能通过代价最高的std::condition_variable::wait()来做的，这里就和leveldb的逻辑一样了，不过就在这里rocksdb还是做了优化：\u003C\u002Fp\u003E\u003Cdiv class=\"highlight\"\u003E\u003Cpre\u003E\u003Ccode class=\"language-text\"\u003E\u003Cspan\u003E\u003C\u002Fspan\u003Euint8_t WriteThread::BlockingAwaitState(Writer* w, uint8_t goal_mask) {\n  \u002F\u002F We're going to block.  Lazily create the mutex.  We guarantee\n  \u002F\u002F propagation of this construction to the waker via the\n  \u002F\u002F STATE_LOCKED_WAITING state.  The waker won't try to touch the mutex\n  \u002F\u002F or the condvar unless they CAS away the STATE_LOCKED_WAITING that\n  \u002F\u002F we install below.\n  w-&gt;CreateMutex();\n  ......\n}\n\u003C\u002Fcode\u003E\u003C\u002Fpre\u003E\u003C\u002Fdiv\u003E\u003Cp\u003E直到需要进行std::condition_variable::wait()的时候，才创建Writer的std::condition_variable变量。还是可以看出rocksdb对于single-writer的写入流程做了尽可能极致的优化来最大程度上提高性能。\u003C\u002Fp\u003E\u003Ch2\u003E\u003Cb\u003E总结\u003C\u002Fb\u003E\u003C\u002Fh2\u003E\u003Col\u003E\u003Cli\u003Eleveldb的一条pthread_cond_wait被rocksdb扩展出这么多的步骤及策略，目的还是为了尽可能的优化性能。的确，基础组件或者服务写的好不好直接决定着上层应用的性能，对于可能存在的瓶颈一定要吃透直到最优。\u003C\u002Fli\u003E\u003Cli\u003Erocksdb默认打开Short-Wait的（enable_write_thread_adaptive_yield = true）max_yield_usec_默认是100us，可以通过配置项write_thread_slow_yield_usec来调整，增大它就是靠消耗更多CPU（Short-Wait持续时间越长）来提高rocksdb的吞吐。另外slow_yield_usec_默认是3us，可以通过配置项write_thread_slow_yield_usec来调整，增大它则会导致slow_yield_usec_门槛变高，减少Short-Wait半路break出去直接进行Long-Wait的概率，同样是用CPU来换吞吐。\u003C\u002Fli\u003E\u003C\u002Fol\u003E",
+                        "state": "published",
+                        "sourceUrl": "",
+                        "pageCommentsCount": 0,
+                        "canComment": true,
+                        "snapshotUrl": "",
+                        "slug": 30717524,
+                        "publishedTime": "2017-11-03T18:39:11+08:00",
+                        "url": "\u002Fp\u002F30717524",
+                        "title": "【rocksdb源码分析】写优化之JoinBatchGroup",
+                        "summary": "N次阅读rocksdb和leveldb源码后，我对它们的简答粗暴概括理解如下：跟leveldb学习LSM-Tree及C++（C98）实践 跟rocksdb学习存储引擎的实现rocksdb在leveldb的基础上做了大量（非常大）的优化，更适合在生产环境使用，我们自己的开源项目（pika、zeppelin）等…",
+                        "reviewingCommentsCount": 0,
+                        "meta": {
+                            "previous": null,
+                            "next": null
+                        },
+                        "commentPermission": "review",
+                        "commentsCount": 8,
+                        "likesCount": 45
+                    },
+                    "next": {
+                        "isTitleImageFullScreen": false,
+                        "rating": "none",
+                        "titleImage": "https:\u002F\u002Fpic1.zhimg.com\u002F50\u002Fv2-67117619a9c6070bb6d86e72b0d3d764_xl.jpg",
+                        "links": {
+                            "comments": "\u002Fapi\u002Fposts\u002F30807728\u002Fcomments"
+                        },
+                        "topics": [
+                            {
+                                "url": "https:\u002F\u002Fwww.zhihu.com\u002Ftopic\u002F20087597",
+                                "id": "20087597",
+                                "name": "RocksDB"
+                            },
+                            {
+                                "url": "https:\u002F\u002Fwww.zhihu.com\u002Ftopic\u002F19558640",
+                                "id": "19558640",
+                                "name": "分布式存储"
+                            },
+                            {
+                                "url": "https:\u002F\u002Fwww.zhihu.com\u002Ftopic\u002F19601705",
+                                "id": "19601705",
+                                "name": "C \u002F C++"
+                            }
+                        ],
+                        "adminClosedComment": false,
+                        "href": "\u002Fapi\u002Fposts\u002F30807728",
+                        "excerptTitle": "",
+                        "author": {
+                            "bio": "码农",
+                            "isFollowing": false,
+                            "hash": "d27b07e8e8f05483fd3fd7bbf7537fa4",
+                            "uid": 599729229546655700,
+                            "isOrg": false,
+                            "slug": "kernelmaker",
+                            "isFollowed": false,
+                            "description": "",
+                            "name": "宋昭",
+                            "profileUrl": "https:\u002F\u002Fwww.zhihu.com\u002Fpeople\u002Fkernelmaker",
+                            "avatar": {
+                                "id": "v2-2c49b918d0d0c70933897b2dc221b0e0",
+                                "template": "https:\u002F\u002Fpic1.zhimg.com\u002F50\u002F{id}_{size}.jpg"
+                            },
+                            "isOrgWhiteList": false,
+                            "isBanned": false
+                        },
+                        "column": {
+                            "slug": "360infra",
+                            "name": "360 基础架构组"
+                        },
+                        "content": "\u003Cp\u003Erocksdb v5.4.5版本引入一个PinnableSlice，来替换之前Get接口的出参，具体如下：\u003C\u002Fp\u003E\u003Cp\u003E老版本：\u003C\u002Fp\u003E\u003Cdiv class=\"highlight\"\u003E\u003Cpre\u003E\u003Ccode class=\"language-cpp\"\u003E\u003Cspan\u003E\u003C\u002Fspan\u003E\u003Cspan class=\"n\"\u003EStatus\u003C\u002Fspan\u003E \u003Cspan class=\"n\"\u003EGet\u003C\u002Fspan\u003E\u003Cspan class=\"p\"\u003E(\u003C\u002Fspan\u003E\u003Cspan class=\"k\"\u003Econst\u003C\u002Fspan\u003E \u003Cspan class=\"n\"\u003EReadOptions\u003C\u002Fspan\u003E\u003Cspan class=\"o\"\u003E&amp;\u003C\u002Fspan\u003E \u003Cspan class=\"n\"\u003Eoptions\u003C\u002Fspan\u003E\u003Cspan class=\"p\"\u003E,\u003C\u002Fspan\u003E\n                     \u003Cspan class=\"n\"\u003EColumnFamilyHandle\u003C\u002Fspan\u003E\u003Cspan class=\"o\"\u003E*\u003C\u002Fspan\u003E \u003Cspan class=\"n\"\u003Ecolumn_family\u003C\u002Fspan\u003E\u003Cspan class=\"p\"\u003E,\u003C\u002Fspan\u003E \u003Cspan class=\"k\"\u003Econst\u003C\u002Fspan\u003E \u003Cspan class=\"n\"\u003ESlice\u003C\u002Fspan\u003E\u003Cspan class=\"o\"\u003E&amp;\u003C\u002Fspan\u003E \u003Cspan class=\"n\"\u003Ekey\u003C\u002Fspan\u003E\u003Cspan class=\"p\"\u003E,\u003C\u002Fspan\u003E\n                     \u003Cspan class=\"n\"\u003Estd\u003C\u002Fspan\u003E\u003Cspan class=\"o\"\u003E::\u003C\u002Fspan\u003E\u003Cspan class=\"n\"\u003Estring\u003C\u002Fspan\u003E\u003Cspan class=\"o\"\u003E*\u003C\u002Fspan\u003E \u003Cspan class=\"n\"\u003Evalue\u003C\u002Fspan\u003E\u003Cspan class=\"p\"\u003E)\u003C\u002Fspan\u003E\n\u003C\u002Fcode\u003E\u003C\u002Fpre\u003E\u003C\u002Fdiv\u003E\u003Cp\u003E新版本：\u003C\u002Fp\u003E\u003Cdiv class=\"highlight\"\u003E\u003Cpre\u003E\u003Ccode class=\"language-text\"\u003E\u003Cspan\u003E\u003C\u002Fspan\u003Evirtual Status Get(const ReadOptions&amp; options,\n                     ColumnFamilyHandle* column_family, const Slice&amp; key,\n                     PinnableSlice* value)\n\u003C\u002Fcode\u003E\u003C\u002Fpre\u003E\u003C\u002Fdiv\u003E\u003Cp\u003E按其说法，使用PinnableSlice* 替换std::string* 来减少一次内存拷贝，提高读性能。我感觉挺有意思，所以看了代码，了解了下具体实现，写篇文章总结下。\u003C\u002Fp\u003E\u003Ch2\u003E\u003Cb\u003E1. 读流程\u003C\u002Fb\u003E\u003C\u002Fh2\u003E\u003Cp\u003Erocksdb读流程这里就不展开讲了，这里仅给出一次从sst文件Get的简单过程：\u003C\u002Fp\u003E\u003Cul\u003E\u003Cli\u003EDBImpl::Get()\u003C\u002Fli\u003E\u003Cli\u003EVersionSet::Get()\u003C\u002Fli\u003E\u003Cli\u003ETableCache::Get()\u003C\u002Fli\u003E\u003Cli\u003EBlockBasedTableReader::Get()\u003C\u002Fli\u003E\u003C\u002Ful\u003E\u003Cp\u003E大的模块调用就这4步，前三步与今天主题无关，暂且忽略，最后一步BlockBasedTableReader::Get()就是从某个sst文件中读取，也是实际发生文件io，数据交换的地方，所以这一步需要详细看下，主要下面2步：\u003C\u002Fp\u003E\u003Cul\u003E\u003Cli\u003E通过IndexBlock拿到要查找的key所在的DataBlock的Handle\u003C\u002Fli\u003E\u003Cli\u003E通过这个Handle拿到对应的DataBlock，建立对应的BlockIter，seek，然后开始遍历查找\u003C\u002Fli\u003E\u003C\u002Ful\u003E\u003Cp\u003E第2步关键代码如下：\u003C\u002Fp\u003E\u003Cdiv class=\"highlight\"\u003E\u003Cpre\u003E\u003Ccode class=\"language-text\"\u003E\u003Cspan\u003E\u003C\u002Fspan\u003E\u002F\u002F DataBlock的iterator\nBlockIter biter;\n\u002F\u002F 通过Handle，即iiter-&gt;value()来构造biter\nNewDataBlockIterator(rep_, read_options, iiter-&gt;value(), &amp;biter);\n\n... ...\n\n\u002F\u002F seek，然后遍历查找\nfor (biter.Seek(key); biter.Valid(); biter.Next()) {\n  ParsedInternalKey parsed_key;\n  if (!ParseInternalKey(biter.key(), &amp;parsed_key)) {\n    s = Status::Corruption(Slice());\n  }\n  \n  \u002F\u002F ---看这里，重点---\n  \u002F\u002F 数据交换的地方，如果找到，会把biter指向的数据交换到\n  \u002F\u002F get_context的PinnableSlice\n  if (!get_context-&gt;SaveValue(parsed_key, biter.value(), &amp;biter)) {\n    done = true;\n    break;\n  }\n}\ns = biter.status();\n\n... ...\n  \nif (done) {\n  \u002F\u002F Avoid the extra Next which is expensive in two-level indexes\n  break;\n}\n... ...\n\u003C\u002Fcode\u003E\u003C\u002Fpre\u003E\u003C\u002Fdiv\u003E\u003Cp\u003E我们知道，真正数据是存在Block对象中，所以上面代码主要完成2件事，\u003C\u002Fp\u003E\u003Col\u003E\u003Cli\u003E数据生成：NewDataBlockIterator()\u003C\u002Fli\u003E\u003Col\u003E\u003Cli\u003E先在block_cache中查找，看有没有缓存需要的Block对象的指针，如果有就直接返回Block对象地址\u003C\u002Fli\u003E\u003Cli\u003E如果block_cache中没找到，则发生磁盘io，在sst文件中读取对应Block的内容，构造Block对象并将其地址缓存在block_cache中\u003C\u002Fli\u003E\u003C\u002Fol\u003E\u003Cli\u003E数据交换：get_context-&gt;SaveValue()\u003C\u002Fli\u003E\u003Col\u003E\u003Cli\u003E老版本会在这里把Block中的数据拷贝到用户传进来的std::string*中\u003C\u002Fli\u003E\u003Cli\u003E新版本则是直接将Block中的数据地址赋给用户传进来的PinnableSlice*中，也就是说用户最终拿到的值的地址其实就在这个Block中。\u003C\u002Fli\u003E\u003C\u002Fol\u003E\u003C\u002Fol\u003E\u003Cp\u003E这样就减少了一次数据拷贝，不过有一个疑问：用户拿到的值就是Block中的值，而这个Block是缓存在block_cache中的，如果后来这个Block被淘汰，那岂不是用户拿到的值被清除了？如果用引用计数来避免这个问题，那么具体怎么做呢？这个问题就是本篇的重点。\u003C\u002Fp\u003E\u003Ch2\u003E\u003Cb\u003E2. Cleannable\u003C\u002Fb\u003E\u003C\u002Fh2\u003E\u003Cp\u003E如果定义这么一个基类Cleannable，它有如下特性：\u003C\u002Fp\u003E\u003Col\u003E\u003Cli\u003E可以通过RegisterCleanup方法来注册CleanupFunction，这个CleanupFunction用户自定义，一般是完成Cleannable对象申请的外部资源释放，例如释放某块之前申请的内存\u003C\u002Fli\u003E\u003Cli\u003E当其对象被析构时，会依次调用所有之前注册的CleanupFunction，来完成外部资源释放\u003C\u002Fli\u003E\u003Cli\u003E两个Cleannable子类对象A，B，可以通过A-&gt;DelegateCleanupsTo(B)，将A注册的所有CleanupFunction委托给B，这样A在析构时就不会释放它申请的外部资源，而是等到B析构时才释放\u003C\u002Fli\u003E\u003C\u002Fol\u003E\u003Cp\u003E有了这么一个基类，如果将BlockIter和PinnableSlice都继承它，那么就可以BlockIter资源释放的任务委托给PinnableSlice，使得BlockIter内的资源生命周期延续至用户的PinnableSlice\u003C\u002Fp\u003E\u003Cp\u003E原理就这个，下面详细掰扯掰扯他们之间委托了什么，直接上图：\u003C\u002Fp\u003E\u003Cimg src=\"https:\u002F\u002Fpic3.zhimg.com\u002Fv2-48739e53602175c42694c5d756e4b112_b.jpg\" data-caption=\"\" data-rawwidth=\"972\" data-rawheight=\"695\" class=\"origin_image zh-lightbox-thumb\" width=\"972\" data-original=\"https:\u002F\u002Fpic3.zhimg.com\u002Fv2-48739e53602175c42694c5d756e4b112_r.jpg\"\u003E\u003Cp\u003EBlockIter肯定有其对应的Block，而Block肯定有其在block_cache中对应的Handle，所以在构造好BlockIter后，往往会执行RegisterCleanup来注册一个CleanupFunction，保证BlockIter析构时，会Release掉block_cache中的对应的Handle，而Handle被Release则会回调对应Block的deleter来最终释放Block。\u003C\u002Fp\u003E\u003Cp\u003EBlockIter的生命周期很短，使用其在Block中查找指定key之后，他的作用域变结束。使用老版本不会有问题，因为在BlockIter作用域内，肯定会将其value拷贝给用户传入的std::string*中，而新版没有这次拷贝，用户拿到的数据地址实际就是在Block中，所以一定要想办法延长Block的作用域，不能像上面说的那样BlockIter析构便释放。\u003C\u002Fp\u003E\u003Cp\u003E所以新版本在BlockIter退出作用域之前，会通过DelegateCleanupsTo将其CleanupFunction委托给用户传入的PinnableSlice，这样便延长了对应block_cache中Handle的生命周期，从而延长了对应的Block的生命周期，直到用户的PinnableSlice退出作用域时，才最终回调之前BlockIter委托的CleanupFunction来进行最终的资源释放。\u003C\u002Fp\u003E\u003Cp\u003E\u003Cb\u003E\u003Ci\u003E注：这里为了简化问题，假设block_cache的Handle在Release时一定会释放其指向的Block，实际这里会有引用计数，直到为0是才会真正释放Block\u003C\u002Fi\u003E\u003C\u002Fb\u003E\u003C\u002Fp\u003E\u003Ch2\u003E\u003Cb\u003E3. 总结\u003C\u002Fb\u003E\u003C\u002Fh2\u003E\u003Cp\u003ECleannable基类还是挺好玩的，适合需要延长某个对象内部资源生命周期的场景。\u003C\u002Fp\u003E",
+                        "state": "published",
+                        "sourceUrl": "",
+                        "pageCommentsCount": 0,
+                        "canComment": true,
+                        "snapshotUrl": "",
+                        "slug": 30807728,
+                        "publishedTime": "2017-11-07T11:44:56+08:00",
+                        "url": "\u002Fp\u002F30807728",
+                        "title": "【rocksdb源码分析】使用PinnableSlice减少Get时的内存拷贝",
+                        "summary": "rocksdb v5.4.5版本引入一个PinnableSlice，来替换之前Get接口的出参，具体如下：老版本：Status Get(const ReadOptions&amp; options,\n ColumnFamilyHandle* column_family, const Slice&amp; key,\n std::string* value)新版本：virtual Status Get(const ReadOpti…",
+                        "reviewingCommentsCount": 0,
+                        "meta": {
+                            "previous": null,
+                            "next": null
+                        },
+                        "commentPermission": "review",
+                        "commentsCount": 0,
+                        "likesCount": 12
+                    }
+                },
+                "annotationDetail": null,
+                "commentsCount": 5,
+                "likesCount": 47,
+                "FULLINFO": true
+            }
+        },
+        "User": {
+            "xziar": {
+                "isFollowed": false,
+                "name": "XZiar",
+                "headline": "小小透明",
+                "avatarUrl": "https:\u002F\u002Fpic1.zhimg.com\u002F50\u002Fdb798e828014f5b25ba29178b43e0540_s.jpg",
+                "isFollowing": false,
+                "type": "people",
+                "slug": "xziar",
+                "bio": "介绍给谁看？",
+                "lastCommentPermission": "anyone",
+                "hash": "f76cc47c7de7323b10ece9d850514561",
+                "uid": 59016952676352,
+                "links": {
+                    "columns": "\u002Fapi\u002Fme\u002Fcolumns"
+                },
+                "isOrg": false,
+                "pendingColumns": [],
+                "activated": true,
+                "allowShareDaily": false,
+                "isBindPhone": true,
+                "mutedInfo": {
+                    "muted": false,
+                    "reason": null,
+                    "leftBanDay": -1,
+                    "banReason": "OTHER"
+                },
+                "description": "小小透明",
+                "muted": false,
+                "profileUrl": "https:\u002F\u002Fwww.zhihu.com\u002Fpeople\u002Fxziar",
+                "avatar": {
+                    "id": "db798e828014f5b25ba29178b43e0540",
+                    "template": "https:\u002F\u002Fpic1.zhimg.com\u002F50\u002F{id}_{size}.jpg"
+                },
+                "isOrgWhiteList": false,
+                "isBanned": false,
+                "email": "czktc2007@gmail.com",
+                "columns": []
+            },
+            "meng-fei-76": {
+                "isFollowed": false,
+                "name": "CatKang",
+                "headline": "王康 https:\u002F\u002Fgithub.com\u002FCatKang",
+                "avatarUrl": "https:\u002F\u002Fpic2.zhimg.com\u002F50\u002Fv2-feb75a52cd66b9dd728c57c5e66a5319_s.jpg",
+                "isFollowing": false,
+                "type": "people",
+                "slug": "meng-fei-76",
+                "bio": "Distribute the future",
+                "hash": "dd42c8e2fcde8a82098cc0363cca02fb",
+                "uid": 26848557793280,
+                "isOrg": false,
+                "description": "王康 https:\u002F\u002Fgithub.com\u002FCatKang",
+                "badge": {
+                    "identity": null,
+                    "bestAnswerer": null
+                },
+                "profileUrl": "https:\u002F\u002Fwww.zhihu.com\u002Fpeople\u002Fmeng-fei-76",
+                "avatar": {
+                    "id": "v2-feb75a52cd66b9dd728c57c5e66a5319",
+                    "template": "https:\u002F\u002Fpic2.zhimg.com\u002F50\u002F{id}_{size}.jpg"
+                },
+                "isOrgWhiteList": false,
+                "isBanned": false
+            }
+        },
+        "Comment": {},
+        "favlists": {}
+    },
+    "me": {
+        "slug": "xziar"
+    },
+    "global": {
+        "experimentFeatures": {
+            "ge3": "ge3_9",
+            "ge2": "ge2_1",
+            "nwebStickySidebar": "sticky",
+            "androidPassThroughPush": "all",
+            "newMore": "new",
+            "recomTopicAc": "topic_ac_with_no_reason",
+            "liveReviewBuyBar": "live_review_buy_bar_2",
+            "liveStore": "ls_a3_b1_c2_f1",
+            "recomAnswerRec": "recom_answer_by_question",
+            "searchHybridTabs": "without-tabs",
+            "isOffice": "false",
+            "searchAppLimit": "limit_10",
+            "homeUi2": "default",
+            "answerRelatedReadings": "qa_recommend_with_ads_and_article",
+            "remixOneKeyPlayButton": "footerButton",
+            "recommendEbookAc": "ebook_old",
+            "asdfadsf": "asdfdsaf",
+            "recommendQuestion": "rec_question_old",
+            "recommendLiveGuessLike": "live_guess_es",
+            "marketTab": "market_tab_old",
+            "qrcodeLogin": "qrcode",
+            "isShowUnicomFreeEntry": "unicom_free_entry_off",
+            "newMobileColumnAppheader": "new_header",
+            "recommendLiveDetail": "live_detail_word2vec_v2",
+            "zcmLighting": "zcm",
+            "favAct": "default",
+            "appStoreRateDialog": "commit_new_answer",
+            "mobileQaPageProxyHeifetz": "m_qa_page_nweb",
+            "iOSNewestVersion": "4.2.0",
+            "default": "None",
+            "wechatShareModal": "wechat_share_modal_show",
+            "qaStickySidebar": "sticky_sidebar",
+            "androidProfilePanel": "panel_a",
+            "nwebWriteAnswer": "default"
+        }
+    },
+    "columns": {
+        "next": {},
+        "360infra": {
+            "following": false,
+            "canManage": false,
+            "href": "\u002Fapi\u002Fcolumns\u002F360infra",
+            "name": "360 基础架构组",
+            "creator": {
+                "slug": "chenzongzhi"
+            },
+            "url": "\u002F360infra",
+            "slug": "360infra",
+            "avatar": {
+                "id": "v2-35680ef9f139541a91ca3330d05820ab",
+                "template": "https:\u002F\u002Fpic4.zhimg.com\u002F{id}_{size}.jpg"
+            }
+        }
+    },
+    "columnPosts": {},
+    "columnSettings": {
+        "colomnAuthor": [],
+        "uploadAvatarDetails": "",
+        "contributeRequests": [],
+        "contributeRequestsTotalCount": 0,
+        "inviteAuthor": ""
+    },
+    "postComments": {},
+    "postReviewComments": {
+        "comments": [],
+        "newComments": [],
+        "hasMore": true
+    },
+    "favlistsByUser": {},
+    "favlistRelations": {},
+    "promotions": {},
+    "draft": {
+        "titleImage": "",
+        "titleImageSize": {},
+        "isTitleImageFullScreen": false,
+        "canTitleImageFullScreen": false,
+        "title": "",
+        "titleImageUploading": false,
+        "error": "",
+        "content": "",
+        "draftLoading": false,
+        "globalLoading": false,
+        "pendingVideo": {
+            "resource": null,
+            "error": null
+        }
+    },
+    "drafts": {
+        "draftsList": [],
+        "next": {}
+    },
+    "config": {
+        "userNotBindPhoneTipString": {}
+    },
+    "recommendPosts": {
+        "articleRecommendations": [],
+        "columnRecommendations": []
+    },
+    "env": {
+        "edition": {},
+        "isAppView": false,
+        "appViewConfig": {
+            "content_padding_top": 128,
+            "content_padding_bottom": 56,
+            "content_padding_left": 16,
+            "content_padding_right": 16,
+            "title_font_size": 22,
+            "body_font_size": 16,
+            "is_dark_theme": false,
+            "can_auto_load_image": true,
+            "app_info": "OS=iOS"
+        },
+        "isApp": false
+    },
+    "message": {
+        "newCount": 0
+    },
+    "pushNotification": {
+        "newCount": 0
+    }
+}
+

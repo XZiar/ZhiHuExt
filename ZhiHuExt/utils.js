@@ -66,6 +66,8 @@ String.prototype.removeSuffix = function (count)
     return this.substring(0, this.length - del);
 }
 
+Math.minmax = (num, min, max) => Math.max(Math.min(num, max), min);
+
 Date.prototype.Format = function (fmt)
 { //author: meizz
     const o =

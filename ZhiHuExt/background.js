@@ -239,6 +239,7 @@ function countDB()
     db.transaction("r", db.tables, () =>
     {
         const ret = { ban: BAN_UID.size };
+        /**@type {Promise<void>[]}*/
         const tabpmss = db.tables.map(async table =>
         {
             ret[table.name] = await table.count();
@@ -267,6 +268,18 @@ function exportDB()
             .catch(e => pms.reject(e));
     });
     return pms;
+}
+/**
+ * @param {string} table
+ * @param {number} from
+ * @param {number} count
+ * @returns {Promise<string> | Promise<string[]>}
+ */
+async function partDB(table, from, count)
+{
+    if (table == null)
+        return db.tables.mapToProp("name");
+    return JSON.stringify(await db[table].offset(from).limit(count).toArray());
 }
 
 /**
@@ -330,6 +343,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) =>
                 DownloadMan.download(blob, fname);
             }).fail(error => console.warn("exportDB fail", error));
             break;
+        case "partdb":
+            partDB(request.target, request.from, request.count)
+                .then(part => sendResponse(part), err => console.warn(err));
+            return true;
         case "insert":
             if (request.target === "batch")
                 Object.entries(request.data).forEach(([key, val]) =>

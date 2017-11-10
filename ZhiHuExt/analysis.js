@@ -214,7 +214,7 @@ class Analyse
         const [anszan, artzan] = await Promise.all(zanquerys);
         console.log("get [" + anszan.length + "] answer records", "get [" + artzan.length + "] article records");
 
-        const minrepeat = Math.floor((Math.sqrt(uids.length) / 2 + 3) / 2);
+        const minrepeat = Math.minmax(Math.floor(Math.log(Math.max(uids.length - 80, 1))), 1, 9);
         const ansbag = new SimpleBag(anszan.mapToProp("to")).above(minrepeat), artbag = new SimpleBag(artzan.mapToProp("to")).above(minrepeat);
         const ansset = ansbag.toSet(), artset = artbag.toSet();
         console.log("reduce to [" + ansset.size + "] answer records", "get [" + artset.size + "] article records");

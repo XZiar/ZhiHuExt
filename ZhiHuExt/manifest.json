@@ -21,6 +21,7 @@
   "permissions":
   [
     "*://www.zhihu.com/",
+    "*://127.0.0.1:*/",
     "tabs",
     "storage",
     "downloads"

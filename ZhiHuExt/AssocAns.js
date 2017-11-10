@@ -6,9 +6,9 @@
      * @param {string} method
      * @param {any[]} args
      */
-    function payload(method, ...args)
+    async function doAnalyse(method, ...args)
     {
-        return { "action": "analyse", "method": method, "argument": args };
+        return await SendMsgAsync({ "action": "analyse", "method": method, "argument": args });
     }
 
     /**
@@ -19,7 +19,7 @@
     async function getVoters(ids, target)
     {
         const method = target === "Answer" ? "getAnsVoters" : "getArtVoters";
-        const voters = await SendMsgAsync(payload(method, ids));
+        const voters = await doAnalyse(method, ids);
         console.log("voters", voters);
         return voters;
     }
@@ -36,10 +36,10 @@
         /**@type {string[]}*/
         const uids = uid0.toArray();
 
-        const anss = await SendMsgAsync(payload("getAnswerByVoter", voters, "desc"));
+        const anss = await doAnalyse("getAnswerByVoter", voters, "desc");
         console.log(anss);
-        const ansMap = await SendMsgAsync(payload("getPropMapOfIds", "answers", anss.mapToProp("key"), "question"));
-        const qstMap = await SendMsgAsync(payload("getDetailMapOfIds", "questions", Object.values(ansMap), "id"));
+        const ansMap = await doAnalyse("getPropMapOfIds", "answers", anss.mapToProp("key"), "question");
+        const qstMap = await doAnalyse("getDetailMapOfIds", "questions", Object.values(ansMap), "id");
         const data = [];
         for (let idx = 0; idx < anss.length; ++idx)
         {
@@ -100,7 +100,7 @@
         else if (qs.authorid != null)
         {
             const athid = qs.authorid.split("*");
-            ansid = (await SendMsgAsync(payload("getAnswerByVoter", athid))).mapToProp("key");
+            ansid = (await doAnalyse("getAnswerByVoter", athid)).mapToProp("key");
         }
         else
             return;

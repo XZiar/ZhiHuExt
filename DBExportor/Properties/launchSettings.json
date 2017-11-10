@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "DBExportor": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Production"
+      }
+    }
+  }
+}

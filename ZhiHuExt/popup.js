@@ -23,6 +23,10 @@ $(document).on("click", "button#export", () =>
 {
     chrome.runtime.sendMessage({ action: "export" });
 });
+$(document).on("click", "button#send", () =>
+{
+    chrome.runtime.sendMessage({ action: "openpage", isBackground: false, target: "Export.html" });
+});
 $(document).ready(() =>
 {
     //rfs();
