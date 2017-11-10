@@ -103,75 +103,7 @@ class ContentBase
         return rawhtml.substring(rawhtml.indexOf('<div id="data"'), rawhtml.lastIndexOf('</div><script'));
     }
 
-    /**
-     * @param {Entities} data
-     */
-    static parseEntities(data)
-    {
-        /**@type {Activity[]}*/
-        const acts = Object.values(data.activities);
-        const users = [], zans = [], zanarts = [], answers = [], quests = [], articles = [], topics = [];
-        for (let i = 0; i < acts.length; ++i)
-        {
-            const act = acts[i];
-            const user = User.fromRawJson(act.actor);
-            if (user)
-            {
-                if (act.verb === "ANSWER_VOTE_UP" && act.target.schema === "answer")
-                    zans.push(new Zan(user, act.target.id, act.createdTime));
-                else if (act.verb === "MEMBER_VOTEUP_ARTICLE" && act.target.schema === "article")
-                    zanarts.push(new Zan(user, act.target.id, act.createdTime));
-            }
-            
-        }
-        /**@type {AnswerType[]}*/
-        const anss = Object.values(data.answers);
-        for (let i = 0; i < anss.length; ++i)
-        {
-            const ans = anss[i];
-            const qst = ans.question;
-            const ansUser = User.fromRawJson(ans.author);
-            if (!_CUR_USER || ansUser.id != _CUR_USER.id)
-                users.push(ansUser);
-            if (qst.author)
-                users.push(User.fromRawJson(qst.author));
-
-            const quest = new Question(qst.id, qst.title/*, qst.boundTopicIds*/);
-            quests.push(quest);
-            const answer = new Answer(ans.id, quest.id, ansUser.id, ans.voteupCount, ans.excerptNew);
-            answers.push(answer);
-        }
-        /**@type {QuestType[]}*/
-        const qsts = Object.values(data.questions);
-        for (let i = 0; i < qsts.length; ++i)
-        {
-            const qst = qsts[i];
-            if (qst.author)
-                users.push(User.fromRawJson(qst.author));
-            const quest = new Question(qst.id, qst.title);
-            quests.push(quest);
-        }
-        /**@type {ArticleType[]}*/
-        const arts = Object.values(data.articles);
-        for (let i = 0; i < arts.length; ++i)
-        {
-            const art = arts[i];
-            const artUser = User.fromRawJson(art.author);
-            if (!_CUR_USER || artUser.id != _CUR_USER.id)
-                users.push(artUser);
-
-            const article = new Article(art.id, art.title, artUser.id, art.excerptNew, art.voteupCount);
-            articles.push(article);
-        }
-        /**@type {TopicType[]}*/
-        const tps = Object.values(data.topics);
-        for (let i = 0; i < tps.length; ++i)
-        {
-            const tp = tps[i];
-            topics.push(new Topic(tp.id, tp.name));
-        }
-        return { users: users, zans: zans, zanarts: zanarts, topics: topics, answers: answers, questions: quests, articles: articles };
-    }
+    
 
     /**
      * fetch answer's voter
@@ -233,7 +165,7 @@ class ContentBase
                 pms.resolve(user);
                 //console.log(theuser);
                 {
-                    const entities = ContentBase.parseEntities(state.entities);
+                    const entities = APIParser.parseEntities(state.entities);
                     ContentBase._report("batch", entities);
                     console.log(entities);
                 }
@@ -258,3 +190,58 @@ class ContentBase
         return pms;
     }
 }
+
+!function ()
+{
+    function FetchHook()
+    {
+        const getLoc = href =>
+        {
+            const anchor = document.createElement("a");
+            anchor.href = href;
+            return anchor;
+        };
+        const oldfetch = fetch;
+        /**
+         * @param {RequestInfo} req
+         * @param {RequestInit} [init]
+         * @returns {Promise<Response>}
+         */
+        async function newfetch(req, init)
+        {
+            const pms = oldfetch(req, init);
+            const anchor = getLoc(req);
+            if (anchor.hostname === "www.zhihu.com" && anchor.pathname.startsWith("/api/v4/members/"))
+            {//capture
+                const subpath = anchor.pathname.split("/").slice(4);
+                const resp = await pms;
+                if (resp.ok)
+                {
+                    const cloned = resp.clone();
+                    chrome.runtime.sendMessage("jideeibijhnbkncjmdhhceajjjkfabje",
+                        { url: req, target: subpath[1] || "empty", data: await cloned.text() });
+                }
+                return resp;
+            }
+            else
+            {
+                return pms;
+            }
+        }
+        fetch = newfetch;
+
+        console.log("hooked");
+    }
+    
+
+    const inj = document.createElement("script");
+    inj.innerHTML = `(${FetchHook})();`;
+    document.documentElement.appendChild(inj);
+}()
+
+
+
+
+
+
+

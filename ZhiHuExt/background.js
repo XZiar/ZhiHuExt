@@ -16,42 +16,10 @@ async function toPropMap(keyProp, valProp)
 Dexie.addons.push(x => x.Collection.prototype.toNameMap = toNameMap);
 Dexie.addons.push(x => x.Collection.prototype.toPropMap = toPropMap);
 
-const db2 = new Dexie("ZhihuDB");
+
 const db = new Dexie("ZhihuDB2");
 let BAN_UID = new Set();
 let SPAM_UID = new Set();
-
-db2.version(1).stores(
-    {
-        spams: "id,type",
-        users: "id,status,anscnt,followcnt",
-        follows: "[from+to],from,to",
-        zans: "[from+to],from,to",
-        answers: "id,author,question",
-        questions: "id",
-        topics: "id"
-    });
-db2.version(2).stores(
-    {
-        spams: "id,type",
-        users: "id,status,anscnt,followcnt",
-        follows: "[from+to],from,to",
-        zans: "[from+to],from,to,time",
-        zanarts: "[from+to],from,to,time",
-        answers: "id,author,question",
-        questions: "id",
-        articles: "id,author",
-        topics: "id"
-    })
-    .upgrade(trans =>
-    {
-        console.log("begin update");
-        trans.zans.toCollection().modify(zan =>
-        {
-            if (zan.time == null)
-                zan.time = -1;
-        });
-    });
 
 db.version(1).stores(
     {
@@ -65,7 +33,6 @@ db.version(1).stores(
         articles: "id,author",
         topics: "id"
     });
-//db2.open();
 db.spams.hook("creating", (primKey, obj, trans) =>
 {
     if (obj.type === "member")
@@ -191,28 +158,42 @@ function fetchTopic(tid)
 /**
  * @param {string} target
  * @param {object | object[]} data
+ * @param {boolean} [notify]
  */
-function insertDB(target, data)
+function insertDB(target, data, notify)
 {
+    if (target === "batch")
+    {
+        let sum = 0;
+        Object.entries(data).forEach(([key, val]) => sum += insertDB(key, val));
+        if (notify)
+            putBadge(sum);
+        return sum;
+    }
+
     const table = db[target];
     if (!table)
-        return false;
-    //console.log(target, data);
+    {
+        console.warn("unknown table", target, data);
+        return 0;
+    }
     let pms;
+    let count = 0;
     if (!(data instanceof Array))
     {
         pms = table.put(data);
-        putBadge(1);
     }
     else if (data.length > 0)
     {
+        count = data.length;
         pms = table.bulkPut(data);
-        putBadge(data.length);
     }
     else
-        return false;
+        return 0;
     pms.catch(error => console.warn("[insert] failed!", error, target, data));
-    return true;
+    if (notify)
+        putBadge(count);
+    return count;
 }
 /**
  * @param {string} target
@@ -309,6 +290,8 @@ async function checkUserSimilarity(target, id)
     return result;
 }
 
+const MONITOR_TABS = new Set();
+
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) =>
 {
     switch (request.action)
@@ -348,16 +331,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) =>
                 .then(part => sendResponse(part), err => console.warn(err));
             return true;
         case "insert":
-            if (request.target === "batch")
-                Object.entries(request.data).forEach(([key, val]) =>
-                {
-                    if (!val || (val instanceof Array && val.length === 0))
-                        return;
-                    if (!insertDB(key, val))
-                        console.warn("insert wrong", key, val);
-                })
-            else if (!insertDB(request.target, request.data))
-                console.warn("insert wrong", request);
+            insertDB(request.target, request.data, true);
             break;
         case "update":
             if (!updateDB(request.target, request.data))
@@ -378,28 +352,97 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) =>
                 else
                     break;
             } return true;
+        //case "regist":
+        //    {
+        //        MONITOR_TABS.add(sender.tab.id);
+        //        const debuggee = { tabId: sender.tab.id };
+        //        chrome.debugger.attach(debuggee, "1.2", () =>
+        //        {
+        //            console.log("debugger attach:", "tab: ", sender.tab.id, "url: ", request.url);
+        //            chrome.debugger.sendCommand(debuggee, "Network.enable");
+        //        });
+        //    }
         default:
             console.log("unknown action:" + request.action, request);
             break;
     }
 });
-/*
-const DOWNLOAD_QUEUE = {};
-chrome.downloads.onChanged.addListener((delta) =>
+chrome.runtime.onMessageExternal.addListener((request, sender, sendResponse) =>
 {
-    if (!DOWNLOAD_QUEUE.hasOwnProperty(delta.id))
-        return;
-    if (delta.state && delta.state.current === "complete")
+    const data = JSON.parse(request.data);
+    switch (request.target)
     {
-        const url = DOWNLOAD_QUEUE[delta.id];
-        delete DOWNLOAD_QUEUE[delta.id];
-        URL.revokeObjectURL(url);
-        console.log("finish download [" + delta.id + "], revoke:", url);
+        case "activities":
+            {
+                const res = APIParser.parsePureActivities(data.data);
+                insertDB("batch", res, true);
+                console.log(request.target, res);
+            } break;
+        case "answers":
+        case "questions":
+            {
+                const res = APIParser.SumType();
+                data.data.forEach(act => APIParser.parseByType(res, act));
+                insertDB("batch", res, true);
+                console.log(request.target, res);
+            } break;
+        case "relations":
+            {
+                const users = data.data.map(User.fromRawJson);
+                insertDB("users", users, true);
+                console.log(request.target, users);
+            } break;
+        case "empty":
+            {
+                const user = User.fromRawJson(data);
+                insertDB("users", user, true);
+                console.log("user", user);
+            } break;
+        case "publications":
+            break;
+        default:
+            console.log("unknown-extern", request.target, request.url, data);
     }
-})
-*/
+});
+
 $(document).ready(function ()
 {
     new Clipboard('#copyBtn');
 });
+
+
+//const REQ_IDS = new Set();
+//chrome.debugger.onEvent.addListener((source, method, params) =>
+//{
+//    if (!MONITOR_TABS.has(source.tabId))
+//        return;
+//    switch (method)
+//    {
+//        case "Network.requestWillBeSent":
+//            {
+//                /**@type {string}*/
+//                const url = params.documentURL;
+//                const reqId = params.requestId;
+//                if (url.includes("www.zhihu.com/api/v4/members/"))
+//                {
+//                    console.info("request", reqId, url);
+//                    REQ_IDS.add(reqId);
+//                }
+//            }
+//        case "Network.loadingFinished":
+//            {
+//                const reqId = params.requestId;
+//                console.info("loaded", reqId, REQ_IDS.has(reqId));
+//                REQ_IDS.delete(reqId);
+//            } break;
+//        default:
+//            console.info(method, params);
+//    }
+//});
+
+//chrome.webRequest.onCompleted.addListener(details =>
+//{
+
+//}, { urls: ["*://www.zhihu.com/api/v4/members/*/activities*"] });
+
 

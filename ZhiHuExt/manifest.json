@@ -26,6 +26,14 @@
     "storage",
     "downloads"
   ],
+  "externally_connectable":
+  {
+    "matches":
+    [
+      "*://www.zhihu.com/*",
+      "*://zhuanlan.zhihu.com/p/*"
+    ]
+  },
   "background":
   {
     "page": "background.html"

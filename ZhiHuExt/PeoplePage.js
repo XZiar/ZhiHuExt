@@ -50,7 +50,7 @@
             }
         }
         {
-            const entities = ContentBase.parseEntities(state.entities);
+            const entities = APIParser.parseEntities(state.entities);
             ContentBase._report("batch", entities);
             console.log(entities);
         }

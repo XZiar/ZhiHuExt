@@ -327,6 +327,18 @@ class SimpleBag
 }
 
 
+/**
+ * @template T
+ * @param {...T} arg
+ */
+function _any(...arg)
+{
+    for (let i = 0; i < arg.length; ++i)
+        if (arg[i] != null)
+            return arg[i];
+    return arg[arg.length - 1];
+}
+
 /**@description parse query string to key-value object
  * @param {string} [qurl] URL's query string
  * @returns {{[x:string]: string}} key-value object

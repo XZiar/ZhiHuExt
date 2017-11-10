@@ -9,17 +9,18 @@
      * @param {number} count
      * @returns {Promise<string>}
      */
-    async function fetchdb(table, offset, count)
+    function fetchdb(table, offset, count)
     {
-        return await SendMsgAsync({ action: "partdb", target: table, from: offset, count: count });
+        return SendMsgAsync({ action: "partdb", target: table, from: offset, count: count });
     }
     /**
      * @param {string} table
      * @param {string} data
      * @param {string} addr
      * @param {string} id
+     * @returns {Promise<void>}
      */
-    async function sendpart(table, data, addr, id)
+    function sendpart(table, data, addr, id)
     {
         const pms = $.Deferred();
         $.ajax(addr + "/accept?table=" + table,
@@ -124,7 +125,7 @@
         try
         {
             await send(needtables, partlen, addr, (tab, cnt) => { thisbtn.textContent = tab + "@" + cnt; });
-            thisbtn.textContent = "¿ªÊ¼·¢ËÍ";
+            thisbtn.textContent = "å¼€å§‹å‘é€";
             thisbtn.style.backgroundColor = "rgb(0,224,32)";
         }
         catch (e)
