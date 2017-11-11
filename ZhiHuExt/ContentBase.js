@@ -1,28 +1,8 @@
 "use strict"
 
-function _getAnsVoters(ansId, offset)
-{
-    const pms = $.Deferred();
-    ContentBase._get("https://www.zhihu.com/api/v4/answers/" + ansId + "/voters?include=data[*].answer_count&limit=20&offset=" + offset)
-        .done((data, status, xhr) =>
-        {
-            const users = data.data.map(User.fromAnsVoterJson);
-            pms.resolve({ "users": users, "end": data.paging.is_end, "start": data.paging.is_start, "total": data.paging.totals });
-        })
-        .fail((data, status, xhr) =>
-        {
-            if (data.responseJSON)
-                console.warn("getAnsVoter fail:" + xhr.status, data.responseJSON.error.message);
-            else
-                console.warn("getAnsVoter fail:" + xhr.status);
-            pms.reject();
-        })
-    return pms;
-}
-
+const fetchVoters = Symbol("_fetchAnsVoters");
 let _CUR_USER;
 let _CUR_ANSWER;
-const fetchVoters = Symbol("_fetchAnsVoters");
 class ContentBase
 {
     static get CUR_USER() { return _CUR_USER; }
@@ -38,10 +18,10 @@ class ContentBase
     static [fetchVoters](ansId, offset)
     {
         const pms = $.Deferred();
-        ContentBase._get("https://www.zhihu.com/api/v4/answers/" + ansId + "/voters?include=data[*].answer_count&limit=20&offset=" + offset)
+        ContentBase._get(`https://www.zhihu.com/api/v4/answers/${ansId}/voters?include=data[*].answer_count,articles_count,follower_count&limit=20&offset=${offset}`)
             .done((data, status, xhr) =>
             {
-                const users = data.data.map(User.fromAnsVoterJson);
+                const users = data.data.map(User.fromRawJson);
                 pms.resolve({ "users": users, "end": data.paging.is_end, "start": data.paging.is_start, "total": data.paging.totals });
             })
             .fail((data, status, xhr) =>
@@ -97,13 +77,11 @@ class ContentBase
             return;
         chrome.runtime.sendMessage({ action: "update", target: target, data: { key: key, obj: objs, updator: updator } });
     }
-
+    /**@param {string} rawhtml*/
     static keepOnlyDataDiv(rawhtml)
     {
         return rawhtml.substring(rawhtml.indexOf('<div id="data"'), rawhtml.lastIndexOf('</div><script'));
     }
-
-    
 
     /**
      * fetch answer's voter
@@ -176,7 +154,7 @@ class ContentBase
 
     /**
      * @param {"users"} target
-     * @param {string | string[] | User | User[]} data
+     * @param {string | string[]} data
      * @returns {{banned: Set<string>, spamed: Set<string>}}
      */
     static checkSpam(target, data)
@@ -185,8 +163,11 @@ class ContentBase
         if (!data || (data instanceof Array && data.length === 0))
             pms.resolve({ banned: new Set(), spamed: new Set() });
         else
-            chrome.runtime.sendMessage({ action: "chkspam", target: target, data: data instanceof Array ? data : [data] },
+        {
+            const users = (data instanceof Array ? data : [data]);
+            chrome.runtime.sendMessage({ action: "chkspam", target: target, data: users },
                 ret => pms.resolve({ banned: new Set(ret.banned), spamed: new Set(ret.spamed) }));
+        }
         return pms;
     }
 }
@@ -195,41 +176,59 @@ class ContentBase
 {
     function FetchHook()
     {
-        const getLoc = href =>
+        /**
+         * @param {string} req
+         * @param {string} api
+         * @param {Promise<Response>} pms
+         * @param {string} target
+         * @param {{}} extra
+         */
+        async function sendData(req, pms, api, target, extra)
         {
-            const anchor = document.createElement("a");
-            anchor.href = href;
-            return anchor;
-        };
+            const resp = await pms;
+            if (resp.ok)
+            {
+                try
+                {
+                    const cloned = resp.clone();
+                    chrome.runtime.sendMessage("jideeibijhnbkncjmdhhceajjjkfabje",
+                        { url: req, api: api, target: target, data: await cloned.text(), extra: extra });
+                }
+                catch (e)
+                {
+                    console.warn(e);
+                }
+            }
+            return resp;
+        }
         const oldfetch = fetch;
         /**
-         * @param {RequestInfo} req
+         * @param {string} req
          * @param {RequestInit} [init]
          * @returns {Promise<Response>}
          */
         async function newfetch(req, init)
         {
-            const pms = oldfetch(req, init);
-            const anchor = getLoc(req);
-            if (anchor.hostname === "www.zhihu.com" && anchor.pathname.startsWith("/api/v4/members/"))
-            {//capture
-                const subpath = anchor.pathname.split("/").slice(4);
-                const resp = await pms;
-                if (resp.ok)
-                {
-                    const cloned = resp.clone();
-                    chrome.runtime.sendMessage("jideeibijhnbkncjmdhhceajjjkfabje",
-                        { url: req, target: subpath[1] || "empty", data: await cloned.text() });
-                }
-                return resp;
+            if (!req.includes("www.zhihu.com/api/v4/"))
+                return oldfetch(req, init);
+            const pms = oldfetch(req.replace("limit=10", "limit=20"), init);//accelerate
+            const apiparts = req.substring(req.indexOf("/api/v4/") + 8, req.indexOf("?")).split("/");
+            if (apiparts[0] === "members")//capture [members, {id}, ...]
+            {
+                return sendData(req, pms, "members", apiparts[2] || "empty");
+            }
+            else if (apiparts[0] === "answers" && apiparts[2] === "voters")
+            {
+                return sendData(req, pms, "answers", "voters", { id: apiparts[1] });
+            }
+            else if (apiparts[0] === "articles" && apiparts[2] === "likers")
+            {
+                return sendData(req, pms, "articles", "voters", { id: apiparts[1] });
             }
             else
-            {
                 return pms;
-            }
         }
         fetch = newfetch;
-
         console.log("hooked");
     }
     

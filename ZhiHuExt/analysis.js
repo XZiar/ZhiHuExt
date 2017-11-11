@@ -1,9 +1,12 @@
 "use strict"
 
 /**
- * @param {BagArray} bagArray
- * @param {{}} detailMap
+ * @template T
+ * @template R
+ * @param {{key: T, count: number}[]} bagArray
+ * @param {{[x: T]: R}} detailMap
  * @param {string} newProp
+ * @returns {{[newProp: string]:T|R, count: number}[]}
  */
 function tryReplaceDetailed(bagArray, detailMap, newProp)
 {
@@ -13,6 +16,7 @@ function tryReplaceDetailed(bagArray, detailMap, newProp)
         const item = bagArray[i];
         const res = { "count": item.count };
         const key = item.key;
+        /**@type {R}*/
         const detail = detailMap[key];
         res[newProp] = (detail === undefined ? key : detail);
         ret.push(res);
@@ -214,6 +218,10 @@ class Analyse
         const [anszan, artzan] = await Promise.all(zanquerys);
         console.log("get [" + anszan.length + "] answer records", "get [" + artzan.length + "] article records");
 
+        const voterbag0 = new SimpleBag(anszan.mapToProp("from"));
+        voterbag0.adds(artzan.mapToProp("from"));
+
+        /**@type {number} ln(1~(zan-80)) => [1,9]*/
         const minrepeat = Math.minmax(Math.floor(Math.log(Math.max(uids.length - 80, 1))), 1, 9);
         const ansbag = new SimpleBag(anszan.mapToProp("to")).above(minrepeat), artbag = new SimpleBag(artzan.mapToProp("to")).above(minrepeat);
         const ansset = ansbag.toSet(), artset = artbag.toSet();
@@ -233,6 +241,8 @@ class Analyse
                 voterbag.add(zan.from);
         }
 
-        return { data: voterbag.toArray(), limit: minrepeat };
+        /**@type {[string, [number, number]][]}*/
+        const result = voterbag.map((uid, count) => [uid, [count, voterbag0.count(uid)]]);
+        return { data: result, limit: minrepeat };
     }
 }

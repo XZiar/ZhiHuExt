@@ -181,6 +181,7 @@ function insertDB(target, data, notify)
     let count = 0;
     if (!(data instanceof Array))
     {
+        count = 1;
         pms = table.put(data);
     }
     else if (data.length > 0)
@@ -264,13 +265,12 @@ async function partDB(table, from, count)
 }
 
 /**
- * @param {string[] | User[]} waitUsers
+ * @param {string[]} waitUsers
  */
 async function checkSpamUser(waitUsers)
 {
     const ret = { banned: [], spamed: [] };
-    const ids = (typeof(waitUsers[0]) === "string") ? waitUsers : waitUsers.mapToProp("id");
-    const [bannedPart, unbannedPart] = splitInOutSide(ids, BAN_UID);
+    const [bannedPart, unbannedPart] = splitInOutSide(waitUsers, BAN_UID);
     ret.banned = bannedPart;
 
     const [spamedIds, dummy] = await splitInOutSide(unbannedPart, SPAM_UID);
@@ -306,11 +306,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) =>
         case "chkspam":
             {
                 checkSpamUser(request.data)
-                    .then(result =>
-                    {
-                        console.log("check-spam result:", result);
-                        sendResponse(result);
-                    });
+                    .then(result => sendResponse(result));
             } return true;
         case "chksim":
             {
@@ -352,22 +348,14 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) =>
                 else
                     break;
             } return true;
-        //case "regist":
-        //    {
-        //        MONITOR_TABS.add(sender.tab.id);
-        //        const debuggee = { tabId: sender.tab.id };
-        //        chrome.debugger.attach(debuggee, "1.2", () =>
-        //        {
-        //            console.log("debugger attach:", "tab: ", sender.tab.id, "url: ", request.url);
-        //            chrome.debugger.sendCommand(debuggee, "Network.enable");
-        //        });
-        //    }
         default:
             console.log("unknown action:" + request.action, request);
             break;
     }
 });
-chrome.runtime.onMessageExternal.addListener((request, sender, sendResponse) =>
+chrome.runtime.onMessageExternal.addListener(
+    /**@param {{ url: string, api: string, target: string, data: string, extra: {} }} request*/
+    (request, sender, sendResponse) =>
 {
     const data = JSON.parse(request.data);
     switch (request.target)
@@ -381,7 +369,7 @@ chrome.runtime.onMessageExternal.addListener((request, sender, sendResponse) =>
         case "answers":
         case "questions":
             {
-                const res = APIParser.SumType();
+                const res = APIParser.batch;
                 data.data.forEach(act => APIParser.parseByType(res, act));
                 insertDB("batch", res, true);
                 console.log(request.target, res);
@@ -391,6 +379,16 @@ chrome.runtime.onMessageExternal.addListener((request, sender, sendResponse) =>
                 const users = data.data.map(User.fromRawJson);
                 insertDB("users", users, true);
                 console.log(request.target, users);
+            } break;
+        case "voters":
+            {
+                const res = { zans: [], zanarts: [], users: data.data.map(User.fromRawJson) };
+                if (request.api === "answers")
+                    res.zans = res.users.map(u => new Zan(u, request.extra.id));
+                else if (request.api === "articles")
+                    res.zanarts = res.users.map(u => new Zan(u, request.extra.id));
+                insertDB("batch", res, true);
+                console.log(request.target, res);
             } break;
         case "empty":
             {
@@ -409,40 +407,5 @@ $(document).ready(function ()
 {
     new Clipboard('#copyBtn');
 });
-
-
-//const REQ_IDS = new Set();
-//chrome.debugger.onEvent.addListener((source, method, params) =>
-//{
-//    if (!MONITOR_TABS.has(source.tabId))
-//        return;
-//    switch (method)
-//    {
-//        case "Network.requestWillBeSent":
-//            {
-//                /**@type {string}*/
-//                const url = params.documentURL;
-//                const reqId = params.requestId;
-//                if (url.includes("www.zhihu.com/api/v4/members/"))
-//                {
-//                    console.info("request", reqId, url);
-//                    REQ_IDS.add(reqId);
-//                }
-//            }
-//        case "Network.loadingFinished":
-//            {
-//                const reqId = params.requestId;
-//                console.info("loaded", reqId, REQ_IDS.has(reqId));
-//                REQ_IDS.delete(reqId);
-//            } break;
-//        default:
-//            console.info(method, params);
-//    }
-//});
-
-//chrome.webRequest.onCompleted.addListener(details =>
-//{
-
-//}, { urls: ["*://www.zhihu.com/api/v4/members/*/activities*"] });
 
 

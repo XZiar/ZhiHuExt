@@ -294,6 +294,27 @@ class SimpleBag
                 themap.set(ele[0], ele[1]);
         return newbag;
     }
+    /**
+     * @template T
+     * @param {function(T, number):void} callback
+     */
+    forEach(callback)
+    {
+        for (const ele of this._map)
+            callback(ele[0], ele[1]);
+    }
+    /**
+     * @template T
+     * @template R
+     * @param {function(T, number):R} callback
+     */
+    map(callback)
+    {
+        const ret = [];
+        for (const ele of this._map)
+            ret.push(callback(ele[0], ele[1]));
+        return ret;
+    }
     toMap() { return new Map(this._map); }
     toSet() { return new Set(this._map.keys()); }
     /**
@@ -405,7 +426,7 @@ function formColor(red, green, blue)
 }
 /**
  * @param {string[]} extraClass
- * @param {string} text
+ * @param {string} [text]
  */
 function createButton(extraClass, text)
 {
@@ -413,7 +434,8 @@ function createButton(extraClass, text)
     btn.addClass("Button");
     btn.addClasses(...extraClass);
     btn.setAttribute("type", "button");
-    btn.innerText = text;
+    if(text)
+        btn.innerText = text;
     return btn;
 }
 /**
@@ -425,7 +447,7 @@ function createButton(extraClass, text)
 function createSVG(width, height, viewbox, ...path)
 {
     const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-    const pathstrs = path.map(x => "<path d='" + x + "'></path>").join("");
+    const pathstrs = path.map(x => `<path d="${x}"></path>`).join("");
     svg.innerHTML = pathstrs;
     svg.setAttribute("width", width);
     svg.setAttribute("height", height);

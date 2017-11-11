@@ -28,31 +28,6 @@ let CUR_QUESTION = null;
 let CUR_ANSWER = null;
 let CUR_ARTICLE = null;
 
-function parseUser(node)
-{
-    const nameLink = $(".UserItem-name .UserLink-link", node).get(0);
-    if (!nameLink)
-        return null;
-    const user = new User();
-    user.id = nameLink.getAttribute("href").split("/").pop();
-    user.name = nameLink.innerText;
-    user.head = node.querySelector("img.UserLink-avatar").src
-        .split("/").pop()
-        .replace(/_[\w]*.[\w]*$/, "");
-    const info = node.querySelectorAll("span.ContentItem-statusItem")
-        .forEach(span =>
-        {
-            const txt = span.innerText;
-            const num = parseInt(txt);
-            if (txt.includes("回答"))
-                user.anscnt = num;
-            else if (txt.includes("文章"))
-                user.articlecnt = num;
-            else if (txt.includes("关注"))
-                user.followcnt = num;
-        });
-    return user;
-}
 
 /**
  * @param {HTMLDivElement} node -div of ".AnswerItem"
@@ -83,31 +58,21 @@ async function addSpamVoterBtns(voterNodes)
     for (let idx = 0; idx < voterNodes.length; ++idx)
     {
         const node = voterNodes[idx];
-        const user = parseUser(node);
-        if (!user)
+        const nameLink = $(".UserItem-name .UserLink-link", node).get(0);
+        if (!nameLink)
             continue;
-        users.push(user);
+        const uid = nameLink.getAttribute("href").split("/").pop();
+        users.push(uid);
 
         const btn = createButton(["Btn-ReportSpam", "Button--primary"], "广告");
-        btn.dataset.id = user.id;
+        btn.dataset.id = uid;
         btn.dataset.type = "member";
         $(".ContentItem-extra", node).prepend(btn);
         btnMap.push(btn);
 
         const btn2 = createButton(["Btn-CheckStatus", "Button--primary"], "检测");
-        btn2.dataset.id = user.id;
+        btn2.dataset.id = uid;
         $(".ContentItem-extra", node).prepend(btn2);
-    }
-    ContentBase._report("users", users);
-    if (CUR_ANSWER)
-    {
-        const zans = users.map(user => new Zan(user, CUR_ANSWER));
-        ContentBase._report("zans", zans);
-    }
-    else if (CUR_ARTICLE)
-    {
-        const zans = users.map(user => new Zan(user, CUR_ARTICLE));
-        ContentBase._report("zanarts", zans);
     }
     const result = await ContentBase.checkSpam("users", users);
     for (let idx = 0; idx < btnMap.length; ++idx)
@@ -252,19 +217,21 @@ $("body").on("click", "button.Btn-ReportSpam", function ()
 });
 $("body").on("click", "button.Btn-CheckSpam", async function (e)
 {
-    const btn = $(this)[0];
+    /**@type {HTMLButtonElement}*/
+    const btn = e.target;
     const ansId = btn.dataset.id;
-    const voters = await ContentBase.fetchAnsVoters(ansId, 6000, e.ctrlKey ? "old" : "new",
+    const voters = await ContentBase.fetchAnsVoters(ansId, 10000, e.ctrlKey ? "old" : "new",
         (cur, all) => btn.innerText = "=>" + cur + "/" + all);
 
+    ContentBase._report("batch", { users: voters, zans: voters.map(user => new Zan(user, ansId)) });
     btn.addClass("Button--blue");
-    ContentBase._report("users", voters);
-    const zans = voters.map(user => new Zan(user, ansId));
-    ContentBase._report("zans", zans);
 
-    const result = await ContentBase.checkSpam("users", voters);
+    const result = await ContentBase.checkSpam("users", voters.mapToProp("id"));
     const total = voters.length, ban = result.banned.size, spm = result.spamed.size;
     btn.innerText = "(" + ban + "+" + spm + ")/" + total;
+    btn.style.fontSize = "smaller";
+    btn.style.fontWeight = "bold";
+
     if (total === 0)
         return;
 
@@ -375,18 +342,18 @@ $("body").on("click", "button.Btn-Similarity", function ()
         btns.push(extraArea.children[1]);
     });
     console.log("detect " + btns.length + " user");
-    chrome.runtime.sendMessage(msg, result =>
+    chrome.runtime.sendMessage(msg, /**@param {[string, [number, number]][]} result*/(result) =>
     {
         console.log(result);
-        /**@type {Map<string, number>}*/
-        const retmap = SimpleBag.backToMap(result.data);
-        const maxcnt = Math.max(...retmap.values());
-        thisbtn.textContent = maxcnt + "(" + result.limit + ")";
+        const simmap = new Map(result.data);
+        let maxcnt = 0;
         btns.forEach(btn =>
         {
-            const count = retmap.get(btn.dataset.id) || 0;
-            btn.textContent = count + "/" + maxcnt;
+            const counts = simmap.get(btn.dataset.id);
+            btn.textContent = counts[0] + "/" + counts[1];
+            maxcnt = Math.max(maxcnt, counts[0]);
         });
+        thisbtn.textContent = maxcnt + "(" + result.limit + ")";
     });
 });
 $("body").on("click", "button.Modal-closeButton", function ()
@@ -438,9 +405,9 @@ $(document).ready(() =>
     );
     svg.addClasses("ZiExt--Main");
     svg.setAttribute("fill", "#ff7000");
-    svg.title = "回答池";
-    const btn = createButton(["CornerButton", "Button--plain"], "");
-    btn.dataset.tooltip = "回答池";
+    svg.title = "知乎疯牛病";
+    const btn = createButton(["CornerButton", "Button--plain"]);
+    btn.dataset.tooltip = "知乎疯牛病";
     btn.dataset.tooltipPosition = "left";
     btn.appendChild(svg);
     const btndiv = document.createElement("div");

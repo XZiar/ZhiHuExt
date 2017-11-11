@@ -17,9 +17,12 @@ class User
     static fromRawJson(theuser)
     {
         const user = new User();
-        user.id = _any(theuser.urlToken, theuser.url_token, "");//empty=>anomonyous
+        user.id = _any(theuser.urlToken, theuser.url_token, theuser.slug, "");//empty=>anomonyous
         user.name = theuser.name;
-        user.head = _any(theuser.avatarUrl, theuser.avatar_url).split("/").pop().replace(/_[\w]*.[\w]*$/, "");
+        if (theuser.avatar)
+            user.head = theuser.avatar.id;
+        else
+            user.head = _any(theuser.avatarUrl, theuser.avatar_url).split("/").pop().replace(/_[\w]*.[\w]*$/, "");
         user.anscnt = _any(theuser.answerCount, theuser.answer_count, -1);
         user.followcnt = _any(theuser.followerCount, theuser.follower_count, -1);
         user.articlecnt = _any(theuser.articlesCount, theuser.articles_count, -1);
@@ -33,27 +36,10 @@ class User
             else
                 user.status = "";
         }
-        return user;
-    }
-    static fromArticleJson(theuser)
-    {
-        const user = new User();
-        user.id = theuser.slug;;
-        user.name = theuser.name;
-        user.head = theuser.avatar.id;
-        if (theuser.answer_count)
-            user.anscnt = theuser.answer_count;
-        user.status = theuser.isBanned ? "sban" : "";
-        return user;
-    }
-    static fromAnsVoterJson(theuser)
-    {
-        const user = new User();
-        user.id = theuser.url_token;
-        user.name = theuser.name;
-        user.head = theuser.avatar_url.split("/").pop().replace(/_[\w]*.[\w]*$/, "");
-        if (theuser.answer_count)
-            user.anscnt = theuser.answer_count;
+        else if (theuser.isBanned)
+        {
+            user.status = "sban";
+        }
         return user;
     }
 }
@@ -227,16 +213,14 @@ class Zan
 
 class APIParser
 {
-    /**
-     * @returns {{ users: User[], zans: Zan[], zanarts: Zan[], topics: Topic[], answers: Answer[], questions: Question[], articles: Article[] }}
-     */
-    static SumType() { return { users: [], zans: [], zanarts: [], topics: [], answers: [], questions: [], articles: [] }; }
+    /**@type {{ users: User[], zans: Zan[], zanarts: Zan[], topics: Topic[], answers: Answer[], questions: Question[], articles: Article[] }}*/
+    static get batch() { return { users: [], zans: [], zanarts: [], topics: [], answers: [], questions: [], articles: [] }; }
     /**
      * @param {Entities} data
      */
     static parseEntities(data)
     {
-        const output = APIParser.SumType();
+        const output = APIParser.batch;
         /**@type {Activity[]}*/
         const acts = Object.values(data.activities);
         const users = [], zans = [], zanarts = [], answers = [], quests = [], articles = [], topics = [];
@@ -350,11 +334,14 @@ class APIParser
      */
     static parsePureActivities(acts)
     {
-        const output = APIParser.SumType();
+        const output = APIParser.batch;
         acts.forEach(act =>
         {
             switch (act.verb)
             {
+                case "TOPIC_FOLLOW":
+                    output.topics.push(new Topic(act.target.id, act.target.name));
+                    break;
                 case "QUESTION_FOLLOW":
                     APIParser.parseByType(output, act.target);
                     break;
