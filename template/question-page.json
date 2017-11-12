@@ -1,0 +1,691 @@
+{
+    "account": {
+        "challenge": [],
+        "errorStatus": false,
+        "isFetching": false,
+        "locakTicketStatus": false,
+        "message": ""
+    },
+    "active": {
+        "activeConfirmError": null,
+        "activeConfirmSucceeded": null,
+        "sendDigitsError": null
+    },
+    "answers": {
+        "copyrightApplicants": {},
+        "favlists": {},
+        "newAnswer": {},
+        "voters": {}
+    },
+    "articles": {
+        "voters": {}
+    },
+    "banner": {},
+    "captcha": {
+        "captchaBase64String": null,
+        "captchaNeeded": false,
+        "captchaValidated": false,
+        "captchaValidationMessage": null,
+        "loginCaptchaExpires": false
+    },
+    "comments": {
+        "collapsed": {},
+        "conversation": {},
+        "pagination": {},
+        "parent": {},
+        "reverse": {},
+        "reviewing": {}
+    },
+    "config": {
+        "alertTimeSpan": 3600,
+        "canWrite": false,
+        "isWindow": 1,
+        "tip": "应国家法规对于帐号实名的要求，进行下一步操作前，需要先完成手机绑定。"
+    },
+    "currentUser": "xziar",
+    "entities": {
+        "activities": {},
+        "answers": {
+            "256494562": {
+                "adminClosedComment": false,
+                "annotationAction": [],
+                "author": {
+                    "avatarUrl": "https://pic1.zhimg.com/50/da8e974dc_hd.jpg",
+                    "avatarUrlTemplate": "https://pic1.zhimg.com/50/da8e974dc_hd.jpg",
+                    "badge": [],
+                    "followerCount": 7,
+                    "gender": -1,
+                    "headline": "心理学者",
+                    "id": "df8374ae02ee090481facb2f7ceb2195",
+                    "isAdvertiser": false,
+                    "isOrg": false,
+                    "name": "Harrison",
+                    "type": "people",
+                    "url": "http://www.zhihu.com/api/v4/people/df8374ae02ee090481facb2f7ceb2195",
+                    "urlToken": "harrison-18-44",
+                    "userType": "people"
+                },
+                "canComment": {
+                    "reason": "",
+                    "status": true
+                },
+                "collapseReason": "",
+                "collapsedBy": "nobody",
+                "commentCount": 5,
+                "commentPermission": "all",
+                "content": "<p>吃鸡这类型的游戏难度不大，但是首先就是降落的时候必须去找武器，然后找到武器补给这些物品。</p><p>   找到安全区，你可以选择在安全区边缘慢慢往里探索也可首先到安全区中心埋伏，不要站在马路中央，尽量在树林中熟悉操作方式。</p><p>   你找到良好的装备以及好的躲避地点剩下的就是守株待兔了，当然如果你的操作实在不行你可以用官方的MuMu模拟器在电脑上玩也行，</p><p>其实吃鸡这样类型的游戏并不难，单兵作战与团队作战是两种方式，团队作战方式主要采取合作方式就是掩护以及互喷，我跟室友就是这么过来，一晚上整个寝室都没有安静过，乐趣也就在其中，吃到鸡吃不到鸡其实结果都不重要，重要的是在玩的过程中和所有人一起合作的乐趣。</p><noscript><img src=\"https://pic4.zhimg.com/50/v2-a1c5934f1acd33ce8b9584bfd3af9afb_hd.jpg\" data-caption=\"\" data-rawwidth=\"554\" data-rawheight=\"362\" class=\"origin_image zh-lightbox-thumb\" width=\"554\" data-original=\"https://pic4.zhimg.com/v2-a1c5934f1acd33ce8b9584bfd3af9afb_r.jpg\"></noscript><img src=\"data:image/svg xml;utf8,&lt;svg xmlns='http://www.w3.org/2000/svg' width='554' height='362'&gt;&lt;/svg&gt;\" data-caption=\"\" data-rawwidth=\"554\" data-rawheight=\"362\" class=\"origin_image zh-lightbox-thumb lazy\" width=\"554\" data-original=\"https://pic4.zhimg.com/v2-a1c5934f1acd33ce8b9584bfd3af9afb_r.jpg\" data-actualsrc=\"https://pic4.zhimg.com/50/v2-a1c5934f1acd33ce8b9584bfd3af9afb_hd.jpg\">",
+                "createdTime": 1510059166,
+                "editableContent": "",
+                "excerpt": "吃鸡这类型的游戏难度不大，但是首先就是降落的时候必须去找武器，然后找到武器补给这些物品。 找到安全区，你可以选择在安全区边缘慢慢往里探索也可首先到安全区中心埋伏，不要站在马路中央，尽量在树林中熟悉操作方式。 你找到良好的装备以及好的躲避地点…",
+                "extras": "",
+                "id": 256494562,
+                "isCollapsed": false,
+                "isCopyable": true,
+                "isNormal": true,
+                "isSticky": false,
+                "markInfos": [],
+                "question": {
+                    "created": 1510042246,
+                    "id": 67777088,
+                    "questionType": "normal",
+                    "title": "怎么才能玩好《终结者2：审判日》这样类型的吃鸡手游？",
+                    "type": "question",
+                    "updatedTime": 1510042246,
+                    "url": "http://www.zhihu.com/api/v4/questions/67777088"
+                },
+                "relationship": {
+                    "isAuthor": false,
+                    "isAuthorized": false,
+                    "isNothelp": false,
+                    "isThanked": false,
+                    "upvotedFollowees": [],
+                    "voting": 0
+                },
+                "reshipmentSettings": "allowed",
+                "rewardInfo": {
+                    "canOpenReward": false,
+                    "isRewardable": false,
+                    "rewardMemberCount": 0,
+                    "rewardTotalMoney": 0,
+                    "tagline": ""
+                },
+                "suggestEdit": {
+                    "reason": "",
+                    "status": false,
+                    "tip": "",
+                    "title": "",
+                    "unnormalDetails": {},
+                    "url": ""
+                },
+                "thumbnail": "https://pic4.zhimg.com/v2-a1c5934f1acd33ce8b9584bfd3af9afb_200x112.jpg",
+                "type": "answer",
+                "updatedTime": 1510059174,
+                "url": "http://www.zhihu.com/api/v4/answers/256494562",
+                "voteupCount": 213
+            },
+            "257541340": {
+                "adminClosedComment": false,
+                "annotationAction": [],
+                "author": {
+                    "avatarUrl": "https://pic2.zhimg.com/50/aadd7b895_hd.jpg",
+                    "avatarUrlTemplate": "https://pic2.zhimg.com/50/aadd7b895_hd.jpg",
+                    "badge": [],
+                    "followerCount": 0,
+                    "gender": 1,
+                    "headline": "",
+                    "id": "0",
+                    "isAdvertiser": false,
+                    "isOrg": false,
+                    "name": "匿名用户",
+                    "type": "people",
+                    "url": "http://www.zhihu.com/api/v4/people/0",
+                    "urlToken": "",
+                    "userType": "people"
+                },
+                "canComment": {
+                    "reason": "",
+                    "status": true
+                },
+                "collapseReason": "",
+                "collapsedBy": "nobody",
+                "commentCount": 8,
+                "commentPermission": "all",
+                "content": "<p>战术战略什么的就不说了，跟电脑端吃鸡差不多，个人比较喜欢沿圈推进。</p><p><br></p><p>分享一下今天单排零杀吃鸡的经历~</p><p>跳飞机去的出生那个岛，只有我一个人，所以很安全地搜刮了一身装备，然后准备游回大陆。</p><p>刚进水的时候卡了一下，游到对岸发现自己并没有起身... 对，就是保持着游泳的姿势在山坡上爬。</p><p>按跳按蹲按卧倒都没用，心想这破bug，这把要凉了，因为游泳的时候是没法开枪的...</p><p>我想回头去岛上等毒过来自杀开下一把，然后，神奇的事情发生了 </p><noscript><img src=\"https://pic4.zhimg.com/50/v2-a622ae2a93a488212da63b6bf3ba4853_hd.jpg\" data-caption=\"\" data-rawwidth=\"1334\" data-rawheight=\"750\" class=\"origin_image zh-lightbox-thumb\" width=\"1334\" data-original=\"https://pic4.zhimg.com/v2-a622ae2a93a488212da63b6bf3ba4853_r.jpg\"></noscript><img src=\"data:image/svg xml;utf8,&lt;svg xmlns='http://www.w3.org/2000/svg' width='1334' height='750'&gt;&lt;/svg&gt;\" data-caption=\"\" data-rawwidth=\"1334\" data-rawheight=\"750\" class=\"origin_image zh-lightbox-thumb lazy\" width=\"1334\" data-original=\"https://pic4.zhimg.com/v2-a622ae2a93a488212da63b6bf3ba4853_r.jpg\" data-actualsrc=\"https://pic4.zhimg.com/50/v2-a622ae2a93a488212da63b6bf3ba4853_hd.jpg\"><noscript><img src=\"https://pic3.zhimg.com/50/v2-70093325b4855ffdca333fdec8e4ec3e_hd.jpg\" data-caption=\"\" data-rawwidth=\"1334\" data-rawheight=\"750\" class=\"origin_image zh-lightbox-thumb\" width=\"1334\" data-original=\"https://pic3.zhimg.com/v2-70093325b4855ffdca333fdec8e4ec3e_r.jpg\"></noscript><img src=\"data:image/svg xml;utf8,&lt;svg xmlns='http://www.w3.org/2000/svg' width='1334' height='750'&gt;&lt;/svg&gt;\" data-caption=\"\" data-rawwidth=\"1334\" data-rawheight=\"750\" class=\"origin_image zh-lightbox-thumb lazy\" width=\"1334\" data-original=\"https://pic3.zhimg.com/v2-70093325b4855ffdca333fdec8e4ec3e_r.jpg\" data-actualsrc=\"https://pic3.zhimg.com/50/v2-70093325b4855ffdca333fdec8e4ec3e_hd.jpg\"><p>我并不能往下游！ 所以我会浮在空中游泳！ 于是我机智地找到一座最高的山头，游（爬）上去，然后开始往安全区游，只要地上的人不往空中乱开枪，我就死不了，美滋滋~</p><noscript><img src=\"https://pic3.zhimg.com/50/v2-19edf69f08fecbb23e62cea506fb8526_hd.jpg\" data-caption=\"\" data-rawwidth=\"1334\" data-rawheight=\"750\" class=\"origin_image zh-lightbox-thumb\" width=\"1334\" data-original=\"https://pic3.zhimg.com/v2-19edf69f08fecbb23e62cea506fb8526_r.jpg\"></noscript><img src=\"data:image/svg xml;utf8,&lt;svg xmlns='http://www.w3.org/2000/svg' width='1334' height='750'&gt;&lt;/svg&gt;\" data-caption=\"\" data-rawwidth=\"1334\" data-rawheight=\"750\" class=\"origin_image zh-lightbox-thumb lazy\" width=\"1334\" data-original=\"https://pic3.zhimg.com/v2-19edf69f08fecbb23e62cea506fb8526_r.jpg\" data-actualsrc=\"https://pic3.zhimg.com/50/v2-19edf69f08fecbb23e62cea506fb8526_hd.jpg\"><noscript><img src=\"https://pic2.zhimg.com/50/v2-f2ac792f5a542fbf20960b699022f6a1_hd.jpg\" data-caption=\"\" data-rawwidth=\"1334\" data-rawheight=\"750\" class=\"origin_image zh-lightbox-thumb\" width=\"1334\" data-original=\"https://pic2.zhimg.com/v2-f2ac792f5a542fbf20960b699022f6a1_r.jpg\"></noscript><img src=\"data:image/svg xml;utf8,&lt;svg xmlns='http://www.w3.org/2000/svg' width='1334' height='750'&gt;&lt;/svg&gt;\" data-caption=\"\" data-rawwidth=\"1334\" data-rawheight=\"750\" class=\"origin_image zh-lightbox-thumb lazy\" width=\"1334\" data-original=\"https://pic2.zhimg.com/v2-f2ac792f5a542fbf20960b699022f6a1_r.jpg\" data-actualsrc=\"https://pic2.zhimg.com/50/v2-f2ac792f5a542fbf20960b699022f6a1_hd.jpg\"><noscript><img src=\"https://pic2.zhimg.com/50/v2-d768d2592ac2b21f2f150ce0b6fb4175_hd.jpg\" data-caption=\"\" data-rawwidth=\"1334\" data-rawheight=\"750\" class=\"origin_image zh-lightbox-thumb\" width=\"1334\" data-original=\"https://pic2.zhimg.com/v2-d768d2592ac2b21f2f150ce0b6fb4175_r.jpg\"></noscript><img src=\"data:image/svg xml;utf8,&lt;svg xmlns='http://www.w3.org/2000/svg' width='1334' height='750'&gt;&lt;/svg&gt;\" data-caption=\"\" data-rawwidth=\"1334\" data-rawheight=\"750\" class=\"origin_image zh-lightbox-thumb lazy\" width=\"1334\" data-original=\"https://pic2.zhimg.com/v2-d768d2592ac2b21f2f150ce0b6fb4175_r.jpg\" data-actualsrc=\"https://pic2.zhimg.com/50/v2-d768d2592ac2b21f2f150ce0b6fb4175_hd.jpg\"><noscript><img src=\"https://pic1.zhimg.com/50/v2-c8622a328b37ed062d5759ca6cb8d5e8_hd.jpg\" data-caption=\"\" data-rawwidth=\"1334\" data-rawheight=\"750\" class=\"origin_image zh-lightbox-thumb\" width=\"1334\" data-original=\"https://pic1.zhimg.com/v2-c8622a328b37ed062d5759ca6cb8d5e8_r.jpg\"></noscript><img src=\"data:image/svg xml;utf8,&lt;svg xmlns='http://www.w3.org/2000/svg' width='1334' height='750'&gt;&lt;/svg&gt;\" data-caption=\"\" data-rawwidth=\"1334\" data-rawheight=\"750\" class=\"origin_image zh-lightbox-thumb lazy\" width=\"1334\" data-original=\"https://pic1.zhimg.com/v2-c8622a328b37ed062d5759ca6cb8d5e8_r.jpg\" data-actualsrc=\"https://pic1.zhimg.com/50/v2-c8622a328b37ed062d5759ca6cb8d5e8_hd.jpg\"><noscript><img src=\"https://pic1.zhimg.com/50/v2-694d5e5ca45e84e77d6e0d5f73ad8e98_hd.jpg\" data-caption=\"\" data-rawwidth=\"1334\" data-rawheight=\"750\" class=\"origin_image zh-lightbox-thumb\" width=\"1334\" data-original=\"https://pic1.zhimg.com/v2-694d5e5ca45e84e77d6e0d5f73ad8e98_r.jpg\"></noscript><img src=\"data:image/svg xml;utf8,&lt;svg xmlns='http://www.w3.org/2000/svg' width='1334' height='750'&gt;&lt;/svg&gt;\" data-caption=\"\" data-rawwidth=\"1334\" data-rawheight=\"750\" class=\"origin_image zh-lightbox-thumb lazy\" width=\"1334\" data-original=\"https://pic1.zhimg.com/v2-694d5e5ca45e84e77d6e0d5f73ad8e98_r.jpg\" data-actualsrc=\"https://pic1.zhimg.com/50/v2-694d5e5ca45e84e77d6e0d5f73ad8e98_hd.jpg\"><figure><noscript><img src=\"https://pic3.zhimg.com/50/v2-1695c0257651b274714069f092f43252_hd.jpg\" data-rawwidth=\"1334\" data-rawheight=\"750\" class=\"origin_image zh-lightbox-thumb\" width=\"1334\" data-original=\"https://pic3.zhimg.com/v2-1695c0257651b274714069f092f43252_r.jpg\"></noscript><img src=\"data:image/svg xml;utf8,&lt;svg xmlns='http://www.w3.org/2000/svg' width='1334' height='750'&gt;&lt;/svg&gt;\" data-rawwidth=\"1334\" data-rawheight=\"750\" class=\"origin_image zh-lightbox-thumb lazy\" width=\"1334\" data-original=\"https://pic3.zhimg.com/v2-1695c0257651b274714069f092f43252_r.jpg\" data-actualsrc=\"https://pic3.zhimg.com/50/v2-1695c0257651b274714069f092f43252_hd.jpg\"><figcaption>单排零杀吃鸡~</figcaption></figure><p><br></p><p>其实我也不知道为什么地上那个人死得比我快.. 可能他打完架血比较少吧？</p><p><br></p><p>怎么才能玩好《终结者2：审判日》这样类型的吃鸡手游？ </p><p>趁上线才几天，利用好bug，把求生游戏玩成观光游戏，就能畅快吃鸡了~ </p><p></p><p></p>",
+                "createdTime": 1510232957,
+                "editableContent": "",
+                "excerpt": "战术战略什么的就不说了，跟电脑端吃鸡差不多，个人比较喜欢沿圈推进。 分享一下今天单排零杀吃鸡的经历~跳飞机去的出生那个岛，只有我一个人，所以很安全地搜刮了一身装备，然后准备游回大陆。刚进水的时候卡了一下，游到对岸发现自己并没有起身... 对，就…",
+                "extras": "",
+                "id": 257541340,
+                "isCollapsed": false,
+                "isCopyable": true,
+                "isNormal": true,
+                "isSticky": false,
+                "markInfos": [],
+                "question": {
+                    "created": 1510042246,
+                    "id": 67777088,
+                    "questionType": "normal",
+                    "title": "怎么才能玩好《终结者2：审判日》这样类型的吃鸡手游？",
+                    "type": "question",
+                    "updatedTime": 1510042246,
+                    "url": "http://www.zhihu.com/api/v4/questions/67777088"
+                },
+                "relationship": {
+                    "isAuthor": false,
+                    "isAuthorized": false,
+                    "isNothelp": false,
+                    "isThanked": false,
+                    "upvotedFollowees": [],
+                    "voting": 0
+                },
+                "reshipmentSettings": "allowed",
+                "rewardInfo": {
+                    "canOpenReward": false,
+                    "isRewardable": false,
+                    "rewardMemberCount": 0,
+                    "rewardTotalMoney": 0,
+                    "tagline": ""
+                },
+                "suggestEdit": {
+                    "reason": "",
+                    "status": false,
+                    "tip": "",
+                    "title": "",
+                    "unnormalDetails": {},
+                    "url": ""
+                },
+                "thumbnail": "https://pic4.zhimg.com/v2-a622ae2a93a488212da63b6bf3ba4853_200x112.jpg",
+                "type": "answer",
+                "updatedTime": 1510232957,
+                "url": "http://www.zhihu.com/api/v4/answers/257541340",
+                "voteupCount": 4
+            },
+            "257751037": {
+                "adminClosedComment": false,
+                "annotationAction": [],
+                "author": {
+                    "avatarUrl": "https://pic1.zhimg.com/50/da8e974dc_hd.jpg",
+                    "avatarUrlTemplate": "https://pic1.zhimg.com/50/da8e974dc_hd.jpg",
+                    "badge": [],
+                    "followerCount": 0,
+                    "gender": -1,
+                    "headline": "市场",
+                    "id": "8054d1ac7bcb2b930dccfdbd10e475ec",
+                    "isAdvertiser": false,
+                    "isOrg": false,
+                    "name": "刘敏",
+                    "type": "people",
+                    "url": "http://www.zhihu.com/api/v4/people/8054d1ac7bcb2b930dccfdbd10e475ec",
+                    "urlToken": "liu-min-6-63",
+                    "userType": "people"
+                },
+                "canComment": {
+                    "reason": "",
+                    "status": true
+                },
+                "collapseReason": "",
+                "collapsedBy": "nobody",
+                "commentCount": 0,
+                "commentPermission": "all",
+                "content": "<p>其实这类射击游戏，最好还是在电脑上玩比较好。</p><p>手机上玩局限性太大，而且视觉效果也没电脑那么好。</p><p>后来在电脑上玩荒野行动，效果真的是好的不要不要的，第一把就成功吃鸡哈哈哈哈</p><p>我是配合溜溜TC Games来玩的，效果还不错。</p>",
+                "createdTime": 1510282204,
+                "editableContent": "",
+                "excerpt": "其实这类射击游戏，最好还是在电脑上玩比较好。手机上玩局限性太大，而且视觉效果也没电脑那么好。后来在电脑上玩荒野行动，效果真的是好的不要不要的，第一把就成功吃鸡哈哈哈哈我是配合溜溜TC Games来玩的，效果还不错。",
+                "extras": "",
+                "id": 257751037,
+                "isCollapsed": false,
+                "isCopyable": true,
+                "isNormal": true,
+                "isSticky": false,
+                "markInfos": [],
+                "question": {
+                    "created": 1510042246,
+                    "id": 67777088,
+                    "questionType": "normal",
+                    "title": "怎么才能玩好《终结者2：审判日》这样类型的吃鸡手游？",
+                    "type": "question",
+                    "updatedTime": 1510042246,
+                    "url": "http://www.zhihu.com/api/v4/questions/67777088"
+                },
+                "relationship": {
+                    "isAuthor": false,
+                    "isAuthorized": false,
+                    "isNothelp": false,
+                    "isThanked": false,
+                    "upvotedFollowees": [],
+                    "voting": 0
+                },
+                "reshipmentSettings": "allowed",
+                "rewardInfo": {
+                    "canOpenReward": false,
+                    "isRewardable": false,
+                    "rewardMemberCount": 0,
+                    "rewardTotalMoney": 0,
+                    "tagline": ""
+                },
+                "suggestEdit": {
+                    "reason": "",
+                    "status": false,
+                    "tip": "",
+                    "title": "",
+                    "unnormalDetails": {},
+                    "url": ""
+                },
+                "thumbnail": "",
+                "type": "answer",
+                "updatedTime": 1510282205,
+                "url": "http://www.zhihu.com/api/v4/answers/257751037",
+                "voteupCount": 2
+            }
+        },
+        "articles": {},
+        "columns": {},
+        "comments": {},
+        "ebooks": {},
+        "favlists": {},
+        "feeds": {},
+        "notifications": {},
+        "pins": {},
+        "promotions": {},
+        "questions": {
+            "67777088": {
+                "adminClosedComment": false,
+                "answerCount": 15,
+                "author": {
+                    "avatarUrl": "https://pic1.zhimg.com/50/da8e974dc_hd.jpg",
+                    "avatarUrlTemplate": "https://pic1.zhimg.com/50/da8e974dc_hd.jpg",
+                    "badge": [],
+                    "gender": -1,
+                    "headline": "轩鹤冠猴",
+                    "id": "646f7107b78d53bc9ebdf7cfae3aee72",
+                    "isAdvertiser": false,
+                    "isFollowing": false,
+                    "isOrg": false,
+                    "name": "请君入瓮",
+                    "type": "people",
+                    "url": "http://www.zhihu.com/api/v4/people/646f7107b78d53bc9ebdf7cfae3aee72",
+                    "urlToken": "qing-jun-ru-weng-35",
+                    "userType": "people"
+                },
+                "canComment": {
+                    "reason": "",
+                    "status": true
+                },
+                "collapsedAnswerCount": 0,
+                "commentCount": 1,
+                "commentPermission": "all",
+                "created": 1510042246,
+                "detail": "<p></p><p>手残党一枚，偶尔跟朋友一起打打农药段位也低，现在他们带我玩吃鸡，我经常出现操作的失误比如手雷炸自己人，开车自己把自己撞了开枪打不中敌人，到现在一次鸡都没吃到。</p>",
+                "editableDetail": "<p></p><p>手残党一枚，偶尔跟朋友一起打打农药段位也低，现在他们带我玩吃鸡，我经常出现操作的失误比如手雷炸自己人，开车自己把自己撞了开枪打不中敌人，到现在一次鸡都没吃到。</p>",
+                "excerpt": "手残党一枚，偶尔跟朋友一起打打农药段位也低，现在他们带我玩吃鸡，我经常出现操作的失误比如手雷炸自己人，开车自己把自己撞了开枪打不中敌人，到现在一次鸡都没吃到。",
+                "followerCount": 33,
+                "hasPublishingDraft": false,
+                "id": 67777088,
+                "isEditable": true,
+                "isMuted": false,
+                "isNormal": true,
+                "questionType": "normal",
+                "relationship": {
+                    "canCollapseAnswers": false,
+                    "canLock": false,
+                    "canStickAnswers": false,
+                    "concernedFollowers": [],
+                    "isAnonymous": false,
+                    "isAuthor": false,
+                    "isFollowing": false
+                },
+                "reviewInfo": {
+                    "editTips": "",
+                    "isReviewing": false,
+                    "tips": "",
+                    "type": ""
+                },
+                "status": {
+                    "isClose": false,
+                    "isEvaluate": false,
+                    "isLocked": false,
+                    "isSuggest": false
+                },
+                "title": "怎么才能玩好《终结者2：审判日》这样类型的吃鸡手游？",
+                "topics": [
+                    {
+                        "avatarUrl": "https://pic4.zhimg.com/50/fb89e0ea3_hd.jpg",
+                        "excerpt": "游戏 是一种在特定时间、空间范围内遵循某种特定规则的，追求精神满足的行为活动。",
+                        "id": "19550994",
+                        "introduction": "<b>游戏</b><br>是一种在特定时间、空间范围内遵循某种特定规则的，追求精神满足的行为活动。",
+                        "name": "游戏",
+                        "type": "topic",
+                        "url": "http://www.zhihu.com/api/v4/topics/19550994"
+                    }
+                ],
+                "type": "question",
+                "updatedTime": 1510042246,
+                "url": "http://www.zhihu.com/api/v4/questions/67777088",
+                "visitCount": 7188
+            }
+        },
+        "roundtables": {},
+        "topics": {},
+        "users": {
+            "xziar": {
+                "accountStatus": [],
+                "adType": "normal",
+                "answerCount": 717,
+                "articlesCount": 0,
+                "availableMessageTypes": [
+                    "common"
+                ],
+                "avatarUrl": "https://pic1.zhimg.com/db798e828014f5b25ba29178b43e0540_is.jpg",
+                "avatarUrlTemplate": "https://pic1.zhimg.com/db798e828014f5b25ba29178b43e0540_{size}.jpg",
+                "badge": [],
+                "business": {
+                    "avatarUrl": "https://pic1.zhimg.com/e82bab09c_is.jpg",
+                    "excerpt": "徼",
+                    "id": "19619368",
+                    "introduction": "徼",
+                    "name": "计算机软件",
+                    "type": "topic",
+                    "url": "http://www.zhihu.com/api/v4/topics/19619368"
+                },
+                "caEnabled": false,
+                "canEditTopic": true,
+                "coverUrl": "https://pic4.zhimg.com/v2-f0ab3a6e3ec12a6430488f6d891e93d3_b.jpg",
+                "defaultNotificationsCount": 0,
+                "description": "小小透明",
+                "draftCount": 183,
+                "editorInfo": [],
+                "educations": [],
+                "email": "cz****@gmail.com",
+                "employments": [],
+                "favoriteCount": 9,
+                "favoritedCount": 261,
+                "followNotificationsCount": 0,
+                "followerCount": 139,
+                "gender": 1,
+                "headline": "介绍给谁看？",
+                "id": "f76cc47c7de7323b10ece9d850514561",
+                "isActive": 1,
+                "isAdvertiser": false,
+                "isBindPhone": true,
+                "isBindSina": false,
+                "isForceRenamed": false,
+                "isOrg": false,
+                "lastCommentPermission": "all",
+                "locations": [
+                    {
+                        "avatarUrl": "https://pic2.zhimg.com/389a772ec26fa8910f8cea8867adef59_is.png",
+                        "excerpt": "东南形胜，三吴都会，钱塘自古繁华，烟柳画桥，风帘翠幕，参差十万人家。云树绕堤沙，怒涛卷霜雪，天堑无涯。市列珠玑，户盈罗绮，竞豪奢。 重湖叠巘清嘉。有三秋桂子，十里荷花。羌管弄晴，菱歌泛夜，嬉嬉钓叟莲娃。千骑拥高牙。乘醉听箫鼓，吟赏烟霞。异日图将好景，归去凤池夸。",
+                        "id": "19558830",
+                        "introduction": "<p>东南形胜，三吴都会，钱塘自古繁华，烟柳画桥，风帘翠幕，参差十万人家。云树绕堤沙，怒涛卷霜雪，天堑无涯。市列珠玑，户盈罗绮，竞豪奢。<br>重湖叠巘清嘉。有三秋桂子，十里荷花。羌管弄晴，菱歌泛夜，嬉嬉钓叟莲娃。千骑拥高牙。乘醉听箫鼓，吟赏烟霞。异日图将好景，归去凤池夸。</p>",
+                        "name": "杭州",
+                        "type": "topic",
+                        "url": "http://www.zhihu.com/api/v4/topics/19558830"
+                    }
+                ],
+                "messagesCount": 1,
+                "name": "XZiar",
+                "renamedFullname": "",
+                "showSinaWeibo": false,
+                "thankedCount": 419,
+                "type": "people",
+                "uid": 59016952676352,
+                "url": "http://www.zhihu.com/api/v4/people/f76cc47c7de7323b10ece9d850514561",
+                "urlToken": "xziar",
+                "userType": "people",
+                "visitsCount": 6479,
+                "voteThankNotificationsCount": 1
+            }
+        }
+    },
+    "env": {
+        "conf": {
+            "unblockContacts": {
+                "mobile": "1069 02098 21212",
+                "telecom": "1069 0920 21212",
+                "unicom": "1069 0920 21212"
+            }
+        },
+        "edition": {
+            "baidu": false,
+            "yidianzixun": false
+        },
+        "experiment": {
+            "androidDbRecommendAction": "open",
+            "androidPassThroughPush": "all",
+            "androidProfilePanel": "panel_a",
+            "appStoreRateDialog": "commit_new_answer",
+            "default": "None",
+            "favAct": "default",
+            "ge2": "ge2_1",
+            "ge3": "ge3_9",
+            "homeUi2": "default",
+            "isOffice": "false",
+            "isShowUnicomFreeEntry": "unicom_free_entry_off",
+            "liveReviewBuyBar": "live_review_buy_bar_2",
+            "liveStore": "ls_a3_b1_c2_f1",
+            "marketTab": "market_tab_old",
+            "mobileQaPageProxyHeifetz": "m_qa_page_nweb",
+            "newMobileColumnAppheader": "new_header",
+            "newMore": "new",
+            "nwebStickySidebar": "sticky",
+            "nwebWriteAnswer": "default",
+            "qaStickySidebar": "sticky_sidebar",
+            "qrcodeLogin": "qrcode",
+            "recomAnswerRec": "recom_answer_by_question",
+            "recomTopicAc": "topic_ac_with_no_reason",
+            "recommendEbookAc": "ebook_old",
+            "recommendLiveDetail": "live_detail_word2vec_v2",
+            "recommendLiveGuessLike": "live_guess_es",
+            "recommendQuestion": "rec_question_old",
+            "remixOneKeyPlayButton": "footerButton",
+            "searchAppLimit": "limit_10",
+            "searchHybridTabs": "pin-3",
+            "wechatShareModal": "wechat_share_modal_show",
+            "zcmLighting": "zcm"
+        },
+        "referer": "https://www.zhihu.com/people/harrison-18-44/activities",
+        "theme": "light",
+        "trafficSource": "production",
+        "userAgent": {
+            "Android": false,
+            "Edge": false,
+            "Mobile": false,
+            "QQ": false,
+            "Wechat": false,
+            "Weibo": false,
+            "Zhihu": false,
+            "ZhihuHybrid": false,
+            "iOS": false,
+            "isAppleDevice": false,
+            "isBot": false,
+            "isWebView": false
+        }
+    },
+    "explore": {
+        "hotfeeds": {},
+        "recommendations": {}
+    },
+    "favlists": {
+        "relations": {}
+    },
+    "guide": {
+        "guide": {
+            "isFetching": false,
+            "isShowGuide": false
+        }
+    },
+    "loading": {
+        "global": {
+            "count": 0
+        },
+        "local": {
+            "config/getAppConfig/": false,
+            "currentUser/get/": false,
+            "env/getExperiments/": false,
+            "question/get/": false,
+            "question/getAnswers/67777088": false,
+            "token/": false
+        }
+    },
+    "login": {
+        "loginBindWechatError": false,
+        "loginConfirmError": null,
+        "loginConfirmSucceeded": null,
+        "loginUnregisteredError": false,
+        "qrcodeLoginError": null,
+        "qrcodeLoginReturnNewToken": false,
+        "qrcodeLoginScanStatus": 0,
+        "qrcodeLoginToken": "",
+        "sendDigitsError": null,
+        "validateDigitsError": false
+    },
+    "messages": {
+        "currentTab": "common",
+        "data": {},
+        "messageCount": 1
+    },
+    "notification": {},
+    "people": {
+        "activitiesByUser": {},
+        "allFavlistsByUser": {},
+        "answersByUser": {},
+        "answersIncludedByUser": {},
+        "answersSortByVotesByUser": {},
+        "articlesByUser": {},
+        "articlesIncludedByUser": {},
+        "articlesSortByVotesByUser": {},
+        "brands": null,
+        "columnsByUser": {},
+        "commercialQuestionsByUser": {},
+        "favlistsByUser": {},
+        "followersByUser": {},
+        "followingByUser": {},
+        "followingColumnsByUser": {},
+        "followingFavlistsByUser": {},
+        "followingQuestionsByUser": {},
+        "followingTopicsByUser": {},
+        "isFetching": false,
+        "mutualsByUser": {},
+        "pinsByUser": {},
+        "publicationsByUser": {},
+        "questionsByUser": {},
+        "thankAnswersByUser": {},
+        "thankedAnswersByUser": {},
+        "topicAnswersByUser": {},
+        "voteAnswersByUser": {},
+        "votedAnswersByUser": {}
+    },
+    "pins": {
+        "voters": {}
+    },
+    "pushNotifications": {
+        "currentTab": "default",
+        "default": {
+            "ids": [],
+            "isDrained": false,
+            "isFetching": false
+        },
+        "follow": {
+            "ids": [],
+            "isDrained": false,
+            "isFetching": false
+        },
+        "notificationsCount": {
+            "default": 0,
+            "follow": 0,
+            "vote-thank": 1
+        },
+        "vote-thank": {
+            "ids": [],
+            "isDrained": false,
+            "isFetching": false
+        }
+    },
+    "question": {
+        "answers": {
+            "67777088": {
+                "ids": [
+                    256494562,
+                    257541340,
+                    257751037
+                ],
+                "isDrained": false,
+                "isFetching": false,
+                "isPrevDrained": true,
+                "newIds": [
+                    256494562,
+                    257541340,
+                    257751037
+                ],
+                "next": "http://www.zhihu.com/api/v4/questions/67777088/answers?sort_by=default&include=data[*].is_normal,admin_closed_comment,reward_info,is_collapsed,annotation_action,annotation_detail,collapse_reason,is_sticky,collapsed_by,suggest_edit,comment_count,can_comment,content,editable_content,voteup_count,reshipment_settings,comment_permission,created_time,updated_time,review_info,question,excerpt,relationship.is_authorized,is_author,voting,is_thanked,is_nothelp,upvoted_followees;data[*].mark_infos[*].url;data[*].author.follower_count,badge[?(type=best_answerer)].topics&limit=3&offset=3",
+                "previous": "http://www.zhihu.com/api/v4/questions/67777088/answers?sort_by=default&include=data[*].is_normal,admin_closed_comment,reward_info,is_collapsed,annotation_action,annotation_detail,collapse_reason,is_sticky,collapsed_by,suggest_edit,comment_count,can_comment,content,editable_content,voteup_count,reshipment_settings,comment_permission,created_time,updated_time,review_info,question,excerpt,relationship.is_authorized,is_author,voting,is_thanked,is_nothelp,upvoted_followees;data[*].mark_infos[*].url;data[*].author.follower_count,badge[?(type=best_answerer)].topics&limit=3&offset=0",
+                "totals": 15
+            }
+        },
+        "bio": {},
+        "brand": {},
+        "collapsedAnswers": {},
+        "commonAnswerCount": 0,
+        "concernedFollowers": {},
+        "createdAnswers": {},
+        "followers": {},
+        "hiddenAnswerCount": 0,
+        "hiddenAnswers": {},
+        "invitationCandidates": {},
+        "invitees": {},
+        "inviters": {},
+        "notificationAnswers": {},
+        "recommendReadings": {},
+        "relatedLives": {},
+        "similarQuestions": {}
+    },
+    "register": {
+        "registerConfirmError": null,
+        "registerConfirmSucceeded": null,
+        "registerValidateErrors": {},
+        "registerValidateSucceeded": null,
+        "sendDigitsError": null
+    },
+    "reward": {},
+    "search": {
+        "columnByQuery": {},
+        "eBookByQuery": {},
+        "generalByQuery": {},
+        "generalByQueryInADay": {},
+        "generalByQueryInAWeek": {},
+        "generalByQueryInThreeMonths": {},
+        "liveByQuery": {},
+        "peopleByQuery": {},
+        "recommendSearch": [],
+        "topSearch": {},
+        "topicByQuery": {}
+    },
+    "shareTexts": {},
+    "sms": {
+        "supportedCountries": []
+    },
+    "switches": {},
+    "token": {
+        "carCompose": "2|1:0|10:1509692365|4:SZYUpkoc0tvYXh0V2E2UTBUID096dwe|92:Mi4xRXFoMUFBQUFBQUFBUUFLN3hXUV9EQ2NBQUFDRUFsVk56YUFqV2dDNDZjenBWNVQ5eFdXVUZFaHdxMXdHaGFReDR3|735d9e88be5b70e327e90e94d9e9461885c6849e225a19708412683434b7017d",
+        "xUDID": "AEACu8VkPwyPTo8oWlBai5_G7KHa5nexvmE=",
+        "xsrf": "056677a0-761b-4779-bef7-629869e76278"
+    },
+    "topics": {
+        "bios": {}
+    },
+    "topstory": {
+        "announcement": {},
+        "sidebar": null,
+        "topstorys": {
+            "afterId": 0,
+            "isDrained": false,
+            "isFetching": false,
+            "items": [],
+            "next": null
+        }
+    },
+    "upload": {},
+    "video": {
+        "data": {}
+    }
+}

@@ -44,7 +44,7 @@
       "matches":
       [
         "*://www.zhihu.com/*",
-        "*://zhuanlan.zhihu.com/p/*"
+        "*://zhuanlan.zhihu.com/*"
       ],
       "js":
       [
@@ -74,6 +74,17 @@
       "js":
       [
         "PeoplePage.js"
+      ],
+      "run_at": "document_start"
+    },
+    {
+      "matches":
+      [
+        "*://www.zhihu.com/question/*"
+      ],
+      "js":
+      [
+        "QuestionPage.js"
       ],
       "run_at": "document_start"
     },

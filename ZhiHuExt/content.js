@@ -24,7 +24,6 @@ function reportSpam(id, type)
 }
 
 
-let CUR_QUESTION = null;
 let CUR_ANSWER = null;
 let CUR_ARTICLE = null;
 
@@ -196,20 +195,30 @@ $("body").on("click", "button.Btn-CheckSpam", async function (e)
     const btn = e.target;
     const id = btn.dataset.id;
     const type = btn.dataset.type;
-    const voters = await ContentBase.fetchTheVoters(type, id, 10000, e.ctrlKey ? "old" : "new",
-        (cur, all) => btn.innerText = "=>" + cur + "/" + all);
+    let total, result;
+    if (e.shiftKey)
     {
-        const rep = { users: voters };
-        if (type === "answer")
-            rep.zans = voters.map(user => new Zan(user, id));
-        else if (type === "article")
-            rep.zanarts = voters.map(user => new Zan(user, id));
-        ContentBase._report("batch", rep);
+        result = await ContentBase.checkSpam(type, id);
+        total = result.total;
     }
-    btn.addClass("Button--blue");
+    else
+    {
+        const voters = await ContentBase.fetchTheVoters(type, id, 10000, e.ctrlKey ? "old" : "new",
+            (cur, all) => btn.innerText = "=>" + cur + "/" + all);
+        {
+            const rep = { users: voters };
+            if (type === "answer")
+                rep.zans = voters.map(user => new Zan(user, id));
+            else if (type === "article")
+                rep.zanarts = voters.map(user => new Zan(user, id));
+            ContentBase._report("batch", rep);
+        }
+        btn.addClass("Button--blue");
 
-    const result = await ContentBase.checkSpam("users", voters.mapToProp("id"));
-    const total = voters.length, ban = result.banned.size, spm = result.spamed.size;
+        result = await ContentBase.checkSpam("users", voters.mapToProp("id"));
+        total = voters.length;
+    }
+    const ban = result.banned.size, spm = result.spamed.size;
     btn.innerText = "(" + ban + "+" + spm + ")/" + total;
     btn.style.fontSize = "smaller";
     btn.style.fontWeight = "bold";
@@ -333,9 +342,13 @@ $("body").on("click", "button.Btn-Similarity", function ()
         {
             const counts = simmap.get(btn.dataset.id);
             btn.textContent = counts[0] + "/" + counts[1];
+            btn.style.fontSize = "smaller";
+            btn.style.fontWeight = "bold";
             maxcnt = Math.max(maxcnt, counts[0]);
         });
         thisbtn.textContent = maxcnt + "(" + result.limit + ")";
+        thisbtn.style.fontSize = "smaller";
+        thisbtn.style.fontWeight = "bold";
     });
 });
 $("body").on("click", "button.Modal-closeButton", function ()
@@ -345,41 +358,11 @@ $("body").on("click", "button.Modal-closeButton", function ()
 });
 
 
-function procInQuestion()
-{
-    console.log("question page");
-    const qstPage = $(".QuestionPage")[0];
-    const qstData = JSON.parse(Array.from(qstPage.childNodes)
-        .filter(node => node instanceof HTMLDivElement)
-        .find(div => div.className == "")
-        .dataset.zopQuestion);
-    const topics = qstData.topics.map(t => new Topic(t.id, t.name));
-    const quest = new Question(qstData.id, qstData.title, topics.mapToProp("id"));
-    CUR_QUESTION = quest;
-    ContentBase._report("questions", quest);
-    ContentBase._report("topics", topics);
-    const qstArea = $(".QuestionHeader-footer .QuestionButtonGroup")
-    if (qstArea.length > 0)
-    {
-        const btn = createButton(["Btn-ReportSpam", "Button--primary"], "广告");
-        btn.dataset.id = CUR_QUESTION.id;
-        btn.dataset.type = "question";
-        qstArea.prepend(btn);
-    }
-}
-
-const pathname = document.location.pathname;
-if (pathname.startsWith("/question/"))
-{
-    procInQuestion();
-}
-
 {
     const curAnsArts = $(".AnswerItem, .ArticleItem").toArray();
     console.log("init " + curAnsArts.length + " answer/article");
     addAASpamBtns(curAnsArts);
 }
-$(document).ready(() =>
 {
     const fbtns = document.body.querySelector(".CornerButtons");
     const svg = createSVG(24, 24, "0 0 100 91",
@@ -397,16 +380,6 @@ $(document).ready(() =>
     btndiv.appendChild(btn);
     if (fbtns)
         fbtns.prepend(btndiv);
-});
+}
 
 bodyObserver.observe(document.body, { "childList": true, "subtree": true });
-
-chrome.runtime.onMessage.addListener(function (request, sender, sendResponse)
-{
-    switch (request.action)
-    {
-        case "click":
-            $(request.objname).click();
-            break;
-    }
-}); 

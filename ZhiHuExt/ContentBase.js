@@ -3,12 +3,15 @@
 const fetchVoters = Symbol("_fetchAnsVoters");
 let _CUR_USER;
 let _CUR_ANSWER;
+let _CUR_QUESTION;
 class ContentBase
 {
     static get CUR_USER() { return _CUR_USER; }
     static set CUR_USER(user) { _CUR_USER = user; }
     static get CUR_ANSWER() { return _CUR_ANSWER; }
     static set CUR_ANSWER(ans) { _CUR_ANSWER = ans; }
+    static get CUR_QUESTION() { return _CUR_QUESTION; }
+    static set CUR_QUESTION(qst) { _CUR_QUESTION = qst; }
 
     /**
      * @param {"answer" | "article"} obj
@@ -156,20 +159,20 @@ class ContentBase
     }
 
     /**
-     * @param {"users"} target
+     * @param {"users" | "answer" | "article"} target
      * @param {string | string[]} data
-     * @returns {{banned: Set<string>, spamed: Set<string>}}
+     * @returns {{banned: Set<string>, spamed: Set<string>, total: number}}
      */
     static checkSpam(target, data)
     {
         const pms = $.Deferred();
         if (!data || (data instanceof Array && data.length === 0))
-            pms.resolve({ banned: new Set(), spamed: new Set() });
+            pms.resolve({ banned: new Set(), spamed: new Set(), total: 0 });
         else
         {
             const users = (data instanceof Array ? data : [data]);
             chrome.runtime.sendMessage({ action: "chkspam", target: target, data: users },
-                ret => pms.resolve({ banned: new Set(ret.banned), spamed: new Set(ret.spamed) }));
+                ret => pms.resolve({ banned: new Set(ret.banned), spamed: new Set(ret.spamed), total: ret.total }));
         }
         return pms;
     }

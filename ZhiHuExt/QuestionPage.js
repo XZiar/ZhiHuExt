@@ -2,7 +2,7 @@
 
 !function ()
 {
-    console.log("people page");
+    console.log("question page");
     function rootFinder(records)
     {
         for (let i = 0; i < records.length; ++i)
@@ -37,23 +37,21 @@
             const entities = APIParser.parseEntities(state.entities);
             ContentBase._report("batch", entities);
             console.log(entities);
-            //process user
-            const selfUser = state.currentUser;
-            ContentBase.CUR_USER = entities.users.filter(u => u.id === selfUser)[0]
-            console.log(ContentBase.CUR_USER);
         }
     });
     obs.observe(document, { "childList": true, "subtree": true });
-
     setTimeout(() =>
     {
-        const user = ContentBase.CUR_USER;
-        const header = $("#ProfileHeader")[0];
-        if (!user || !header)
+        const qid = document.location.pathname.split("/")[2];
+        if (!qid)
             return;
-        const btn = createButton(["Btn-ReportSpam", "Button--primary"], "广告");
-        btn.dataset.id = user.id;
-        btn.dataset.type = "member";
-        $(".ProfileButtonGroup", header).prepend(btn);
-    }, 640);
+        const qstArea = $(".QuestionHeader-footer .QuestionButtonGroup")
+        if (qstArea.length > 0)
+        {
+            const btn = createButton(["Btn-ReportSpam", "Button--primary"], "广告");
+            btn.dataset.id = qid;
+            btn.dataset.type = "question";
+            qstArea.prepend(btn);
+        }
+    }, 800);
 }()

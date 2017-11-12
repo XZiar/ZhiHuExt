@@ -9,8 +9,8 @@ class User
         this.head = "";
         this.status = null;
         this.anscnt = -1;
-        this.articlecnt = -1;
-        this.followcnt = -1;
+        this.artcnt = -1;
+        this.follower = -1;
     }
 
     /**@param {UserType} theuser*/
@@ -24,8 +24,8 @@ class User
         else
             user.head = _any(theuser.avatarUrl, theuser.avatar_url).split("/").pop().replace(/_[\w]*.[\w]*$/, "");
         user.anscnt = _any(theuser.answerCount, theuser.answer_count, -1);
-        user.followcnt = _any(theuser.followerCount, theuser.follower_count, -1);
-        user.articlecnt = _any(theuser.articlesCount, theuser.articles_count, -1);
+        user.follower = _any(theuser.followerCount, theuser.follower_count, -1);
+        user.artcnt = _any(theuser.articlesCount, theuser.articles_count, -1);
         const statuss = theuser.accountStatus;
         if (statuss)
         {
@@ -50,20 +50,17 @@ class Question
      * @param {number | string} id
      * @param {string} title
      * @param {number | number[]} [topic]
+     * @param {number} [timeCreated]
      */
-    constructor(id, title, topic)
+    constructor(id, title, topic, timeCreated)
     {
-        this.id = Number(id);// + "";
+        this.id = Number(id);
         this.title = title;
         if (topic)
-        {
-            if (topic instanceof Array)
-                this.topics = topic;
-            else
-                this.topics = [topic];
-        }
+            this.topics = topic instanceof Array ? topic : [topic];
         else
             this.topics = null;
+        this.timeC = timeCreated == null ? -1 : timeCreated;
     }
 }
 
@@ -75,14 +72,18 @@ class Article
      * @param {string} author
      * @param {string} [excerpt]
      * @param {number} [zancnt]
+     * @param {number} [timeCreated]
+     * @param {number} [timeUpdated]
      */
-    constructor(id, title, author, excerpt, zancnt)
+    constructor(id, title, author, excerpt, zancnt, timeCreated, timeUpdated)
     {
         this.id = Number(id);
         this.title = title;
         this.author = author;
-        this.excerpt = excerpt == null ? "" : excerpt;
+        this.excerpt = excerpt == null ? null : excerpt;
         this.zancnt = zancnt == null ? -1 : zancnt;
+        this.timeC = timeCreated == null ? -1 : timeCreated;
+        this.timeU = timeUpdated == null ? -1 : timeUpdated;
     }
 }
 
@@ -94,16 +95,8 @@ class Topic
      */
     constructor(id, name)
     {
-        this.id = Number(id);// + "";
+        this.id = Number(id);
         this.name = name;
-    }
-
-    static assigns(data)
-    {
-        if (data instanceof Array)
-            return data.map(dat => new Topic(dat.id, dat.name));
-        else
-            return [new Topic(data.id, data.name)];
     }
 }
 
@@ -115,27 +108,18 @@ class Answer
      * @param {string} author
      * @param {number} [zancnt]
      * @param {string} [excerpt]
+     * @param {number} [timeCreated]
+     * @param {number} [timeUpdated]
      */
-    constructor(id, quest, author, zancnt, excerpt)
+    constructor(id, quest, author, zancnt, excerpt, timeCreated, timeUpdated)
     {
-        this.id = Number(id);// + "";
+        this.id = Number(id);
         this.question = Number(quest);
         this.author = author;//should not be null
         this.zancnt = zancnt == null ? -1 : zancnt;
         this.excerpt = excerpt == null ? null : excerpt;
-    }
-
-    assign(data)
-    {
-        Object.assign(this, data);
-    }
-
-    static assigns(data)
-    {
-        if (data instanceof Array)
-            return data.map(dat => new Answer(dat));
-        else
-            return [new Answer(data)];
+        this.timeC = timeCreated == null ? -1 : timeCreated;
+        this.timeU = timeUpdated == null ? -1 : timeUpdated;
     }
 }
 
@@ -152,13 +136,10 @@ class Zan
         if (target instanceof Answer)
             this.to = target.id;
         else if (target instanceof Article)
-            this.to = Number(target.id);// + "";
+            this.to = target.id;
         else
-            this.to = Number(target);// + "";
-        if (time == null)
-            this.time = -1;
-        else
-            this.time = time;
+            this.to = Number(target);
+        this.time = time == null ? -1 : time;
     }
 }
 
@@ -215,77 +196,7 @@ class APIParser
 {
     /**@type {{ users: User[], zans: Zan[], zanarts: Zan[], topics: Topic[], answers: Answer[], questions: Question[], articles: Article[] }}*/
     static get batch() { return { users: [], zans: [], zanarts: [], topics: [], answers: [], questions: [], articles: [] }; }
-    /**
-     * @param {Entities} data
-     */
-    static parseEntities(data)
-    {
-        const output = APIParser.batch;
-        /**@type {Activity[]}*/
-        const acts = Object.values(data.activities);
-        const users = [], zans = [], zanarts = [], answers = [], quests = [], articles = [], topics = [];
-        for (let i = 0; i < acts.length; ++i)
-        {
-            const act = acts[i];
-            const user = User.fromRawJson(act.actor);
-            if (user)
-            {
-                if (act.verb === "ANSWER_VOTE_UP" && act.target.schema === "answer")
-                    output.zans.push(new Zan(user, act.target.id, act.createdTime));
-                else if (act.verb === "MEMBER_VOTEUP_ARTICLE" && act.target.schema === "article")
-                    output.zanarts.push(new Zan(user, act.target.id, act.createdTime));
-            }
-
-        }
-        /**@type {AnswerType[]}*/
-        const anss = Object.values(data.answers);
-        for (let i = 0; i < anss.length; ++i)
-        {
-            const ans = anss[i];
-            const qst = ans.question;
-            const ansUser = User.fromRawJson(ans.author);
-            if (!_CUR_USER || ansUser.id != _CUR_USER.id)
-                output.users.push(ansUser);
-            if (qst.author)
-                output.users.push(User.fromRawJson(qst.author));
-
-            const quest = new Question(qst.id, qst.title/*, qst.boundTopicIds*/);
-            output.questions.push(quest);
-            const answer = new Answer(ans.id, quest.id, ansUser.id, ans.voteupCount, ans.excerptNew);
-            output.answers.push(answer);
-        }
-        /**@type {QuestType[]}*/
-        const qsts = Object.values(data.questions);
-        for (let i = 0; i < qsts.length; ++i)
-        {
-            const qst = qsts[i];
-            if (qst.author)
-                output.users.push(User.fromRawJson(qst.author));
-            const quest = new Question(qst.id, qst.title);
-            output.questions.push(quest);
-        }
-        /**@type {ArticleType[]}*/
-        const arts = Object.values(data.articles);
-        for (let i = 0; i < arts.length; ++i)
-        {
-            const art = arts[i];
-            const artUser = User.fromRawJson(art.author);
-            if (!_CUR_USER || artUser.id != _CUR_USER.id)
-                output.users.push(artUser);
-
-            const article = new Article(art.id, art.title, artUser.id, art.excerptNew, art.voteupCount);
-            output.articles.push(article);
-        }
-        /**@type {TopicType[]}*/
-        const tps = Object.values(data.topics);
-        for (let i = 0; i < tps.length; ++i)
-        {
-            const tp = tps[i];
-            output.topics.push(new Topic(tp.id, tp.name));
-        }
-        return output;
-    }
-
+    
     /**
      * @param {{}} output
      * @param {{type: string, [x:string]: any}} obj
@@ -299,8 +210,18 @@ class APIParser
         {
             case "question":
                 {
-                    const qst = new Question(obj.id, obj.title);
+                    let tpids = undefined;
+                    if (obj.topics instanceof Array)
+                    {
+                        const tps = obj.topics.map(t => new Topic(t.id, t.name));
+                        output.topics.push(...tps);
+                        if (tps.length > 0)
+                            tpids = tps.mapToProp("id");
+                    }
+                    const qst = new Question(obj.id, obj.title, tpids, obj.created);
                     output.questions.push(qst);
+                    if (qst.author)
+                        APIParser.parseByType(output, qst.author);
                     return qst;
                 }
             case "answer":
@@ -308,10 +229,12 @@ class APIParser
                     const qst = APIParser.parseByType(output, obj.question);
                     const ath = APIParser.parseByType(output, obj.author);
                     const qid = qst.id; const aid = ath.id;
+                    /**@type {string}*/
                     let excerpt = obj.excerptNew || obj.excerpt_new;
                     if (!excerpt && obj.excerpt)
                         excerpt = obj.excerpt.replace(/<[^>]+>/g, "");//remove html tags
-                    const ans = new Answer(obj.id, qid, aid, obj.voteup_count, excerpt);
+                    const ans = new Answer(obj.id, qid, aid, _any(obj.voteup_count, obj.voteupCount), excerpt,
+                        _any(obj.created_time, obj.createdTime), _any(obj.updated_time, obj.updatedTime));
                     output.answers.push(ans);
                     return ans;
                 }
@@ -324,11 +247,41 @@ class APIParser
             case "article":
                 {
                     const ath = APIParser.parseByType(output, obj.author);
-                    const art = new Article(obj.id, obj.title, ath.id, obj.excerpt_new, obj.voteup_count);
+                    let timeC = obj.created, timeU = obj.updated;
+                    if (timeC == null && obj.publishedTime)
+                        timeC = Math.floor(Date.parse(obj.publishedTime) / 1000);
+                    if (typeof(timeU) === "string")
+                        timeU = Math.floor(Date.parse(timeU) / 1000);
+                    const art = new Article(obj.id, obj.title, ath.id, _any(obj.excerpt_new, obj.excerptNew),
+                        _any(obj.voteup_count, obj.voteupCount), timeC, timeU);
                     output.articles.push(art);
                     return art;
                 }
         }
+    }
+
+    /**
+     * @param {Entities} data
+     */
+    static parseEntities(data)
+    {
+        const output = APIParser.batch;
+        /**@type {Activity[]}*/
+        const acts = Object.values(data.activities);
+        for (let i = 0; i < acts.length; ++i)
+        {
+            const act = acts[i];
+            if (act.verb === "ANSWER_VOTE_UP")
+                output.zans.push(new Zan(act.actor.urlToken, act.target.id, act.createdTime));
+            else if (act.verb === "MEMBER_VOTEUP_ARTICLE")
+                output.zanarts.push(new Zan(act.actor.urlToken, act.target.id, act.createdTime));
+        }
+
+        Object.values(data.users).forEach(/**@param {UserType} usr*/(usr) => APIParser.parseByType(output, usr));
+        Object.values(data.answers).forEach(/**@param {AnswerType} ans*/(ans) => APIParser.parseByType(output, ans));
+        Object.values(data.questions).forEach(/**@param {QuestType} qst*/(qst) => APIParser.parseByType(output, qst));
+        Object.values(data.articles).forEach(/**@param {ArticleType} art*/(art) => APIParser.parseByType(output, art));
+        return output;
     }
 
     /**

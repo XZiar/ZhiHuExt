@@ -17,22 +17,23 @@ Dexie.addons.push(x => x.Collection.prototype.toNameMap = toNameMap);
 Dexie.addons.push(x => x.Collection.prototype.toPropMap = toPropMap);
 
 
-const db = new Dexie("ZhihuDB2");
+const db = new Dexie("ZhihuDB");
 let BAN_UID = new Set();
 let SPAM_UID = new Set();
 
 db.version(1).stores(
     {
         spams: "id,type",
-        users: "id,status,anscnt,followcnt",
+        users: "id,status,anscnt,follower",
         follows: "[from+to],from,to",
         zans: "[from+to],from,to,time",
         zanarts: "[from+to],from,to,time",
-        answers: "id,author,question",
-        questions: "id",
-        articles: "id,author",
+        answers: "id,author,question,timeC",
+        questions: "id,timeC",
+        articles: "id,author,timeC",
         topics: "id"
     });
+
 db.spams.hook("creating", (primKey, obj, trans) =>
 {
     if (obj.type === "member")
@@ -87,8 +88,7 @@ db.articles.hook("updating", (mods, primKey, obj, trans) =>
     {
         const key = keys[idx], val = mods[key];
         if ((val === -1 || val === null))
-            if (obj.hasOwnProperty(key))
-                ret[key] = obj[key];//skip unset values
+            ret[key] = obj[key];//skip unset values
     }
     return ret;
 });
@@ -101,8 +101,7 @@ db.answers.hook("updating", (mods, primKey, obj, trans) =>
     {
         const key = keys[idx], val = mods[key];
         if ((val === -1 || val === null))
-            if (obj.hasOwnProperty(key))
-                ret[key] = obj[key];//skip unset values
+            ret[key] = obj[key];//skip unset values
     }
     return ret;
 });
@@ -114,9 +113,14 @@ db.questions.hook("creating", (primKey, obj, trans) =>
 db.questions.hook("updating", (mods, primKey, obj, trans) =>
 {
     const hasModTopic = Object.keys(mods).find(key => key.startsWith("topics."));
+    const ret = {};
+    if (mods.timeC === -1)
+        ret.timeC = obj.timeC;
     if (!mods.topics && !hasModTopic)
-        return { topics: obj.topics };
+        ret.topics = obj.topics;
+    return ret;
 });
+
 db.open()
     .then(async () =>
     {
@@ -128,7 +132,6 @@ db.open()
         console.log("readed", "BAN_UID:" + BAN_UID.size, "SPAM_UID:" + SPAM_UID.size);
     })
     .catch(e => console.error("cannot open db", e));
-
 
 let TIMER_CLEAR_BADGE = setTimeout(clearBadge, 0);
 /**@param {number} num */
@@ -267,13 +270,13 @@ async function partDB(table, from, count)
 /**
  * @param {string[]} waitUsers
  */
-async function checkSpamUser(waitUsers)
+function checkSpamUser(waitUsers)
 {
     const ret = { banned: [], spamed: [] };
     const [bannedPart, unbannedPart] = splitInOutSide(waitUsers, BAN_UID);
     ret.banned = bannedPart;
 
-    const [spamedIds, dummy] = await splitInOutSide(unbannedPart, SPAM_UID);
+    const [spamedIds, dummy] = splitInOutSide(unbannedPart, SPAM_UID);
     ret.spamed = spamedIds;
     return ret;
 }
@@ -305,9 +308,20 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) =>
             return true;
         case "chkspam":
             {
-                checkSpamUser(request.data)
-                    .then(result => sendResponse(result));
-            } return true;
+                if (request.target === "users")
+                    sendResponse(checkSpamUser(request.data));
+                else
+                {
+                    const func = request.target === "answer" ? Analyse.getAnsVoters : Analyse.getArtVoters;
+                    func(request.data).then(voters =>
+                    {
+                        const result = checkSpamUser(voters.mapToProp("id"));
+                        result.total = voters.length;
+                        sendResponse(result);
+                    });
+                    return true;
+                }
+            } break;
         case "chksim":
             {
                 checkUserSimilarity(request.target, request.data)
@@ -390,7 +404,7 @@ chrome.runtime.onMessageExternal.addListener(
                     else if (request.api === "articles")
                         res.zanarts = res.users.map(u => new Zan(u, request.extra.id));
                     insertDB("batch", res, true);
-                    console.log("voters", res);
+                    //console.log("voters", res);
                 } break;
             case "empty":
                 {
