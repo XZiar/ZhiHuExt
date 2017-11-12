@@ -11,14 +11,16 @@ class ContentBase
     static set CUR_ANSWER(ans) { _CUR_ANSWER = ans; }
 
     /**
-     * @param {number | string} ansId
+     * @param {"answer" | "article"} obj
+     * @param {number | string} id
      * @param {number} offset
      * @returns {Promise<{users: User[], end:boolean, start: boolean, total: number}>}
      */
-    static [fetchVoters](ansId, offset)
+    static [fetchVoters](obj, id, offset)
     {
+        const part = (obj === "answer") ? "voters" : "likers";
         const pms = $.Deferred();
-        ContentBase._get(`https://www.zhihu.com/api/v4/answers/${ansId}/voters?include=data[*].answer_count,articles_count,follower_count&limit=20&offset=${offset}`)
+        ContentBase._get(`https://www.zhihu.com/api/v4/${obj}s/${id}/${part}?include=data[*].answer_count,articles_count,follower_count&limit=20&offset=${offset}`)
             .done((data, status, xhr) =>
             {
                 const users = data.data.map(User.fromRawJson);
@@ -27,9 +29,9 @@ class ContentBase
             .fail((data, status, xhr) =>
             {
                 if (data.responseJSON)
-                    console.warn("getAnsVoter fail:" + xhr.status, data.responseJSON.error.message);
+                    console.warn("fetchVoter fail:" + xhr.status, data.responseJSON.error.message);
                 else
-                    console.warn("getAnsVoter fail:" + xhr.status);
+                    console.warn("fetchVoter fail:" + xhr.status);
                 pms.reject();
             })
         return pms;
@@ -84,15 +86,16 @@ class ContentBase
     }
 
     /**
-     * fetch answer's voter
-     * @param {string | number} ansId
+     * fetch answer/article 's voter
+     * @param {"answer" | "article"} obj
+     * @param {string | number} id
      * @param {number} limit
      * @param {"old" | "new"} config
      * @param {function(number, number):void} onProgress
      */
-    static async fetchAnsVoters(ansId, limit, config, onProgress)
+    static async fetchTheVoters(obj, id, limit, config, onProgress)
     {
-        const first = await ContentBase[fetchVoters](ansId, 0);
+        const first = await ContentBase[fetchVoters](obj, id, 0);
         /**@type {User[]}*/
         let ret = first.users;
         const total = Math.min(first.total, limit);
@@ -104,7 +107,7 @@ class ContentBase
             offset = first.total - left;
         while (left > 0)
         {
-            const part = await ContentBase[fetchVoters](ansId, offset);
+            const part = await ContentBase[fetchVoters](obj, id, offset);
             ret = ret.concat(part.users);
             const len = part.users.length;
             offset += len, left -= len;
@@ -181,7 +184,7 @@ class ContentBase
          * @param {string} api
          * @param {Promise<Response>} pms
          * @param {string} target
-         * @param {{}} extra
+         * @param {{}} [extra]
          */
         async function sendData(req, pms, api, target, extra)
         {
@@ -209,9 +212,15 @@ class ContentBase
          */
         async function newfetch(req, init)
         {
+            //https://www.zhihu.com/api/v4/explore/recommendations?include=data%5B*%5D.answer.voteup_count%3Bdata%5B*%5D.article.voteup_count
             if (!req.includes("www.zhihu.com/api/v4/"))
                 return oldfetch(req, init);
-            const pms = oldfetch(req.replace("limit=10", "limit=20"), init);//accelerate
+            let newreq = req;
+            {
+                newreq = newreq.replace("limit=10", "limit=20");//accelerate
+                //newreq = newreq.replace("%5D.author.follower_count%2C", "%5D.author.answer_count%2Carticles_count%2Cfollower_count%2C");//detail
+            }
+            const pms = oldfetch(newreq, init);
             const apiparts = req.substring(req.indexOf("/api/v4/") + 8, req.indexOf("?")).split("/");
             if (apiparts[0] === "members")//capture [members, {id}, ...]
             {
@@ -224,6 +233,14 @@ class ContentBase
             else if (apiparts[0] === "articles" && apiparts[2] === "likers")
             {
                 return sendData(req, pms, "articles", "voters", { id: apiparts[1] });
+            }
+            else if (apiparts[0] === "questions" && apiparts[2] === "answers")
+            {
+                return sendData(req, pms, "questions", "answers", { id: apiparts[1] });
+            }
+            else if (apiparts[0] === "explore" && apiparts[1] === "recommendations")
+            {
+                return sendData(req, pms, "explore", "recommendations");
             }
             else
                 return pms;
@@ -239,8 +256,7 @@ class ContentBase
 }()
 
 
-
-
-
+/*
+*/
 
 

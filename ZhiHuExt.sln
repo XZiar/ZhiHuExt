@@ -55,8 +55,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Pages", "Pages", "{E8E9AB37
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "template", "template", "{D348C6E8-E1A4-4D91-A246-BACD33EE99A0}"
 	ProjectSection(SolutionItems) = preProject
+		template\answers-api.json = template\answers-api.json
 		template\article-page.json = template\article-page.json
 		template\people-page.json = template\people-page.json
+		template\voters-api.json = template\voters-api.json
 	EndProjectSection
 EndProject
 Global

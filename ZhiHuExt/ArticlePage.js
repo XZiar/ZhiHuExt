@@ -78,10 +78,8 @@
         {
             /**@type {ArtType}*/
             const post = Object.values(artdb.Post)[0];
-            const tmpdiv = document.createElement("div");
             output.topics.push(...post.topics.map(t => new Topic(t.id, t.name)))
-            tmpdiv.innerHTML = post.summary;
-            const article = new Article(post.slug, post.title, post.author, tmpdiv.innerText, post.likeCount);
+            const article = new Article(post.slug, post.title, post.author, post.summary.replace(/<[^>]+>/g, ""), post.likeCount);
             output.articles.push(article);
             post.lastestLikers.forEach(theuser =>
             {
@@ -94,8 +92,7 @@
             {
                 const ath = User.fromRawJson(p.author);
                 output.users.push(ath);
-                tmpdiv.innerHTML = p.summary;
-                const subart = new Article(p.slug, p.title, ath.id, tmpdiv.innerText);
+                const subart = new Article(p.slug, p.title, ath.id, p.summary.replace(/<[^>]+>/g, ""));
                 output.articles.push(subart);
             });
         }

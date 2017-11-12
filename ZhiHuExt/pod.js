@@ -307,9 +307,11 @@ class APIParser
                 {
                     const qst = APIParser.parseByType(output, obj.question);
                     const ath = APIParser.parseByType(output, obj.author);
-                    const qid = qst.id;
-                    const aid = ath.id;
-                    const ans = new Answer(obj.id, qid, aid, obj.voteup_count, _any(obj.excerptNew, obj.excerpt));
+                    const qid = qst.id; const aid = ath.id;
+                    let excerpt = obj.excerptNew || obj.excerpt_new;
+                    if (!excerpt && obj.excerpt)
+                        excerpt = obj.excerpt.replace(/<[^>]+>/g, "");//remove html tags
+                    const ans = new Answer(obj.id, qid, aid, obj.voteup_count, excerpt);
                     output.answers.push(ans);
                     return ans;
                 }

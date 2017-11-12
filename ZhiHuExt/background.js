@@ -356,52 +356,61 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) =>
 chrome.runtime.onMessageExternal.addListener(
     /**@param {{ url: string, api: string, target: string, data: string, extra: {} }} request*/
     (request, sender, sendResponse) =>
-{
-    const data = JSON.parse(request.data);
-    switch (request.target)
     {
-        case "activities":
-            {
-                const res = APIParser.parsePureActivities(data.data);
-                insertDB("batch", res, true);
-                console.log(request.target, res);
-            } break;
-        case "answers":
-        case "questions":
-            {
-                const res = APIParser.batch;
-                data.data.forEach(act => APIParser.parseByType(res, act));
-                insertDB("batch", res, true);
-                console.log(request.target, res);
-            } break;
-        case "relations":
-            {
-                const users = data.data.map(User.fromRawJson);
-                insertDB("users", users, true);
-                console.log(request.target, users);
-            } break;
-        case "voters":
-            {
-                const res = { zans: [], zanarts: [], users: data.data.map(User.fromRawJson) };
-                if (request.api === "answers")
-                    res.zans = res.users.map(u => new Zan(u, request.extra.id));
-                else if (request.api === "articles")
-                    res.zanarts = res.users.map(u => new Zan(u, request.extra.id));
-                insertDB("batch", res, true);
-                console.log(request.target, res);
-            } break;
-        case "empty":
-            {
-                const user = User.fromRawJson(data);
-                insertDB("users", user, true);
-                console.log("user", user);
-            } break;
-        case "publications":
-            break;
-        default:
-            console.log("unknown-extern", request.target, request.url, data);
-    }
-});
+        const data = JSON.parse(request.data);
+        switch (request.target)
+        {
+            case "activities":
+                {
+                    const res = APIParser.parsePureActivities(data.data);
+                    insertDB("batch", res, true);
+                    console.log(request.target, res);
+                } break;
+            case "answers":
+            case "questions":
+                {
+                    const res = APIParser.batch;
+                    data.data.forEach(act => APIParser.parseByType(res, act));
+                    insertDB("batch", res, true);
+                    if (request.api === "questions")
+                        res.questions = [res.questions[0]];//reduce duplicated qsts
+                    console.log(request.target, res);
+                } break;
+            case "relations":
+                {
+                    const users = data.data.map(User.fromRawJson);
+                    insertDB("users", users, true);
+                    //console.log(request.target, users);
+                } break;
+            case "voters":
+                {
+                    const res = { users: data.data.map(User.fromRawJson) };
+                    if (request.api === "answers")
+                        res.zans = res.users.map(u => new Zan(u, request.extra.id));
+                    else if (request.api === "articles")
+                        res.zanarts = res.users.map(u => new Zan(u, request.extra.id));
+                    insertDB("batch", res, true);
+                    console.log("voters", res);
+                } break;
+            case "empty":
+                {
+                    const user = User.fromRawJson(data);
+                    insertDB("users", user, true);
+                    console.log("user", user);
+                } break;
+            case "recommendations":
+                {
+                    const res = APIParser.batch;
+                    Object.values(data.data).forEach(act => APIParser.parseByType(res, act));
+                    insertDB("batch", res, true);
+                    console.log("recommends", res);
+                } break;
+            case "publications":
+                break;
+            default:
+                console.log("unknown-extern", request.target, request.url, data);
+        }
+    });
 
 $(document).ready(function ()
 {

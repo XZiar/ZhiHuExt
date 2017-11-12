@@ -29,28 +29,6 @@ let CUR_ANSWER = null;
 let CUR_ARTICLE = null;
 
 
-/**
- * @param {HTMLDivElement} node -div of ".AnswerItem"
- */
-function parseAnswer(node)
-{
-    if (!node)
-        return null;
-
-    /**@type {{type: string, token: string, upvote_num: number, comment_num: number, parent_token: string, author_member_hash_id: string}}*/
-    const ansInfo = JSON.parse(node.dataset.zaModuleInfo).card.content;
-    if (ansInfo.type != "Answer")
-        return null;
-
-    const nameLink = node.querySelector("a.UserLink-link");
-    /**@type {string}*/
-    const author = nameLink ? nameLink.getAttribute("href").split("/").pop() : "";
-
-    const answer = new Answer(ansInfo.token, ansInfo.parent_token, author, ansInfo.upvote_num);
-    return answer;
-}
-
-
 async function addSpamVoterBtns(voterNodes)
 {
     const users = [];
@@ -87,12 +65,10 @@ async function addSpamVoterBtns(voterNodes)
 };
 const voterObserver = new MutationObserver(records =>
 {
-    //console.log("detect add voters", records);
     const voterNodes = Array.fromArray(
         records.filter(record => (record.type == "childList" && record.target.nodeName == "DIV"))
             .map(record => $.makeArray(record.addedNodes)))
         .filter(node => node.hasClass("List-item") && !node.hasChild(".Btn-ReportSpam"));
-    //console.log("added " + voterNodes.length + " voters", voterNodes);
     addSpamVoterBtns(voterNodes);
 });
 function monitorVoter(voterPopup)
@@ -116,40 +92,39 @@ function monitorVoter(voterPopup)
     }
 }
 
-function addSpamAnsBtns(answerNodes)
+function addAASpamBtns(answerNodes)
 {
-    const answers = [];
-    const zans = [];
     answerNodes.filter(node => !node.hasChild(".Btn-ReportSpam"))
         .forEach(node =>
         {
-            const answer = parseAnswer(node);
-            if (!answer) return;
-            answers.push(answer);
-            if (ContentBase.CUR_USER)
-            {
-                const span = $("span.ActivityItem-metaTitle", node.parentElement)[0];
-                if (span && span.innerText.startsWith("赞"))
-                    zans.push(new Zan(ContentBase.CUR_USER, answer));
-            }
+            if (!node) return;
+            /**@type {{type: string, token: string, upvote_num: number, comment_num: number, parent_token: string, author_member_hash_id: string}}*/
+            const ansInfo = JSON.parse(node.dataset.zaModuleInfo).card.content;
+            let thetype;
+            if (ansInfo.type === "Answer")
+                thetype = "answer";
+            else if (ansInfo.type === "Post")
+                thetype = "article";
+            else
+                return;
+
+            const ansid = ansInfo.token;
             const ansArea = node.querySelector(".AuthorInfo");
             if (!ansArea)
                 return;
             {
                 const btn = createButton(["Btn-CheckSpam", "Button--primary"], "分析");
-                btn.dataset.id = answer.id;
+                btn.dataset.id = ansid;
+                btn.dataset.type = thetype;
                 ansArea.appendChild(btn);
             }
             {
                 const btn = createButton(["Btn-ReportSpam", "Button--primary"], "广告");
-                btn.dataset.id = answer.id;
-                btn.dataset.type = "answer";
+                btn.dataset.id = ansid;
+                btn.dataset.type = thetype;
                 ansArea.appendChild(btn);
             }
         });
-    ContentBase._report("answers", answers);
-    ContentBase._report("zans", zans);
-    return answers;
 }
 
 function addQuickCheckBtns(feedbackNodes)
@@ -192,9 +167,9 @@ const bodyObserver = new MutationObserver(records =>
         }
     }
     {
-        const answerNodes = $(addNodes).find(".AnswerItem").toArray();
-        if (answerNodes.length > 0)
-            addSpamAnsBtns(answerNodes);
+        const ansartNodes = $(addNodes).find(".AnswerItem, .ArticleItem").toArray();
+        if (ansartNodes.length > 0)
+            addAASpamBtns(ansartNodes);
     }
 });
     
@@ -219,11 +194,18 @@ $("body").on("click", "button.Btn-CheckSpam", async function (e)
 {
     /**@type {HTMLButtonElement}*/
     const btn = e.target;
-    const ansId = btn.dataset.id;
-    const voters = await ContentBase.fetchAnsVoters(ansId, 10000, e.ctrlKey ? "old" : "new",
+    const id = btn.dataset.id;
+    const type = btn.dataset.type;
+    const voters = await ContentBase.fetchTheVoters(type, id, 10000, e.ctrlKey ? "old" : "new",
         (cur, all) => btn.innerText = "=>" + cur + "/" + all);
-
-    ContentBase._report("batch", { users: voters, zans: voters.map(user => new Zan(user, ansId)) });
+    {
+        const rep = { users: voters };
+        if (type === "answer")
+            rep.zans = voters.map(user => new Zan(user, id));
+        else if (type === "article")
+            rep.zanarts = voters.map(user => new Zan(user, id));
+        ContentBase._report("batch", rep);
+    }
     btn.addClass("Button--blue");
 
     const result = await ContentBase.checkSpam("users", voters.mapToProp("id"));
@@ -393,9 +375,9 @@ if (pathname.startsWith("/question/"))
 }
 
 {
-    const curAnswers = $(".AnswerItem").toArray();
-    console.log("init " + curAnswers.length + " answers");
-    addSpamAnsBtns(curAnswers);
+    const curAnsArts = $(".AnswerItem, .ArticleItem").toArray();
+    console.log("init " + curAnsArts.length + " answer/article");
+    addAASpamBtns(curAnsArts);
 }
 $(document).ready(() =>
 {
