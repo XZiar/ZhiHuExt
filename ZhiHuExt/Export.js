@@ -2,7 +2,7 @@
 
 !async function ()
 {
-    const auth = "fwAAASLR" + "171109a";
+    const auth = "fwAAASLR" + "171112a";
     /**
      * @param {string} table
      * @param {number} offset

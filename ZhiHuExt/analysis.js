@@ -1,5 +1,8 @@
 "use strict"
 
+var BAN_UID = new Set();
+var SPAM_UID = new Set();
+
 /**
  * @template T
  * @template R
@@ -211,21 +214,32 @@ class Analyse
         const uid1 = new Set(uid0);
         uid1.delete("");//except anonymous user
         const uids = uid1.toArray();
-        console.log("here [" + uids.length + "] uids");
+        console.log("Analyse Similarity here [" + uids.length + "] uids");
 
+        /**@type {[Promise<Zan[]>, Promise<Zan[]>]}*/
         const zanquerys = [db.zans.where("from").anyOf(uids).toArray(), db.zanarts.where("from").anyOf(uids).toArray()];
-        /**@type {[Zan[], Zan[]]}*/
         const [anszan, artzan] = await Promise.all(zanquerys);
-        console.log("get [" + anszan.length + "] answer records", "get [" + artzan.length + "] article records");
+        console.log(`get [${anszan.length}] answer records`, `get [${artzan.length}] article records`);
 
-        const voterbag0 = new SimpleBag(anszan.mapToProp("from"));
-        voterbag0.adds(artzan.mapToProp("from"));
+        const zancounter = new SimpleBag(anszan.mapToProp("from"));
+        zancounter.adds(artzan.mapToProp("from"));
+
+        const zancounter2 = new SimpleBag();
+        {
+            /**@type {Set<string>}*/
+            const banusers = zancounter.toSet().intersection(BAN_UID);
+            const involvedAnss = new Set(anszan.filter(zan => banusers.has(zan.from)).mapToProp("to"));
+            anszan.filter(zan => involvedAnss.has(zan.to)).forEach(zan => zancounter2.add(zan.from));
+            const involvedArts = new Set(artzan.filter(zan => banusers.has(zan.from)).mapToProp("to"));
+            artzan.filter(zan => involvedArts.has(zan.to)).forEach(zan => zancounter2.add(zan.from));
+            console.log(`find [${banusers.size}] banned users`, `involve [${involvedAnss.size + involvedArts.size}] objects`);
+        }
 
         /**@type {number} ln(1~(zan-80)) => [1,9]*/
         const minrepeat = Math.minmax(Math.floor(Math.log(Math.max(uids.length - 80, 1))), 1, 9);
-        const ansbag = new SimpleBag(anszan.mapToProp("to")).above(minrepeat), artbag = new SimpleBag(artzan.mapToProp("to")).above(minrepeat);
-        const ansset = ansbag.toSet(), artset = artbag.toSet();
-        console.log("reduce to [" + ansset.size + "] answer records", "get [" + artset.size + "] article records");
+        const ansset = new SimpleBag(anszan.mapToProp("to")).above(minrepeat).toSet();
+        const artset = new SimpleBag(artzan.mapToProp("to")).above(minrepeat).toSet();
+        console.log(`reduce to [${ansset.size}] answer records`, `reduce to [${artset.size}] article records`);
 
         const voterbag = new SimpleBag();
         for (let i = 0; i < anszan.length; ++i)
@@ -241,8 +255,9 @@ class Analyse
                 voterbag.add(zan.from);
         }
 
-        /**@type {[string, [number, number]][]}*/
-        const result = voterbag.map((uid, count) => [uid, [count, voterbag0.count(uid)]]);
+        /**@type {[string, [number, number, number]][]}*/
+        const result = voterbag.map((uid, count) => [uid, [count, zancounter2.count(uid), zancounter.count(uid)]]);
+        console.log(`Analyse Similarity finished, threshold [${minrepeat}]`);
         return { data: result, limit: minrepeat };
     }
 }

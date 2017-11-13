@@ -15,14 +15,14 @@ namespace DBExportor
     public class Program
     {
         public static ushort Port { get; private set; }
-        public static string Auth { get; private set; } = "171109a";
+        public static string Auth { get; private set; } = "171112a";
         public static string Address { get; private set; }
         public static DirectoryInfo DBFolder { get; private set; }
         public static void Main(string[] args)
         {
             Port = (args.Where(p => p.StartsWith("-p")).LastOrDefault()?.Substring(2))
                 .ToUshort(8913);
-            var folderpath = args.Where(p => p.StartsWith("-d")).LastOrDefault();
+            var folderpath = args.Where(p => p.StartsWith("-d")).LastOrDefault()?.Substring(2);
             DBFolder = new DirectoryInfo(String.IsNullOrEmpty(folderpath) ? Directory.GetCurrentDirectory() : folderpath);
             BuildWebHost(args).Run();
         }

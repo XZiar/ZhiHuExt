@@ -70,12 +70,12 @@ class Article
      * @param {number | string} id
      * @param {string} title
      * @param {string} author
-     * @param {string} [excerpt]
      * @param {number} [zancnt]
+     * @param {string} [excerpt]
      * @param {number} [timeCreated]
      * @param {number} [timeUpdated]
      */
-    constructor(id, title, author, excerpt, zancnt, timeCreated, timeUpdated)
+    constructor(id, title, author, zancnt,excerpt,  timeCreated, timeUpdated)
     {
         this.id = Number(id);
         this.title = title;
@@ -116,8 +116,8 @@ class Answer
         this.id = Number(id);
         this.question = Number(quest);
         this.author = author;//should not be null
-        this.zancnt = zancnt == null ? -1 : zancnt;
         this.excerpt = excerpt == null ? null : excerpt;
+        this.zancnt = zancnt == null ? -1 : zancnt;
         this.timeC = timeCreated == null ? -1 : timeCreated;
         this.timeU = timeUpdated == null ? -1 : timeUpdated;
     }
@@ -252,8 +252,8 @@ class APIParser
                         timeC = Math.floor(Date.parse(obj.publishedTime) / 1000);
                     if (typeof(timeU) === "string")
                         timeU = Math.floor(Date.parse(timeU) / 1000);
-                    const art = new Article(obj.id, obj.title, ath.id, _any(obj.excerpt_new, obj.excerptNew),
-                        _any(obj.voteup_count, obj.voteupCount), timeC, timeU);
+                    const art = new Article(obj.id, obj.title, ath.id, _any(obj.voteup_count, obj.voteupCount),
+                        _any(obj.excerpt_new, obj.excerptNew), timeC, timeU);
                     output.articles.push(art);
                     return art;
                 }

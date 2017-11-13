@@ -55,6 +55,14 @@ Array.prototype.filterUnique = function ()
     return Array.from(new Set(this));
 }
 
+Set.prototype.intersection = function (other)
+{
+    const ret = new Set();
+    for (const ele of this)
+        if (other.has(ele))
+            ret.add(ele);
+    return ret;
+}
 Set.prototype.toArray = function ()
 {
     return Array.from(this);
@@ -263,6 +271,25 @@ class SimpleBag
     }
     /**
      * @template T
+     * @param {function(T):boolean} [filter]
+     */
+    elements(filter)
+    {
+        const keyit = this._map.keys();
+        if (filter == null)
+            return Array.from(keyit);
+        const ret = [];
+        while (true)
+        {
+            const { value, done } = keyit.next();
+            if (done) break;
+            if (filter(value))
+                ret.push(value);
+        }
+        return ret;
+    }
+    /**
+     * @template T
      * @param {function(T, number): boolean} filtor
      */
     filter(filtor)
@@ -390,8 +417,10 @@ function _sleep(ms)
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 /**
- * @param {any[]} array
- * @param {Set<any>} set
+ * @template T
+ * @param {T[]} array
+ * @param {Set<T>} set
+ * @returns {[T[], T[]]} [inside,outside]
  */
 function splitInOutSide(array, set)
 {

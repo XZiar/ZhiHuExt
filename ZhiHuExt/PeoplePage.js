@@ -38,8 +38,10 @@
             ContentBase._report("batch", entities);
             console.log(entities);
             //process user
-            const selfUser = state.currentUser;
-            ContentBase.CUR_USER = entities.users.filter(u => u.id === selfUser)[0]
+            const uid = document.location.pathname.split("/")[2];
+            if (!uid)
+                return;
+            ContentBase.CUR_USER = entities.users.filter(u => u.id === uid)[0]
             console.log(ContentBase.CUR_USER);
         }
     });

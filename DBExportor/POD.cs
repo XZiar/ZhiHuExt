@@ -31,15 +31,15 @@ namespace DBExportor.Pods
         private string id_;
         public string name;
         public string head;
+        public int anscnt;
+        public int artcnt;
+        public int follower;
         public string status
         {
             get { return status_ == UserStatus.empty ? "" : status_.ToString(); }
             set { status_ = Enum.TryParse<UserStatus>(value, out var res) ? res : UserStatus.empty; }
         }
         private UserStatus status_;
-        public int anscnt;
-        public int articlecnt;
-        public int followcnt;
     }
 
     [Pod("questions")]
@@ -48,6 +48,8 @@ namespace DBExportor.Pods
         public uint id;
         public string title;
         public int[] topics;
+        public long timeC { get { return timeC_ == uint.MaxValue ? -1L : timeC_; } set { timeC_ = value == -1 ? uint.MaxValue : (uint)value; } }
+        private uint timeC_;
     }
 
     [Pod("articles")]
@@ -59,6 +61,10 @@ namespace DBExportor.Pods
         private string author_;
         public string excerpt;
         public int zancnt;
+        public long timeC { get { return timeC_ == uint.MaxValue ? -1L : timeC_; } set { timeC_ = value == -1 ? uint.MaxValue : (uint)value; } }
+        private uint timeC_;
+        public long timeU { get { return timeU_ == uint.MaxValue ? -1L : timeU_; } set { timeU_ = value == -1 ? uint.MaxValue : (uint)value; } }
+        private uint timeU_;
     }
 
     [Pod("topics")]
@@ -77,6 +83,10 @@ namespace DBExportor.Pods
         private string author_;
         public string excerpt;
         public int zancnt;
+        public long timeC { get { return timeC_ == uint.MaxValue ? -1L : timeC_; } set { timeC_ = value == -1 ? uint.MaxValue : (uint)value; } }
+        private uint timeC_;
+        public long timeU { get { return timeU_ == uint.MaxValue ? -1L : timeU_; } set { timeU_ = value == -1 ? uint.MaxValue : (uint)value; } }
+        private uint timeU_;
     }
 
     [Pod("zans", "zanarts")]
@@ -85,6 +95,8 @@ namespace DBExportor.Pods
         public string from { get { return from_; } set { from_ = string.Intern(value); } }
         private string from_;
         public uint to;
+        public long time { get { return time_ == uint.MaxValue ? -1L : time_; } set { time_ = value == -1 ? uint.MaxValue : (uint)value; } }
+        private uint time_;
     }
 
     [AttributeUsage(AttributeTargets.Struct, AllowMultiple = false)]

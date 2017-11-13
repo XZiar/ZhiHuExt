@@ -2,6 +2,7 @@
   "profiles": {
     "DBExportor": {
       "commandName": "Project",
+      "commandLineArgs": "-dE:\\Backups",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Production"
       }

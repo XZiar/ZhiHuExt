@@ -18,9 +18,6 @@ Dexie.addons.push(x => x.Collection.prototype.toPropMap = toPropMap);
 
 
 const db = new Dexie("ZhihuDB");
-let BAN_UID = new Set();
-let SPAM_UID = new Set();
-
 db.version(1).stores(
     {
         spams: "id,type",
@@ -315,7 +312,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) =>
                     const func = request.target === "answer" ? Analyse.getAnsVoters : Analyse.getArtVoters;
                     func(request.data).then(voters =>
                     {
-                        const result = checkSpamUser(voters.mapToProp("id"));
+                        const result = checkSpamUser(voters.mapToProp("key"));
                         result.total = voters.length;
                         sendResponse(result);
                     });

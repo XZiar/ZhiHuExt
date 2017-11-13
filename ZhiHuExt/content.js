@@ -198,7 +198,7 @@ $("body").on("click", "button.Btn-CheckSpam", async function (e)
     let total, result;
     if (e.shiftKey)
     {
-        result = await ContentBase.checkSpam(type, id);
+        result = await ContentBase.checkSpam(type, Number(id));
         total = result.total;
     }
     else
@@ -254,7 +254,7 @@ $("body").on("click", "button.Btn-CheckStatus", async function (e)
         btn.style.backgroundColor = "rgb(0,224,32)";
         $(btn).siblings(".Btn-ReportSpam")[0].style.backgroundColor = "";
     }
-    ContentBase._report("users", user);
+    //ContentBase._report("users", user);//entity has include this user
 });
 $("body").on("click", "button.Btn-CheckAllStatus", async function (e)
 {
@@ -333,7 +333,7 @@ $("body").on("click", "button.Btn-Similarity", function ()
         btns.push(extraArea.children[1]);
     });
     console.log("detect " + btns.length + " user");
-    chrome.runtime.sendMessage(msg, /**@param {[string, [number, number]][]} result*/(result) =>
+    chrome.runtime.sendMessage(msg, /**@param {[string, [number, number, number]][]} result*/(result) =>
     {
         console.log(result);
         const simmap = new Map(result.data);
@@ -341,12 +341,12 @@ $("body").on("click", "button.Btn-Similarity", function ()
         btns.forEach(btn =>
         {
             const counts = simmap.get(btn.dataset.id);
-            btn.textContent = counts[0] + "/" + counts[1];
+            btn.textContent = `${counts[0]}(${counts[1]})/${counts[2]}`;
             btn.style.fontSize = "smaller";
             btn.style.fontWeight = "bold";
             maxcnt = Math.max(maxcnt, counts[0]);
         });
-        thisbtn.textContent = maxcnt + "(" + result.limit + ")";
+        thisbtn.textContent = `${maxcnt}(${result.limit})`;
         thisbtn.style.fontSize = "smaller";
         thisbtn.style.fontWeight = "bold";
     });
