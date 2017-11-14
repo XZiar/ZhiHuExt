@@ -1,80 +1,66 @@
 "use strict"
 
-!async function ()
+
+/**
+ * @param {string[] | BagArray} voters
+ */
+async function AssocByVoters(voters)
 {
-    /**
-     * @param {string} method
-     * @param {any[]} args
-     */
-    async function doAnalyse(method, ...args)
+    if (voters[0].hasOwnProperty("count"))
+        voters = voters.mapToProp("key");
+    const uid0 = new Set(voters);
+    uid0.delete("");//except anonymous user
+    /**@type {string[]}*/
+    const uids = uid0.toArray();
+
+    /**@type {BagArray}*/
+    const anss = await doAnalyse("getAnsIdByVoter", voters, "desc");
+    console.log(`${anss.length} answers`, anss);
+    /**@type {{[x:number]: Answer}}*/
+    const ansMap = await doAnalyse("getDetailMapOfIds", "answers", anss.mapToProp("key"), "id");
+    /**@type {{[x:number]: Question}}*/
+    const qstMap = await doAnalyse("getDetailMapOfIds", "questions", Object.values(ansMap).mapToProp("question"), "id");
+    const data = [];
+    for (let idx = 0; idx < anss.length; ++idx)
     {
-        return await SendMsgAsync({ "action": "analyse", "method": method, "argument": args });
+        const cur = anss[idx];
+        const ans = ansMap[cur.key];
+        const qstid = ans.question;
+        const qst = qstMap[qstid];
+        const title = qst == null ? qstid : qst.title;
+        const dat = { ansid: ans.id, qst: { title: title, aid: ans.id, qid: qstid }, author: ans.author, date: ans.timeC, count: cur.count };
+        data.push(dat);
     }
 
-    /**
-     * @param {number | number[]} ids
-     * @param {"Answer" | "Article"} target
-     * @returns {BagArray}
-     */
-    async function getVoters(ids, target)
-    {
-        const method = target === "Answer" ? "getAnsVoters" : "getArtVoters";
-        const voters = await doAnalyse(method, ids);
-        console.log("voters", voters);
-        return voters;
-    }
-
-    /**
-     * @param {string[] | BagArray} voters
-     */
-    async function AssocByVoters(voters)
-    {
-        if (voters[0].hasOwnProperty("count"))
-            voters = voters.mapToProp("key");
-        const uid0 = new Set(voters);
-        uid0.delete("");//except anonymous user
-        /**@type {string[]}*/
-        const uids = uid0.toArray();
-
-        const anss = await doAnalyse("getAnswerByVoter", voters, "desc");
-        console.log(anss);
-        const ansMap = await doAnalyse("getPropMapOfIds", "answers", anss.mapToProp("key"), "question");
-        const qstMap = await doAnalyse("getDetailMapOfIds", "questions", Object.values(ansMap), "id");
-        const data = [];
-        for (let idx = 0; idx < anss.length; ++idx)
+    $("#maintable").DataTable(
         {
-            const cur = anss[idx];
-            const qstid = ansMap[cur.key];
-            const link = "https://www.zhihu.com/question/" + qstid + "/answer/" + cur.key;
-            const qst = qstMap[qstid];
-            const title = qst == null ? qstid : qst.title;
-            const dat = { "ansid": cur.key, "qst": { "title": title, "link": link }, "times": cur.count };
-            data.push(dat);
-        }
+            paging: true,
+            lengthMenu: [[20, 50, 100, -1], [20, 50, 100, "All"]],
+            data: data,
+            order: [[4, "desc"]],
+            columns:
+            [
+                { data: "ansid" },
+                {
+                    data: "qst",
+                    render: displayRender(dat => `<a class="bgopen" href="https://www.zhihu.com/question/${dat.qid}/answer/${dat.aid}">${dat.title}</a>`, dat => dat.qid),
+                },
+                {
+                    data: "author",
+                    render: displayRender(dat => `<a class="bgopen" href="https://www.zhihu.com/people/${dat}">${dat}</a>`),
+                },
+                {
+                    data: "date",
+                    render: displayRender(dat => dat === -1 ? "No record" : new Date(dat * 1000).toLocaleString()),
+                },
+                { data: "count" }
+            ]
+        });
+}
 
-        $("#maintable").DataTable(
-            {
-                paging: true,
-                lengthMenu: [[20, 50, 100, -1], [20, 50, 100, "All"]],
-                data: data,
-                order: [[2, "desc"]],
-                columns: [
-                    { data: "ansid" },
-                    {
-                        data: "qst",
-                        render: function (data, type, row)
-                        {
-                            if (type === 'display')
-                                return '<a href="' + data.link + '">' + data.title + '</a>';
-                            else
-                                return data.link;
-                        }
-                    },
-                    { data: "times" }
-                ]
-            });
-    }
 
+!async function()
+{
     /**@type {{[x: string]: string}}*/
     const qs = _getQueryString();
 
@@ -83,7 +69,7 @@
     if (qs.artid != null)
     {
         const artid = qs.artid.split("*").map(Number);
-        voters = await getVoters(artid, "Article");
+        voters = await getVoters(artid, "article");
     }
     else if (qs.votid != null)
     {
@@ -104,8 +90,9 @@
         }
         else
             return;
-        voters = await getVoters(ansid, "Answer");
+        voters = await getVoters(ansid, "answer");
     }
     if (voters != null)
         AssocByVoters(voters);
 }()
+

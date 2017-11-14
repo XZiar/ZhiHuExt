@@ -312,9 +312,15 @@ $("body").on("click", "button.Btn-AssocAns", function ()
         return;
     chrome.runtime.sendMessage({ action: "openpage", isBackground: false, target: "AssocAns.html?" + query });
 });
-$("body").on("click", "button.Btn-Similarity", function ()
+$("body").on("click", "button.Btn-StatVoter", e =>
 {
-    const thisbtn = $(this)[0];
+    const btn = e.target;
+    const query = `${btn.dataset.qname}=${btn.dataset.id}`;
+    chrome.runtime.sendMessage({ action: "openpage", isBackground: false, target: "StatVoter.html?" + query });
+});
+$("body").on("click", "button.Btn-Similarity", e =>
+{
+    const thisbtn = e.target;
     const msg = { action: "chksim", target: "", data: null };
     if (CUR_ANSWER)
         msg.target = "answer", msg.data = CUR_ANSWER;

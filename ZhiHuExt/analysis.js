@@ -49,7 +49,11 @@ class Analyse
         const dat0 = dat instanceof Promise ? await dat : dat;
         const dat1 = dat0 instanceof Set ? dat0.toArray() : dat0;
         const dat2 = dat1 instanceof SimpleBag ? dat1.toArray() : dat1;
+        if (dat2 == null)
+            return [];
         const dat3 = dat2 instanceof Array ? dat2 : [dat2];
+        if (dat3.length === 0)
+            return [];
         const dat4 = dat3[0].hasOwnProperty("count") ? dat3.mapToProp("key") : dat3;
         return dat4;
     }
@@ -84,6 +88,12 @@ class Analyse
         const spams = await db.spams.where("type").equals("member").primaryKeys();
         return (new Set([...spams, ...uids])).toArray();
     }
+    /**
+     * @param {string | object} tab
+     * @param {[] | Promise<any>} id
+     * @param {string} prop
+     * @returns {{[x:any]: any}[]}
+     */
     static async getPropMapOfIds(tab, id, prop)
     {
         const ids = await Analyse.toPureArray(id);
@@ -124,15 +134,29 @@ class Analyse
         const zanUsers = new SimpleBag(zans.mapToProp("from")).toArray("desc");
         return zanUsers;
     }
-    static async getAnswerByAuthor(uid)
+    /**
+     * @param {string | string[] | BagArray | Promise<Any>} uid
+     * @param {"answer" | "article"} target
+     * @returns {Promise<number[]>}
+     */
+    static async getIdByAuthor(uid, target)
     {
         const uids = await Analyse.toPureArray(uid);
         console.log("here [" + uids.length + "] uids");
-        const ansids = await db.answers.where("id").anyOf(uids).primaryKeys();
-        console.log("here [" + ansids.length + "] ansids");
-        return ansids;
+        if (target === "answer")
+        {
+            const ansids = await db.answers.where("author").anyOf(uids).primaryKeys();
+            console.log("here [" + ansids.length + "] ansids");
+            return ansids;
+        }
+        else if (target === "article")
+        {
+            const artids = await db.articles.where("author").anyOf(uids).primaryKeys();
+            console.log("here [" + artids.length + "] artids");
+            return artids;
+        }
     }
-    static async getAnswerByVoter(uid, order)
+    static async getAnsIdByVoter(uid, order)
     {
         const uids = await Analyse.toPureArray(uid);
         console.log("here [" + uids.length + "] uids");
@@ -141,6 +165,14 @@ class Analyse
         const zanAnss = new SimpleBag(zans.mapToProp("to")).toArray(order);
         console.log("reduce to [" + zanAnss.length + "] answers");
         return zanAnss;
+    }
+    static async getAnswerByQuestion(qsts)
+    {
+        const qids = await Analyse.toPureArray(qsts);
+        console.log("here [" + qids.length + "] qids");
+        const quests = await db.answers.where("question").anyOf(qids).toArray();
+        console.log("get [" + quests.length + "] questions");
+        return quests;
     }
     static async getQuestIdByAnswer(anss)
     {
@@ -156,7 +188,7 @@ class Analyse
 
     static async findQuestOfUserVote(uid)
     {
-        const zanAnss = await Analyse.getAnswerByVoter(uid);
+        const zanAnss = await Analyse.getAnsIdByVoter(uid);
         const qsts = await Analyse.getQuestIdByAnswer(zanAnss);
         const qstMap = await Analyse.getDetailMapOfIds(db.questions, qsts, "id");
         console.log("get [" + Object.keys(qstMap).length + "] questions");
@@ -164,7 +196,7 @@ class Analyse
     }
     static async findAuthorOfUserVote(uid)
     {
-        const zanAnss = await Analyse.getAnswerByVoter(uid);
+        const zanAnss = await Analyse.getAnsIdByVoter(uid);
         const ansMap = await Analyse.getPropMapOfIds(db.answers, zanAnss, "author");
         console.log("get [" + Object.keys(ansMap).length + "] answers");
         const authorBag = new SimpleBag();
@@ -195,7 +227,7 @@ class Analyse
     }
     static async findTopicOfUserVote(uid)
     {
-        const quests = await Analyse.getAnswerByVoter(uid);
+        const quests = await Analyse.getAnsIdByVoter(uid);
         const topicBag = new SimpleBag();
         quests.forEach(quest =>
         {

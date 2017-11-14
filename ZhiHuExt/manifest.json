@@ -86,6 +86,10 @@
       [
         "QuestionPage.js"
       ],
+      "css":
+      [
+        "cssfix.css"
+      ],
       "run_at": "document_start"
     },
     {

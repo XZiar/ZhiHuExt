@@ -56,6 +56,16 @@
         const btn = createButton(["Btn-ReportSpam", "Button--primary"], "广告");
         btn.dataset.id = user.id;
         btn.dataset.type = "member";
+        const btn2 = createButton(["Btn-StatVoter", "Button--primary"], "最粉丝");
+        btn2.dataset.id = user.id;
+        btn2.dataset.qname = "uid";
+        if (!header.hasChild(".ProfileButtonGroup"))
+        {
+            const dummydiv = document.createElement("div");
+            dummydiv.className = "MemberButtonGroup ProfileButtonGroup ProfileHeader-buttons";
+            $(".ProfileHeader-contentFooter", header).append(dummydiv);
+        }
         $(".ProfileButtonGroup", header).prepend(btn);
+        $(".ProfileButtonGroup", header).prepend(btn2);
     }, 640);
 }()

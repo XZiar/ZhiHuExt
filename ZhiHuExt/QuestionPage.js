@@ -45,13 +45,17 @@
         const qid = document.location.pathname.split("/")[2];
         if (!qid)
             return;
-        const qstArea = $(".QuestionHeader-footer .QuestionButtonGroup")
+        const qstArea = $("div.QuestionHeader-footer-inner").find("div.QuestionButtonGroup")
         if (qstArea.length > 0)
         {
             const btn = createButton(["Btn-ReportSpam", "Button--primary"], "广告");
             btn.dataset.id = qid;
             btn.dataset.type = "question";
+            const btn2 = createButton(["Btn-StatVoter", "Button--primary"], "最爱赞");
+            btn2.dataset.id = qid;
+            btn2.dataset.qname = "qid";
             qstArea.prepend(btn);
+            qstArea.prepend(btn2);
         }
     }, 800);
 }()

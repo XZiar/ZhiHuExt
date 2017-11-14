@@ -290,6 +290,20 @@ class SimpleBag
     }
     /**
      * @template T
+     * @param {SimpleBag | BagArray} other
+     */
+    union(other)
+    {
+        if (other instanceof SimpleBag)
+            for (const ele of other._map)
+                this.addMany(ele[0], ele[1]);
+        else
+            for (let i = 0; i < other.length; ++i)
+                this.addMany(other[i].key, other[i].count);
+        return this;
+    }
+    /**
+     * @template T
      * @param {function(T, number): boolean} filtor
      */
     filter(filtor)
@@ -360,6 +374,18 @@ class SimpleBag
         return array;
     }
     get size() { return this._map.size; }
+    /**
+     * @template T
+     * @param {BagArray} bagArray
+     * @returns {SimpleBag<T>}
+     */
+    static fromBagArray(bagArray)
+    {
+        const bag = new SimpleBag();
+        for (let i = 0; i < bagArray.length; ++i)
+            bag._map.set(bagArray[i].key, bagArray[i].count);
+        return bag;
+    }
     /**
      * @template T
      * @param {BagArray} bagArray

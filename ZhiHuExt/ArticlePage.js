@@ -89,7 +89,7 @@
                 output.zanarts.push(new Zan(user, article));
             });
 
-            [post.meta.previous, post.meta.next].forEach(p =>
+            [post.meta.previous, post.meta.next].filter(p => p != null).forEach(p =>
             {
                 const ath = User.fromRawJson(p.author);
                 output.users.push(ath);
@@ -116,6 +116,7 @@
             txt = part[0] + part[1].replace(")", "");
         }
         const artdata = JSON.parse(txt);
+        console.log(artdata);
         const output = parseData(artdata);
         console.log("artpage-report", output);
         ContentBase._report("batch", output);

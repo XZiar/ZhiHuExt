@@ -36,10 +36,8 @@ class User
             else
                 user.status = "";
         }
-        else if (theuser.isBanned)
-        {
-            user.status = "sban";
-        }
+        //else if (theuser.isBanned)
+        //    user.status = "sban";
         return user;
     }
 }
