@@ -22,8 +22,9 @@ class ContentBase
     static [fetchVoters](obj, id, offset)
     {
         const part = (obj === "answer") ? "voters" : "likers";
+        const zanquery = (obj === "answer") ? ",voteup_count" : "";
         const pms = $.Deferred();
-        ContentBase._get(`https://www.zhihu.com/api/v4/${obj}s/${id}/${part}?include=data[*].answer_count,articles_count,follower_count&limit=20&offset=${offset}`)
+        ContentBase._get(`https://www.zhihu.com/api/v4/${obj}s/${id}/${part}?include=data[*].answer_count,articles_count,follower_count${zanquery}&limit=20&offset=${offset}`)
             .done((data, status, xhr) =>
             {
                 const users = data.data.map(User.fromRawJson);
@@ -180,6 +181,8 @@ class ContentBase
 
 !function ()
 {
+    if (!window.location.host.includes("zhihu.com"))
+        return;
     function FetchHook()
     {
         /**
@@ -221,7 +224,10 @@ class ContentBase
             let newreq = req;
             {
                 newreq = newreq.replace("limit=10", "limit=20");//accelerate
-                //newreq = newreq.replace("%5D.author.follower_count%2C", "%5D.author.answer_count%2Carticles_count%2Cfollower_count%2C");//detail
+                if (newreq.includes("/api/v4/articles"))//simple fix for articles api(lacks voteup_count field)
+                    newreq = newreq.replace("follower_count%2C", "answer_count%2Carticles_count%2Cfollower_count%2C");//detail
+                else
+                    newreq = newreq.replace("follower_count%2C", "voteup_count%2Canswer_count%2Carticles_count%2Cfollower_count%2C");//detail
             }
             const pms = oldfetch(newreq, init);
             const apiparts = req.substring(req.indexOf("/api/v4/") + 8, req.indexOf("?")).split("/");

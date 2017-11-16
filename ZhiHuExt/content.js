@@ -301,7 +301,7 @@ $("body").on("click", "span.Voters", function ()
     else if (itemContent.type === "Post")
         CUR_ARTICLE = itemContent.token;
 });
-$("body").on("click", "button.Btn-AssocAns", function ()
+$("body").on("click", "button.Btn-AssocAns", e =>
 {
     let query;
     if (CUR_ANSWER)
@@ -310,7 +310,8 @@ $("body").on("click", "button.Btn-AssocAns", function ()
         query = "artid=" + CUR_ARTICLE;
     else
         return;
-    chrome.runtime.sendMessage({ action: "openpage", isBackground: false, target: "AssocAns.html?" + query });
+    const target = e.ctrlKey ? "StatVoter.html?" : "AssocAns.html?";
+    chrome.runtime.sendMessage({ action: "openpage", isBackground: false, target: target + query });
 });
 $("body").on("click", "button.Btn-StatVoter", e =>
 {

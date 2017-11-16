@@ -11,6 +11,7 @@ class User
         this.anscnt = -1;
         this.artcnt = -1;
         this.follower = -1;
+        this.zancnt = -1;
     }
 
     /**@param {UserType} theuser*/
@@ -26,6 +27,7 @@ class User
         user.anscnt = _any(theuser.answerCount, theuser.answer_count, -1);
         user.follower = _any(theuser.followerCount, theuser.follower_count, -1);
         user.artcnt = _any(theuser.articlesCount, theuser.articles_count, -1);
+        user.zancnt = _any(theuser.voteupCount, theuser.voteup_count, -1);
         const statuss = theuser.accountStatus;
         if (statuss)
         {

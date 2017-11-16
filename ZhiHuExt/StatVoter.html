@@ -6,6 +6,7 @@
     <script src="jquery-3.2.1.min.js"></script>
     <script src="pod.js"></script>
     <script src="utils.js"></script>
+    <script src="ContentBase.js"></script>
     <script src="AnalysePage.js"></script>
     <link rel="stylesheet" href="https://cdn.datatables.net/1.10.16/css/jquery.dataTables.min.css">
     <script src="https://cdn.datatables.net/1.10.16/js/jquery.dataTables.min.js"></script>
@@ -21,19 +22,24 @@
 </head>
 <body>
     <div>
-        <h3 style="text-align:center"><span id="banzansum"></span>个来自封禁用户的赞</h3>
+        <h3 style="text-align:center">
+            <span id="zansum"></span>个赞中,  有<span id="banzansum"></span>个来自封禁用户的赞
+            <button id="chkAllStatus">检测全部</button>
+        </h3>
         <table id="maintable" class="cell-border hover order-column stripe" width="100%">
             <thead>
                 <tr>
-                    <th width="40%">名字</th>
-                    <th width="15%">状态</th>
+                    <th width="35%">名字</th>
+                    <th width="13%">状态</th>
                     <th width="10%">文章数</th>
                     <th width="10%">回答数</th>
                     <th width="10%">关注者</th>
-                    <th width="15%">点赞计数</th>
+                    <th width="10%">赞数</th>
+                    <th width="12%">点赞计数</th>
                 </tr>
             </thead>
         </table>
+        <div style="text-align:center"><button id="assoc">联想回答</button></div>
     </div>
     <script src="StatVoter.js"></script>
 </body>

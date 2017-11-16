@@ -517,3 +517,34 @@ async function SendMsgAsync(data)
     return pms;
 }
 
+
+/**
+ * @param {Promise<Any> | Set<Any> | SimpleBag | Any[]} dat
+ * @returns {Promise<Any[]>}
+ */
+async function toPureArray(dat)
+{
+    const dat0 = dat instanceof Promise ? await dat : dat;
+    const dat1 = dat0 instanceof Set ? dat0.toArray() : dat0;
+    const dat2 = dat1 instanceof SimpleBag ? dat1.toArray() : dat1;
+    if (dat2 == null)
+        return [];
+    const dat3 = dat2 instanceof Array ? dat2 : [dat2];
+    if (dat3.length === 0)
+        return [];
+    const dat4 = dat3[0].hasOwnProperty("count") ? dat3.mapToProp("key") : dat3;
+    return dat4;
+}
+/**
+ * @template T
+ * @param {Promise<T> | SimpleBag | T[]} dat
+ * @returns {Promise<BagArray[]>}
+ */
+async function toSimpleBagArray(dat)
+{
+    const dat0 = dat instanceof Promise ? await dat : dat;
+    const dat1 = dat0 instanceof SimpleBag ? dat0.toArray() : dat0;
+    const dat2 = dat1 instanceof Array ? dat1 : [dat1];
+    const dat3 = dat2[0].hasOwnProperty("count") ? dat3 : dat3.map(x => ({ key: x, count: 1 }));
+    return dat3;
+}

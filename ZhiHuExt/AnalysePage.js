@@ -9,32 +9,15 @@ async function doAnalyse(method, ...args)
 {
     return await SendMsgAsync({ "action": "analyse", "method": method, "argument": args });
 }
-
 /**
- * @param {number | number[]} ids
- * @param {"answer" | "article"} target
- * @returns {BagArray}
+ * @param {string} method
+ * @param {any[]} args
  */
-async function getVoters(ids, target)
+async function DBfunc(method, ...args)
 {
-    const method = target === "answer" ? "getAnsVoters" : "getArtVoters";
-    const voters = await doAnalyse(method, ids);
-    console.log("voters", voters);
-    return voters;
+    return await SendMsgAsync({ "action": "dbop", "method": method, "argument": args });
 }
 
-/**
- * @param {number | number[]} ids
- * @param {"answer" | "article"} target
- * @returns {Promise<number[]>}
- */
-async function getIdByAuthor(uid, target)
-{
-    const ids = await doAnalyse("getIdByAuthor", uid, target);
-    console.log(target+"s", ids);
-    return ids;
-    
-}
 
 /**
  * @param {function(any, number=):string} render
