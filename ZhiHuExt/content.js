@@ -281,7 +281,7 @@ $("body").on("click", "button.Btn-CheckAllStatus", async function (e)
     {
         btn.textContent = btnList[idx].name;
         btnList[idx].btn.click();
-        await _sleep(600);
+        await _sleep(1000);
     }
     btn.textContent = "检测全部";
 });

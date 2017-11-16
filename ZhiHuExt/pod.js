@@ -75,7 +75,7 @@ class Article
      * @param {number} [timeCreated]
      * @param {number} [timeUpdated]
      */
-    constructor(id, title, author, zancnt,excerpt,  timeCreated, timeUpdated)
+    constructor(id, title, author, zancnt, excerpt, timeCreated, timeUpdated)
     {
         this.id = Number(id);
         this.title = title;

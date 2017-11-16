@@ -2,7 +2,7 @@
 
 !async function ()
 {
-    const auth = "fwAAASLR" + "171112a";
+    const auth = "fwAAASLR" + "171115a";
     /**
      * @param {string} table
      * @param {number} offset
@@ -13,6 +13,7 @@
     {
         return SendMsgAsync({ action: "partdb", target: table, from: offset, count: count });
     }
+
     /**
      * @param {string} table
      * @param {string} data
@@ -31,6 +32,28 @@
                 data: data
             })
             .done(x => pms.resolve())
+            .fail(err => pms.reject(err));
+        return pms;
+    }
+
+
+    /**
+     * @param {string} table
+     * @param {string} addr
+     * @param {string} id
+     * @param {number} offset
+     * @param {number} count
+     * @returns {Promise<string>}
+     */
+    function receivepart(table, addr, id, offset, count)
+    {
+        const pms = $.Deferred();
+        $.ajax(`${addr}/accept?table=${table}&from=${offset}&limit=${count}`,
+            {
+                type: "GET",
+                headers: { "objid": id, "authval": auth },
+            })
+            .done(x => pms.resolve(x))
             .fail(err => pms.reject(err));
         return pms;
     }
@@ -91,16 +114,50 @@
     }
 
     /**
-     * @param {number | number[]} ids
-     * @param {"Answer" | "Article"} target
-     * @returns {BagArray}
+     * @param {any[]} objs
      */
-    async function getVoters(ids, target)
+    function quickfix(objs)
     {
-        const method = target === "Answer" ? "getAnsVoters" : "getArtVoters";
-        const voters = await SendMsgAsync(payload(method, ids));
-        console.log("voters", voters);
-        return voters;
+        objs.forEach(obj =>
+        {
+            if (obj.topics != null && obj.topics.length === 0)
+                obj.topics = null;
+            if (obj.excerpt === "")
+                obj.excerpt = null;
+            if (obj.status === "")
+                obj.status = null;
+        });
+    }
+
+    /**
+     * @param {string[]} tables
+     * @param {string} timeid
+     * @param {number} partlen
+     * @param {string} addr
+     * @param {function(string, number):void} onProgress
+     */
+    async function receive(tables, timeid, partlen, addr, onProgress)
+    {
+        console.log(timeid, "addr", addr, "tables", tables, "len", partlen);
+        await begin(addr, timeid);
+        for (let i = 0; i < tables.length; ++i)
+        {
+            let offset = 0;
+            while (true)
+            {
+                const pms = receivepart(tables[i], addr, timeid, offset, partlen);
+                if (onProgress)
+                    onProgress(tables[i], offset);
+                const part = await pms;
+                if (part === "[]")
+                    break;
+                const partobj = JSON.parse(part);
+                quickfix(partobj);
+                console.log(partobj);
+                offset += partlen;
+            }
+        }
+        await finish(addr, timeid);
     }
 
 
@@ -126,6 +183,31 @@
         {
             await send(needtables, partlen, addr, (tab, cnt) => { thisbtn.textContent = tab + "@" + cnt; });
             thisbtn.textContent = "开始发送";
+            thisbtn.style.backgroundColor = "rgb(0,224,32)";
+        }
+        catch (e)
+        {
+            console.warn(e);
+            thisbtn.style.backgroundColor = "rgb(224,0,32)";
+        }
+    });
+
+    $(document).on("click", "button#receive", async (e) =>
+    {
+        /**@type {HTMLButtonElement}*/
+        const thisbtn = e.target;
+        const partlen = Number($("#partlen")[0].value);
+        const ip = $("#ip")[0].value;
+        const port = $("#port")[0].value;
+        const suffix = $("#suffix")[0].value;
+        const addr = `http://${ip}:${port}/import`;
+        const needtables = $(".tabchooser").toArray()
+            .filter(/**@type {HTMLInputElement}*/(chkbox) => chkbox.checked)
+            .map(chkbox => chkbox.dataset.tname);
+        try
+        {
+            await receive(needtables, suffix, partlen, addr, (tab, cnt) => { thisbtn.textContent = tab + "@" + cnt; });
+            thisbtn.textContent = "开始接收";
             thisbtn.style.backgroundColor = "rgb(0,224,32)";
         }
         catch (e)

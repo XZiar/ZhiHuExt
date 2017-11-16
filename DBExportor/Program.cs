@@ -15,7 +15,7 @@ namespace DBExportor
     public class Program
     {
         public static ushort Port { get; private set; }
-        public static string Auth { get; private set; } = "171112a";
+        public static string Auth { get; private set; }
         public static string Address { get; private set; }
         public static DirectoryInfo DBFolder { get; private set; }
         public static void Main(string[] args)
@@ -37,7 +37,7 @@ namespace DBExportor
                     addrByte.AddRange(IPAddress.Loopback.GetAddressBytes());
                     addrByte.AddRange(new byte[] { (byte)(Port / 256), (byte)(Port % 256) });
                     Address = Convert.ToBase64String(addrByte.ToArray());
-                    Auth = Address + Auth;
+                    Auth = Address + Pods.DBExtensions.POD_VER;
                     Console.WriteLine($"listen on 127.0.0.1:{Port}");
                     Console.WriteLine($"Address：{Address}");
                 })

@@ -10,7 +10,7 @@
     <script src="AnalysePage.js"></script>
     <link rel="stylesheet" href="https://cdn.datatables.net/1.10.16/css/jquery.dataTables.min.css">
     <script src="https://cdn.datatables.net/1.10.16/js/jquery.dataTables.min.js"></script>
-    <title>统计点赞</title>
+    <title>自动爬虫（账户动态/状态）</title>
     <style>
         td:last-child {
             font-weight: bold;
@@ -22,10 +22,6 @@
 </head>
 <body>
     <div>
-        <h3 style="text-align:center">
-            <span id="zansum"></span>个赞中,  有<span id="banzansum"></span>个来自封禁用户的赞
-            <button id="chkAllStatus">检测全部</button>
-        </h3>
         <table id="maintable" class="cell-border hover order-column stripe" width="100%">
             <thead>
                 <tr>
@@ -35,15 +31,19 @@
                     <th width="10%">回答数</th>
                     <th width="10%">关注者</th>
                     <th width="10%">赞数</th>
-                    <th width="12%">点赞计数</th>
+                    <th width="12%">编号</th>
                 </tr>
             </thead>
         </table>
-        <div style="text-align:center">
-            <button id="assoc">联想回答</button>
-            <button id="export">导出csv</button>
+        <div>
+            请求间隔<input type="number" id="waittime" value="1500" />
+            <button id="go">开始</button>
+            <button id="refresh">刷新</button>
+        </div>
+        <div>
+            <textarea id="userinput" style="width:100%; height:200px"></textarea>
         </div>
     </div>
-    <script src="StatVoter.js"></script>
+    <script src="AutoSpider.js"></script>
 </body>
 </html>

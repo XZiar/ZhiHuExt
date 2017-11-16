@@ -110,7 +110,7 @@
             const [uid, cell] = objs[i];
             thisbtn.textContent = uid;
             checkUserStatus(uid, cell);
-            await _sleep(400);
+            await _sleep(600);
         }
         thisbtn.textContent = "检测全部";
     });

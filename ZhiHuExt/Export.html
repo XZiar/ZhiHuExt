@@ -6,13 +6,13 @@
     <script src="jquery-3.2.1.min.js"></script>
     <script src="pod.js"></script>
     <script src="utils.js"></script>
-    <title>发送数据库</title>
+    <title>导入导出数据库</title>
 </head>
 <body>
     <div>
-        Address<input type="text" id="ip" value="127.0.0.1"/>:<input type="number" id="port" value="8913"/>
+        服务器Ip<input type="text" id="ip" value="127.0.0.1"/>:<input type="number" id="port" value="8913"/>
     </div>
-    <div>分段大小<input type="number" id="partlen" min="100" max="500000" value="100000"/></div>
+    <div>分段大小<input type="number" id="partlen" min="100" max="500000" value="50000"/></div>
     <div>
         <table id="maintable" class="cell-border" width="50%">
             <thead>
@@ -26,7 +26,9 @@
             </tbody>
         </table>
     </div>
-    <button id="send">开始发送</button>
+    <button id="send">开始发送</button><br />
+    接收文件标识<input type="text" id="suffix" value="" />
+    <button id="receive">开始接收</button>
     <script src="Export.js"></script>
 </body>
 </html>

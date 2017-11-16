@@ -25,22 +25,25 @@ namespace DBExportor.Controllers
         {
             if (!CheckAuth())
                 return StatusCode(401);
-            if (!NewDB())
+            if (!NewDB(new StandardDB()))
                 return StatusCode(500);
             return Ok("ok");
         }
 
         [HttpGet("finish")]
-        public IActionResult OutputDB()
+        public IActionResult OutputDB([FromQuery]bool shouldKeep = false)
         {
             if (!CheckAuth())
                 return StatusCode(401);
             if (!TryGetDB(out var obj))
                 return StatusCode(404);
-            var fname = $"{Program.DBFolder}/ZhihuDB{ObjName}.json";
+            var fname = $"{Program.DBFolder}/ZhiHuExtDB-{ObjName}.json";
             using (StreamWriter file = System.IO.File.CreateText(fname))
             {
                 Serializer.Serialize(file, obj);
+                LOG.LogInformation("output DB successful", fname);
+                if (!shouldKeep)
+                    DelDB();
                 return Ok("ok");
             }
         }
@@ -50,24 +53,24 @@ namespace DBExportor.Controllers
         {
             if (!CheckAuth())
                 return StatusCode(401);
-            if (!TryGetDB(out var obj))
+            if (!TryGetDB(out var db))
                 return StatusCode(404);
-            if (!DBExtensions.GetPodType(table, out var type, out var listtype))
+            if (!DBExtensions.PodTypeMap.TryGetValue(table, out var tableinfo))
                 return StatusCode(400);
 
             using (var reader = new JsonTextReader(new StreamReader(HttpContext.Request.Body)))
             {
                 try
                 {
-                    var records = Serializer.Deserialize(reader, listtype);
-                    AddMore(obj, table, records);
+                    dynamic records = Serializer.Deserialize(reader, tableinfo.ListType);
+                    tableinfo.GetTable(db).AddRange(records);
                 }
                 catch(Exception e)
                 {
                     LOG.LogError(e.Message);
                 }
             }
-            GC.Collect(2, GCCollectionMode.Forced, false, true);
+            GC.Collect(2, GCCollectionMode.Optimized, false, true);
             return Ok("ok");
         }
 

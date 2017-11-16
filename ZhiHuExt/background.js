@@ -144,6 +144,20 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) =>
         case "openpage":
             chrome.tabs.create({ active: !request.isBackground, url: request.target });
             break;
+        case "download":
+            {
+                let blob;
+                switch (request.type)
+                {
+                    case "txt":
+                        blob = new Blob([request.data], { type: "text/plain" }); break;
+                    case "json":
+                        blob = new Blob([JSON.stringify(request.data)], { type: "application/json" }); break;
+                    default:
+                        return;
+                }
+                DownloadMan.download(blob, request.fname);
+            } break;
         case "analyse":
             {
                 /**@type {function}*/

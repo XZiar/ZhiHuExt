@@ -1,5 +1,9 @@
 "use strict"
 
+/**@type {{[x:string]: User}}*/
+let finalUserMap;
+/**@type {SimpleBag}*/
+let finalBag;
 
 /**
  * @param {...BagArray} voters
@@ -48,11 +52,11 @@ async function StatVoters(...voters)
                 { data: "count" }
             ]
         });
-    return usrMap;
+    finalUserMap = usrMap;
+    finalBag = bag;
 }
 
-/**@type {{[x:string]: User}}*/
-let finalUserMap;
+
 
 /**
  * @param {User} objuser
@@ -80,14 +84,26 @@ $(document).on("click", "#chkAllStatus", async e =>
         const [anchor, objuser] = objs[i];
         chkUser(objuser, anchor);
         btn.textContent = objuser.id;
-        await _sleep(720);
+        await _sleep(1000);
     }
     btn.textContent = "检测全部";
 });
 $(document).on("click", "#assoc", e =>
 {
     chrome.runtime.sendMessage({ action: "openpage", target: window.location.href.replace("StatVoter", "AssocAns"), isBackground: true });
-})
+});
+$(document).on("click", "#export", e =>
+{
+    const head = "\uFEFF" + "名字,id,状态,文章数,回答数,关注者,赞数,点赞计数\n";
+    let txt = head;
+    finalBag.forEach((id, count) =>
+    {
+        const user = finalUserMap[id];
+        txt += `${user.name},${id},${user.status},${user.artcnt},${user.anscnt},${user.follower},${user.zancnt},${count}\n`;
+    });
+    const time = new Date().Format("yyyyMMdd-hhmm");
+    chrome.runtime.sendMessage({ action: "download", type: "txt", data: txt, fname: `StatVoter-${time}.csv` });
+});
 
 !async function()
 {
@@ -121,6 +137,6 @@ $(document).on("click", "#assoc", e =>
         voters = [await DBfunc("getVoters", aids, "article")];
     }
     if (voters != null)
-        finalUserMap = await StatVoters(...voters);
+        StatVoters(...voters);
 }()
 

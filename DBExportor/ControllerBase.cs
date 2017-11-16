@@ -11,32 +11,30 @@ namespace DBExportor.Controllers
 {
     public class ControllerBase : Controller
     {
-        protected static readonly Dictionary<string, Dictionary<string, object>> DBList = new Dictionary<string, Dictionary<string, object>>();
+        protected static readonly Dictionary<string, StandardDB> DBList = new Dictionary<string, StandardDB>();
         protected static readonly JsonSerializer Serializer = new JsonSerializer();
-
-        protected static void AddMore(Dictionary<string, object> dict, string key, dynamic data)
-        {
-            if (!DBExtensions.PodTypeMap.ContainsKey(key))
-                throw new ArgumentException("invalid table name");
-
-            if (dict.TryGetValue(key, out dynamic list))
-                list.AddRange(data);
-            else
-                dict.Add(key, data);
-        }
 
         protected string ObjName { get => HttpContext.Request.Headers["objid"].FirstOrDefault(); }
 
         protected bool CheckAuth() => HttpContext.Request.Headers["authval"].Contains(Program.Auth);
 
-        protected bool TryGetDB(out Dictionary<string, object> ret) => DBList.TryGetValue(ObjName, out ret);
+        protected bool TryGetDB(out StandardDB ret) => DBList.TryGetValue(ObjName, out ret);
 
-        protected bool NewDB()
+        protected bool NewDB(StandardDB db)
         {
             if (ObjName != null)
-                DBList[ObjName] = new Dictionary<string, object>();
+                DBList[ObjName] = db;
             return ObjName != null;
         }
 
+        protected bool DelDB()
+        {
+            if (ObjName != null)
+            {
+                GC.Collect(2, GCCollectionMode.Optimized, false, true);
+                return DBList.Remove(ObjName);
+            }
+            return false;
+        }
     }
 }

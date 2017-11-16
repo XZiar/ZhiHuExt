@@ -6,8 +6,7 @@ using System.Threading.Tasks;
 
 namespace DBExportor.Pods
 {
-    public enum SpamType : byte { member, answer, question }
-    [Pod("spams")]
+    public enum SpamType : byte { member, answer, article, question }
     public struct Spam
     {
         public string id { get { return id_; } set { id_ = string.Intern(value); } }
@@ -16,7 +15,6 @@ namespace DBExportor.Pods
         private SpamType type_;
     }
 
-    [Pod("follows")]
     public struct Follow
     {
         public string from;
@@ -24,7 +22,6 @@ namespace DBExportor.Pods
     }
 
     public enum UserStatus : byte { ban, sban, empty }
-    [Pod("users")]
     public struct User
     {
         public string id { get { return id_; } set { id_ = string.Intern(value); } }
@@ -33,6 +30,7 @@ namespace DBExportor.Pods
         public string head;
         public int anscnt;
         public int artcnt;
+        public int zancnt;
         public int follower;
         public string status
         {
@@ -42,7 +40,6 @@ namespace DBExportor.Pods
         private UserStatus status_;
     }
 
-    [Pod("questions")]
     public struct Question
     {
         public uint id;
@@ -52,7 +49,6 @@ namespace DBExportor.Pods
         private uint timeC_;
     }
 
-    [Pod("articles")]
     public struct Article
     {
         public uint id;
@@ -67,14 +63,12 @@ namespace DBExportor.Pods
         private uint timeU_;
     }
 
-    [Pod("topics")]
     public struct Topic
     {
         public uint id;
         public string name;
     }
 
-    [Pod("answers")]
     public struct Answer
     {
         public uint id;
@@ -89,7 +83,6 @@ namespace DBExportor.Pods
         private uint timeU_;
     }
 
-    [Pod("zans", "zanarts")]
     public struct Zan
     {
         public string from { get { return from_; } set { from_ = string.Intern(value); } }
@@ -97,6 +90,19 @@ namespace DBExportor.Pods
         public uint to;
         public long time { get { return time_ == uint.MaxValue ? -1L : time_; } set { time_ = value == -1 ? uint.MaxValue : (uint)value; } }
         private uint time_;
+    }
+
+    public class StandardDB
+    {
+        public List<Spam> spams = new List<Spam>();
+        public List<Follow> follows = new List<Follow>();
+        public List<User> users = new List<User>();
+        public List<Question> questions = new List<Question>();
+        public List<Article> articles = new List<Article>();
+        public List<Topic> topics = new List<Topic>();
+        public List<Answer> answers = new List<Answer>();
+        public List<Zan> zans = new List<Zan>();
+        public List<Zan> zanarts = new List<Zan>();
     }
 
     [AttributeUsage(AttributeTargets.Struct, AllowMultiple = false)]
@@ -109,26 +115,28 @@ namespace DBExportor.Pods
         }
     }
 
+    public class TableInfo
+    {
+        private readonly FieldInfo Field;
+        private readonly PropertyInfo CountProperty;
+        public readonly Type ElementType;
+        public readonly Type ListType;
+        public TableInfo(FieldInfo field)
+        {
+            Field = field;
+            ListType = field.FieldType;
+            ElementType = ListType.GetGenericArguments()[0];
+            CountProperty = ListType.GetProperty("Count");
+        }
+        public dynamic GetTable(StandardDB db) => Field.GetValue(db);
+        public uint GetCount(dynamic table) => (uint)CountProperty.GetValue(table);
+    }
+
     public static class DBExtensions
     {
-        private static readonly Type ListType = typeof(List<>);
+        public const string POD_VER = "171115a";
 
-        public static readonly Dictionary<string, Tuple<Type, Type>> PodTypeMap =
-            Assembly.GetExecutingAssembly().GetTypes()
-                .Where(t => t.Namespace == "DBExportor.Pods" && t.IsDefined(typeof(PodAttribute)))
-                .SelectMany(t => t.GetCustomAttribute<PodAttribute>().TableNames.Select(name => Tuple.Create(name, t)))
-                .ToDictionary(p => p.Item1, p => Tuple.Create(p.Item2, ListType.MakeGenericType(p.Item2)));
-
-        public static bool GetPodType(string key, out Type type, out Type listtype)
-        {
-            if (!PodTypeMap.TryGetValue(key, out var types))
-            {
-                type = listtype = null; return false;
-            }
-            else
-            {
-                (type, listtype) = types; return true;
-            }
-        }
+        public static readonly Dictionary<string, TableInfo> PodTypeMap =
+            typeof(StandardDB).GetFields().ToDictionary(field => field.Name, field => new TableInfo(field));
     }
 }

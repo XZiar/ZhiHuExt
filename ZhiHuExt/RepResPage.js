@@ -63,7 +63,7 @@
         {
             btns[i].click();
             thisbtn.textContent = btns[i].dataset.name;
-            await _sleep(640);
+            await _sleep(1000);
         }
         thisbtn.textContent = "检测全部";
     });

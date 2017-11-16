@@ -1,5 +1,6 @@
 "use strict"
 
+let finalData;
 
 /**
  * @param {string[] | BagArray} voters
@@ -66,12 +67,21 @@ async function AssocByVoters(voters)
                 { data: "count" }
             ]
         });
+    finalData = data;
 }
 
 $(document).on("click", "#stat", e =>
 {
     chrome.runtime.sendMessage({ action: "openpage", target: window.location.href.replace("AssocAns", "StatVoter"), isBackground: true });
-})
+});
+$(document).on("click", "#export", e =>
+{
+    const head = "\uFEFF" + "answerId,questionId,标题,作者,authorId,日期,计数\n";
+    let txt = head;
+    finalData.forEach(dat => txt += `${dat.ansid},${dat.qst.qid},${dat.qst.title},${dat.author.name},${dat.author.id},${dat === -1 ? "No record" : new Date(dat * 1000).toLocaleString()},${dat.count}\n`);
+    const time = new Date().Format("yyyyMMdd-hhmm");
+    chrome.runtime.sendMessage({ action: "download", type: "txt", data: txt, fname: `AssocAns-${time}.csv` });
+});
 
 !async function()
 {
