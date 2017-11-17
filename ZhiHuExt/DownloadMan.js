@@ -31,7 +31,6 @@ class DownloadMan
      */
     static download(data, filename)
     {
-        const pms = $.Deferred();
         const isBlob = data instanceof Blob;
         const url = isBlob ? URL.createObjectURL(data) : data;
         if (isBlob)
@@ -39,8 +38,7 @@ class DownloadMan
         else if (!(data instanceof string))
         {
             console.warn("unknown data type", data);
-            pms.reject("unknown data type:[" + typeof (data) + "]");
-            return pms;
+            return;
         }
         const anchor = document.createElement("a");
         anchor.href = url;
@@ -49,25 +47,5 @@ class DownloadMan
         document.body.appendChild(anchor);
         DOWNLOAD_WAIT.add(url);
         anchor.click();
-        pms.resolve();
-        /*
-        chrome.downloads.download({ url: url, filename: filename }, id =>
-        {
-            if (id === undefined)
-            {
-                const errMsg = chrome.runtime.lastError;
-                console.warn("download wrong", errMsg);
-                pms.reject(errMsg);
-            }
-            else
-            {
-                console.log("start download [" + id + "]");
-                if (isBlob)
-                    DOWNLOAD_QUEUE[id] = url;
-                pms.resolve(id);
-            }
-        });
-        */
-        return pms;
     }
 }

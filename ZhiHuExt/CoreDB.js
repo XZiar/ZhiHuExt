@@ -23,21 +23,71 @@ var SPAM_UID = new Set();
 
 class ZhiHuDB
 {
-    static hook(db)
+    /**
+     * @template T
+     * @param {string} table
+     * @param {T[]} items
+     */
+    static insertfix(table, items)
     {
-        db.spams.hook("creating", (primKey, obj, trans) =>
+        /**@type {Map<string, T>}*/
+        const tmpmap = new Map();
+        switch (table)
+        {
+            case "zans":
+            case "zanarts":
+                for (let i = 0; i < items.length; ++i)
+                {
+                    const zan = items[i];
+                    const id = zan.from + "," + zan.to;
+                    const last = tmpmap.get(id);
+                    if (last == null)
+                        tmpmap.set(id, zan);
+                    else if (last.time === -1)
+                        last.time = zan.time;
+                }
+                break;
+            case "topics":
+            case "spams":
+                return items;//skip
+            default:
+                for (let i = 0; i < items.length; ++i)
+                {
+                    const item = items[i];
+                    const id = item.id;
+                    const last = tmpmap.get(id);
+                    if (last != null)
+                    {
+                        const entries = Object.entries(last);
+                        for (let i = 0; i < entries.length; ++i)
+                        {
+                            const [key, val] = entries[i];
+                            if (val === -1 || val === null)
+                                last[key] = item[key];
+                        }
+                    }
+                    else
+                        tmpmap.set(id, item);
+                }
+        }
+        return Array.from(tmpmap.values());
+    }
+
+    static hook(thedb)
+    {
+        thedb.spams.hook("creating", (primKey, obj, trans) =>
         {
             if (obj.type === "member")
                 SPAM_UID.add(obj.id);
         });
-        db.users.hook("creating", (primKey, obj, trans) =>
+        thedb.users.hook("creating", (primKey, obj, trans) =>
         {
             if (obj.status === null)
                 obj.status = "";
             else if (obj.status === "ban" || obj.status === "sban")
                 BAN_UID.add(obj.id);
         });
-        db.users.hook("updating", (mods, primKey, obj, trans) =>
+        thedb.users.hook("updating", (mods, primKey, obj, trans) =>
         {
             const keys = Object.keys(mods);
             if (keys.length === 0) return;
@@ -58,19 +108,19 @@ class ZhiHuDB
             //console.log("compare", mods, ret);
             return ret;
         });
-        db.zans.hook("updating", (mods, primKey, obj, trans) =>
+        thedb.zans.hook("updating", (mods, primKey, obj, trans) =>
         {
             if (mods.time === -1)
                 return { time: obj.time };//skip empty time
             return;
         });
-        db.zanarts.hook("updating", (mods, primKey, obj, trans) =>
+        thedb.zanarts.hook("updating", (mods, primKey, obj, trans) =>
         {
             if (mods.time === -1)
                 return { time: obj.time };//skip empty time
             return;
         });
-        db.articles.hook("updating", (mods, primKey, obj, trans) =>
+        thedb.articles.hook("updating", (mods, primKey, obj, trans) =>
         {
             const keys = Object.keys(mods);
             if (keys.length === 0) return;
@@ -83,7 +133,7 @@ class ZhiHuDB
             }
             return ret;
         });
-        db.answers.hook("updating", (mods, primKey, obj, trans) =>
+        thedb.answers.hook("updating", (mods, primKey, obj, trans) =>
         {
             const keys = Object.keys(mods);
             if (keys.length === 0) return;
@@ -96,12 +146,12 @@ class ZhiHuDB
             }
             return ret;
         });
-        db.questions.hook("creating", (primKey, obj, trans) =>
+        thedb.questions.hook("creating", (primKey, obj, trans) =>
         {
             if (obj.topics === null)
                 obj.topics = [];
         });
-        db.questions.hook("updating", (mods, primKey, obj, trans) =>
+        thedb.questions.hook("updating", (mods, primKey, obj, trans) =>
         {
             const hasModTopic = Object.keys(mods).find(key => key.startsWith("topics."));
             const ret = {};
@@ -167,6 +217,7 @@ class ZhiHuDB
         }
         else if (data.length > 0)
         {
+            data = ZhiHuDB.insertfix(target, data);
             count = data.length;
             pms = table.bulkPut(data);
         }

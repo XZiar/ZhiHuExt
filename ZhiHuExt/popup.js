@@ -19,9 +19,9 @@ function rfs()
 }
 
 $(document).on("click", "button#rfs", rfs);
-$(document).on("click", "button#export", () =>
+$(document).on("click", "button#spider", () =>
 {
-    chrome.runtime.sendMessage({ action: "export" });
+    chrome.runtime.sendMessage({ action: "openpage", isBackground: false, target: "AutoSpider.html" });
 });
 $(document).on("click", "button#send", () =>
 {

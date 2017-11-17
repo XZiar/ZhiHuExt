@@ -10,19 +10,21 @@
 </head>
 <body>
     <div>
+        <button id="quickexport">快速导出</button>
+    </div>
+    <div>
         服务器Ip<input type="text" id="ip" value="127.0.0.1"/>:<input type="number" id="port" value="8913"/>
     </div>
-    <div>分段大小<input type="number" id="partlen" min="100" max="500000" value="50000"/></div>
+    <div>分段大小<input type="number" id="partlen" min="10" max="500000" value="50000"/></div>
     <div>
-        <table id="maintable" class="cell-border" width="50%">
+        <table id="maintable" class="cell-border" style="text-align:center" width="50%">
             <thead>
                 <tr>
-                    <th width="70%">Table</th>
-                    <th>Y/N</th>
+                    <th>Table</th>
                 </tr>
             </thead>
             <tbody>
-                <tr><td></td><td><input type="checkbox" class="tabchooser" data-tname="" checked/></td></tr>
+                <tr><td><input type="checkbox" class="tabchooser" data-tname="" checked/></td></tr>
             </tbody>
         </table>
     </div>

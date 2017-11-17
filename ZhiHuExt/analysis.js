@@ -28,6 +28,12 @@ function tryReplaceDetailed(bagArray, detailMap, newProp)
 
 class Analyse
 {
+    static generateBlob(obj)
+    {
+        const blob = new Blob([JSON.stringify(obj)], { type: "application/json" });
+        return URL.createObjectURL(blob);
+    }
+
     static get STR_AUTHOR()
     { return 'Analyse.findAuthorOfUserVote(BAN_UID).then(x=>console.log(x.map(y=>y.count+" --- "+(y.user instanceof Object?y.user.name+"  ===  "+y.user.id+"  ===  "+y.user.status:"    ===  "+y.user))))'; }
     static get STR_QUEST()
@@ -39,6 +45,14 @@ class Analyse
     static get STR_MISS_TOPIC()
     { return 'Analyse.findQuestOfUserVote(BAN_UID).then(x=>console.log(x.filter(y=>y.question instanceof Object?!(y.question.topics||y.question.topics.length>0):true).map(y=>y.count+" --- https://www.zhihu.com/question/"+(y.question instanceof Object?y.question.id:y.question))))'; }
 
+    static async showPopAnswer(uid, limit)
+    {
+        let zanAnss = await db.getAnsIdByVoter(uid);
+        if (limit)
+            zanAnss = zanAnss.slice(0, limit);
+        const blobstr = Analyse.generateBlob(zanAnss);
+        chrome.tabs.create({ active: true, url: "AssocAns.html?ansblob=" + blobstr });
+    }
 
     static async findQuestOfUserVote(uid)
     {

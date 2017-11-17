@@ -4,6 +4,7 @@
 const users = [];
 const uids = new Set();
 const u404s = new Set();
+let isRunning = false;
 
 const thetable = $("#maintable").DataTable(
     {
@@ -61,8 +62,15 @@ $(document).on("click", "#refresh", e =>
 $(document).on("click", "#go", async e =>
 {
     const btn = e.target;
+    if (isRunning)
+    {
+        isRunning = false;
+        btn.textContent = "开始";
+        return;
+    }
+    isRunning = true;
     const isCtrl = e.ctrlKey;
-    const waitTime = Number($("#waittime")[0].value);
+    const wtBtn = $("#waittime")[0];
 
     const txt = $("#userinput")[0].value;
     let objs = JSON.parse(txt).filter(uid => !uids.has(uid));
@@ -70,14 +78,14 @@ $(document).on("click", "#go", async e =>
     objs = objs.filter(uid => !u404s.has(uid) && !banset.has(uid));
 
     console.log(`here [${objs.length}] obj users`);
-    for (let i = 0; i < objs.length; ++i)
+    for (let i = 0; isRunning && i < objs.length; ++i)
     {
         const uid = objs[i];
         chkUser(uid);
         btn.textContent = uid;
-        await _sleep(waitTime);
+        await _sleep(Number(wtBtn.value));
     }
-    btn.textContent = "开始";
+    btn.textContent = "完毕";
 });
 
 

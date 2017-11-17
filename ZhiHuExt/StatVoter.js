@@ -136,6 +136,10 @@ $(document).on("click", "#export", e =>
         const aids = qs.artid.split("*").map(Number);
         voters = [await DBfunc("getVoters", aids, "article")];
     }
+    else if (qs.vblob != null)
+    {
+        voters = [await fetch(qs.vblob)];
+    }
     if (voters != null)
         StatVoters(...voters);
 }()

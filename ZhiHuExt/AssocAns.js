@@ -16,6 +16,13 @@ async function AssocByVoters(voters)
 
     /**@type {BagArray}*/
     const anss = await DBfunc("getAnsIdByVoter", voters, "desc");
+    await AssocByAnswers(anss);
+}
+/**
+ * @param {BagArray} voters
+ */
+async function AssocByAnswers(anss)
+{
     console.log(`${anss.length} answers`, anss);
     /**@type {{[x:number]: Answer}}*/
     const ansMap = await DBfunc("getDetailMapOfIds", "answers", anss.mapToProp("key"), "id");
@@ -76,9 +83,10 @@ $(document).on("click", "#stat", e =>
 });
 $(document).on("click", "#export", e =>
 {
-    const head = "\uFEFF" + "answerId,questionId,±êÌâ,×÷Õß,authorId,ÈÕÆÚ,¼ÆÊý\n";
+    const head = "\uFEFF" + "answerId,questionId,æ ‡é¢˜,ä½œè€…,authorId,æ—¥æœŸ,è®¡æ•°\n";
     let txt = head;
-    finalData.forEach(dat => txt += `${dat.ansid},${dat.qst.qid},${dat.qst.title},${dat.author.name},${dat.author.id},${dat === -1 ? "No record" : new Date(dat * 1000).toLocaleString()},${dat.count}\n`);
+    const defDate = new Date(0).toLocaleString();
+    finalData.forEach(dat => txt += `${dat.ansid},${dat.qst.qid},"${dat.qst.title}","${dat.author.name}",${dat.author.id},${dat.date === -1 ? defDate : new Date(dat.date * 1000).toLocaleString()},${dat.count}\n`);
     const time = new Date().Format("yyyyMMdd-hhmm");
     chrome.runtime.sendMessage({ action: "download", type: "txt", data: txt, fname: `AssocAns-${time}.csv` });
 });
@@ -98,6 +106,12 @@ $(document).on("click", "#export", e =>
     else if (qs.votid != null)
     {
         voters = qs.votid.split("*");
+    }
+    else if (qs.ansblob != null)
+    {
+        const anss = await (await fetch(qs.ansblob)).json()
+        AssocByAnswers(anss);
+        return;
     }
     else
     {

@@ -154,6 +154,9 @@
                 const partobj = JSON.parse(part);
                 quickfix(partobj);
                 console.log(partobj);
+
+                chrome.runtime.sendMessage({ action: "insert", target: tables[i], data: partobj });
+
                 offset += partlen;
             }
         }
@@ -164,10 +167,15 @@
     const tables = await SendMsgAsync({ "action": "partdb" });
     console.log(tables);
     const tbody = document.querySelector("#maintable").querySelector("tbody");
-    const rows = tables.map(tname => `<tr><td>${tname}</td><td><input type="checkbox" class="tabchooser" data-tname="${tname}" checked/></td><tr>`)
+    const rows = tables.map(tname => `<tr><td>${tname}<input type="checkbox" class="tabchooser" data-tname="${tname}" checked/></td><tr>`)
         .join("");
     tbody.innerHTML = rows;
 
+
+    $(document).on("click", "button#quickexport", () =>
+    {
+        chrome.runtime.sendMessage({ action: "export" });
+    });
     $(document).on("click", "button#send", async (e) =>
     {
         /**@type {HTMLButtonElement}*/
