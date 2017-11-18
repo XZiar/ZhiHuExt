@@ -48,4 +48,25 @@ class DownloadMan
         DOWNLOAD_WAIT.add(url);
         anchor.click();
     }
+    /**
+     * @param {object | string | ArrayBuffer} data
+     * @param {string} type
+     * @param {string} filename
+     */
+    static exportDownload(data, type, filename)
+    {
+        let blob;
+        switch (type)
+        {
+            case "txt":
+                blob = new Blob([data], { type: "text/plain" }); break;
+            case "json":
+                blob = new Blob([JSON.stringify(data)], { type: "application/json" }); break;
+            case "bin":
+                blob = new Blob([data], { type: "application/octstream" }); break;
+            default:
+                return;
+        }
+        DownloadMan.download(blob, filename);
+    }
 }

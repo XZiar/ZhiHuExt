@@ -42,9 +42,10 @@ function displayRender(render, elser)
     return func;
 }
 
+
 $(document).on("click", "a.bgopen", e =>
 {
     e.preventDefault();
     const href = e.target.href;
-    chrome.runtime.sendMessage({ action: "openpage", target: href, isBackground: true });
+    chrome.tabs.create({ active: false, url: href });
 });

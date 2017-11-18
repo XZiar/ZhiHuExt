@@ -47,11 +47,44 @@ class Analyse
 
     static async showPopAnswer(uid, limit)
     {
-        let zanAnss = await db.getAnsIdByVoter(uid);
+        let zanAnss = await db.getAnsIdByVoter(uid, "desc");
         if (limit)
             zanAnss = zanAnss.slice(0, limit);
         const blobstr = Analyse.generateBlob(zanAnss);
         chrome.tabs.create({ active: true, url: "AssocAns.html?ansblob=" + blobstr });
+    }
+    /**
+     * @param {number | number[]} ansid
+     * @param {number | number[]} artid
+     * @param {number} mincount
+     * @param {...Set<string>} filters
+     */
+    static async filterOutsideVotersById(ansid, artid, mincount, ...filters)
+    {
+        const ansv = await db.getVoters(ansid, "answer");
+        const artv = await db.getVoters(artid, "article");
+        const bag = new SimpleBag().union(ansv).union(artv);
+        const ret = bag.above(mincount).filter(uid =>
+        {
+            for (const f of filters)
+                if (f.has(uid))
+                    return false;
+            return true;
+        }).elements();
+        $("#copyData").val(JSON.stringify(ret));
+        $("#copyBtn")[0].click();
+        console.log("copied");
+    }
+    /**
+     * @param {string | string[]} author
+     * @param {number} mincount
+     * @param {...Set<string>} filters
+     */
+    static async filterOutsideVotersByAuthor(author, mincount, ...filters)
+    {
+        const ansid = await db.getIdByAuthor(author, "answer");
+        const artid = await db.getIdByAuthor(author, "article");
+        Analyse.filterOutsideVotersById(ansid, artid, mincount, ...filters);
     }
 
     static async findQuestOfUserVote(uid)

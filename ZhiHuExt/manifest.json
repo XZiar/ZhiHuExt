@@ -69,7 +69,8 @@
     {
       "matches":
       [
-        "*://www.zhihu.com/people/*"
+        "*://www.zhihu.com/people/*",
+        "*://www.zhihu.com/org/*"
       ],
       "js":
       [

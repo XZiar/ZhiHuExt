@@ -88,7 +88,7 @@ $(document).on("click", "#export", e =>
     const defDate = new Date(0).toLocaleString();
     finalData.forEach(dat => txt += `${dat.ansid},${dat.qst.qid},"${dat.qst.title}","${dat.author.name}",${dat.author.id},${dat.date === -1 ? defDate : new Date(dat.date * 1000).toLocaleString()},${dat.count}\n`);
     const time = new Date().Format("yyyyMMdd-hhmm");
-    chrome.runtime.sendMessage({ action: "download", type: "txt", data: txt, fname: `AssocAns-${time}.csv` });
+    DownloadMan.exportDownload(txt, "txt", `AssocAns-${time}.csv`);
 });
 
 !async function()

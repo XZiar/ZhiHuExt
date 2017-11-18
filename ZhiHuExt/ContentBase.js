@@ -109,7 +109,8 @@ class ContentBase
         let offset = 20;
         if (config === "old")
             offset = first.total - left;
-        while (left > 0)
+        let isEnd = false;
+        while (left > 0 && !isEnd)
         {
             const part = await ContentBase[fetchVoters](obj, id, offset);
             ret = ret.concat(part.users);
@@ -117,14 +118,16 @@ class ContentBase
             offset += len, left -= len;
             if (onProgress)
                 onProgress(ret.length, total);
+            isEnd = part.end;
         }
         return ret;
     }
     /**
      * @param {number | string} uid
+     * @param {function({[x:string]:any[]}):boolean} [bypass]
      * @returns {Promise<User>}
      */
-    static checkUserState(uid)
+    static checkUserState(uid, bypass)
     {
         const pms = $.Deferred();
         ContentBase._get("https://www.zhihu.com/people/" + uid + "/activities")
@@ -151,7 +154,9 @@ class ContentBase
                 //console.log(theuser);
                 {
                     const entities = APIParser.parseEntities(state.entities);
-                    ContentBase._report("batch", entities);
+                    const shouldReport = bypass ? bypass(entities) : true;
+                    if (shouldReport)
+                        ContentBase._report("batch", entities);
                     console.log(entities);
                 }
             })

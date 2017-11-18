@@ -8,15 +8,17 @@ async function toNameMap(prop)
     await this.each(obj => result[obj[prop]] = obj);
     return result;
 }
-Dexie.addons.push(x => x.Collection.prototype.toNameMap = toNameMap);
 async function toPropMap(keyProp, valProp)
 {
     const result = {};
     await this.each(obj => result[obj[keyProp]] = obj[valProp]);
     return result;
 }
-Dexie.addons.push(x => x.Collection.prototype.toPropMap = toPropMap);
-
+if (typeof Dexie !== "undefined")
+{
+    Dexie.addons.push(x => x.Collection.prototype.toNameMap = toNameMap);
+    Dexie.addons.push(x => x.Collection.prototype.toPropMap = toPropMap);
+}
 
 var BAN_UID = new Set();
 var SPAM_UID = new Set();

@@ -28,6 +28,19 @@ let CUR_ANSWER = null;
 let CUR_ARTICLE = null;
 
 
+/**
+ * @param {HTMLElement} element
+ */
+function setDraggable(element)
+{
+    element.draggable = true;
+    element.ondragstart = (ev) =>
+    {
+        ev.dataTransfer.setData("text", JSON.stringify(ev.target.dataset));
+    }
+}
+
+
 async function addSpamVoterBtns(voterNodes)
 {
     const users = [];
@@ -40,6 +53,7 @@ async function addSpamVoterBtns(voterNodes)
             continue;
         const uid = nameLink.getAttribute("href").split("/").pop();
         users.push(uid);
+
 
         const btn = createButton(["Btn-ReportSpam", "Button--primary"], "广告");
         btn.dataset.id = uid;
@@ -115,12 +129,14 @@ function addAASpamBtns(answerNodes)
                 const btn = createButton(["Btn-CheckSpam", "Button--primary"], "分析");
                 btn.dataset.id = ansid;
                 btn.dataset.type = thetype;
+                setDraggable(btn);
                 ansArea.appendChild(btn);
             }
             {
                 const btn = createButton(["Btn-ReportSpam", "Button--primary"], "广告");
                 btn.dataset.id = ansid;
                 btn.dataset.type = thetype;
+                setDraggable(btn);
                 ansArea.appendChild(btn);
             }
         });
@@ -363,6 +379,10 @@ $("body").on("click", "button.Modal-closeButton", function ()
     CUR_ANSWER = null;
     CUR_ARTICLE = null;
 });
+$("body").on("click", "div#MarkBtn", e =>
+{
+});
+
 
 
 {
@@ -383,8 +403,38 @@ $("body").on("click", "button.Modal-closeButton", function ()
     btn.dataset.tooltipPosition = "left";
     btn.appendChild(svg);
     const btndiv = document.createElement("div");
+    btndiv.id = "MarkBtn";
     btndiv.addClass("CornerAnimayedFlex");
     btndiv.appendChild(btn);
+    btndiv.ondragover = ev => ev.preventDefault();
+    btndiv.ondrop = ev =>
+    {
+        ev.preventDefault();
+        /**@type {string}*/
+        const txt = ev.dataTransfer.getData("text");
+        let report;
+        if (txt.includes("http"))
+        {
+            const mth1 = txt.match(/zhihu.com\/question\/\d*\/answer\/(\d*)/i);
+            if (mth1)
+                report = { id: Number(mth1[1]), type: "badans" };
+            else
+            {
+                const mth2 = txt.match(/zhuanlan.zhihu.com\/p\/{\d*}/i);
+                if (mth2)
+                    report = { id: Number(mth2[1]), type: "badart" };
+            }
+        }
+        else if (txt.startsWith("{"))
+        {
+            const dat = JSON.parse(txt);
+            report = { id: Number(dat.id), type: dat.type === "answer" ? "badans" : "badart" };
+        }
+        if (report)
+            //console.log("drop", txt, report);
+            ContentBase._report("spams", report);
+    };
+
     if (fbtns)
         fbtns.prepend(btndiv);
 }

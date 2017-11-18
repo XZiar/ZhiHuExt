@@ -102,7 +102,7 @@ $(document).on("click", "#export", e =>
         txt += `${user.name},${id},${user.status},${user.artcnt},${user.anscnt},${user.follower},${user.zancnt},${count}\n`;
     });
     const time = new Date().Format("yyyyMMdd-hhmm");
-    chrome.runtime.sendMessage({ action: "download", type: "txt", data: txt, fname: `StatVoter-${time}.csv` });
+    DownloadMan.exportDownload(txt, "txt", `StatVoter-${time}.csv`);
 });
 
 !async function()

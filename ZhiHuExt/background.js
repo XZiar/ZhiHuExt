@@ -94,6 +94,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) =>
 {
     switch (request.action)
     {
+        case "copy":
+            $("#copyData").val(request.data);
+            $("#copyBtn").trigger("click");
+            break;
         case "stat":
             db.count().then(result =>
             {
@@ -124,10 +128,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) =>
         case "export":
             db.export().then(dbjson =>
             {
-                const blob = new Blob([JSON.stringify(dbjson)], { type: "application/json" });
                 const time = new Date().Format("yyyyMMdd-hhmm");
                 const fname = "ZhiHuExtDB-" + time + ".json";
-                DownloadMan.download(blob, fname);
+                DownloadMan.exportDownload(dbjson, "json", fname);
             }, error => console.warn("exportDB fail", error));
             break;
         case "partdb":
@@ -145,19 +148,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) =>
             chrome.tabs.create({ active: !request.isBackground, url: request.target });
             break;
         case "download":
-            {
-                let blob;
-                switch (request.type)
-                {
-                    case "txt":
-                        blob = new Blob([request.data], { type: "text/plain" }); break;
-                    case "json":
-                        blob = new Blob([JSON.stringify(request.data)], { type: "application/json" }); break;
-                    default:
-                        return;
-                }
-                DownloadMan.download(blob, request.fname);
-            } break;
+            DownloadMan.exportDownload(request.data, request.type, request.fname);
+            break;
         case "analyse":
             {
                 /**@type {function}*/
@@ -203,6 +195,7 @@ chrome.runtime.onMessageExternal.addListener(
                     console.log(request.target, res);
                 } break;
             case "answers":
+            case "articles":
             case "questions":
                 {
                     const res = APIParser.batch;

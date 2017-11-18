@@ -8,6 +8,8 @@
     <script src="utils.js"></script>
     <script src="ContentBase.js"></script>
     <script src="AnalysePage.js"></script>
+    <script src="CoreDB.js"></script>
+    <script src="DownloadMan.js"></script>
     <link rel="stylesheet" href="https://cdn.datatables.net/1.10.16/css/jquery.dataTables.min.css">
     <script src="https://cdn.datatables.net/1.10.16/js/jquery.dataTables.min.js"></script>
     <title>自动爬虫（账户动态/状态）</title>
@@ -37,11 +39,19 @@
         </table>
         <div>
             请求间隔<input type="number" id="waittime" value="1500" />
-            <button id="go">开始</button>
+            单独记录数据<input type="checkbox" id="aloneRec" />
+            无限循环<input type="checkbox" id="repeat" />
             <button id="refresh">刷新</button>
+            <button id="show404">失败项</button>
+            <button id="del404">清理失败</button>
+            <button id="go">开始</button>
+            <br />
+            <button id="export">导出</button>
+            <button id="import">导入</button> <input type="file" id="infile" />
         </div>
         <div>
-            <textarea id="userinput" style="width:100%; height:200px"></textarea>
+            <textarea id="userinput" style="width:100%; height:160px"></textarea>
+            <textarea id="out404" style="width:100%; height:50px"></textarea>
         </div>
     </div>
     <script src="AutoSpider.js"></script>
