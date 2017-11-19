@@ -297,7 +297,7 @@ class ZhiHuDB
      * @param {string} table
      * @param {[] | Promise<any>} id
      * @param {string} prop
-     * @returns {{[x:any]: any}[]}
+     * @returns {{[x:any]: any}}
      */
     async getPropMapOfIds(table, id, prop)
     {
@@ -336,6 +336,22 @@ class ZhiHuDB
     /**
      * @param {string | string[] | BagArray | Promise<Any>} uid
      * @param {"answer" | "article"} target
+     * @param {"desc" | "asc"} [order]
+     * @returns {Promise<BagArray>}
+     */
+    async getIdByVoter(uid, target, order)
+    {
+        const uids = await toPureArray(uid);
+        console.log("here [" + uids.length + "] uids");
+        const table = (target === "answer" ? this.db.zans : this.db.zanarts);
+        const zans = await table.where("from").anyOf(uids).toArray();
+        console.log(`here [${zans.length}] ${target} zans`);
+        const ids = new SimpleBag(zans.mapToProp("to"));
+        return ids.toArray(order);
+    }
+    /**
+     * @param {string | string[] | BagArray | Promise<Any>} uid
+     * @param {"answer" | "article"} target
      * @returns {Promise<number[]>}
      */
     async getIdByAuthor(uid, target)
@@ -364,6 +380,14 @@ class ZhiHuDB
         const answers = await this.db.answers.where("question").anyOf(qids).toArray();
         console.log("get [" + answers.length + "] questions");
         return answers;
+    }
+    async getAnsIdByQuestion(qsts)
+    {
+        const qids = await toPureArray(qsts);
+        console.log("here [" + qids.length + "] qids");
+        const ansids = await this.db.answers.where("question").anyOf(qids).primaryKeys();
+        console.log("get [" + ansids.length + "] questions");
+        return ansids;
     }
     async getQuestIdByAnswer(anss)
     {

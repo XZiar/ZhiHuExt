@@ -54,8 +54,12 @@
             const btn2 = createButton(["Btn-StatVoter", "Button--primary"], "最爱赞");
             btn2.dataset.id = qid;
             btn2.dataset.qname = "qid";
+            const btn3 = createButton(["Btn-AssocAns", "Button--primary"], "启发");
+            btn3.dataset.id = qid;
+            btn3.dataset.qname = "qid";
             qstArea.prepend(btn);
             qstArea.prepend(btn2);
+            qstArea.prepend(btn3);
         }
     }, 800);
 }()

@@ -135,7 +135,17 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) =>
             break;
         case "partdb":
             db.part(request.target, request.from, request.count)
-                .then(part => sendResponse(part), err => console.warn(err));
+                .then(part =>
+                {
+                    if (part instanceof Array)
+                    {
+                        sendResponse(part); return;
+                    }
+                    const blob = new Blob([part], { type: "application/json" });
+                    const url = URL.createObjectURL(blob);
+                    sendResponse(url);
+                },
+                err => console.warn(err));
             return true;
         case "insert":
             db.insert(request.target, request.data, putBadge);

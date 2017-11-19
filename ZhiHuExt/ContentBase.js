@@ -188,7 +188,7 @@ class ContentBase
 {
     if (!window.location.host.includes("zhihu.com"))
         return;
-    function FetchHook()
+    function FetchHook(extid)
     {
         /**
          * @param {string} req
@@ -205,7 +205,7 @@ class ContentBase
                 try
                 {
                     const cloned = resp.clone();
-                    chrome.runtime.sendMessage("jideeibijhnbkncjmdhhceajjjkfabje",
+                    chrome.runtime.sendMessage(extid,
                         { url: req, api: api, target: target, data: await cloned.text(), extra: extra });
                 }
                 catch (e)
@@ -265,12 +265,10 @@ class ContentBase
     
 
     const inj = document.createElement("script");
-    inj.innerHTML = `(${FetchHook})();`;
+    inj.innerHTML = `(${FetchHook})("${chrome.runtime.id}");`;
     document.documentElement.appendChild(inj);
 }()
 
 
-/*
-*/
 
 

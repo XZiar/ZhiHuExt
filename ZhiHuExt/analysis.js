@@ -53,6 +53,21 @@ class Analyse
         const blobstr = Analyse.generateBlob(zanAnss);
         chrome.tabs.create({ active: true, url: "AssocAns.html?ansblob=" + blobstr });
     }
+    static async showPopAuthor(uid, limit)
+    {
+        const [zanAnss, zanArts] = await Promise.all([db.getIdByVoter(uid, "answer"), db.getIdByVoter(uid, "article")]);
+        const ansid = zanAnss.mapToProp("key"), artid = zanArts.mapToProp("key");
+        const [ansmap, artmap] = await Promise.all([db.getPropMapOfIds("answers", ansid, "author"), db.getPropMapOfIds("articles", artid, "author")]);
+        const athBag = new SimpleBag();
+        zanAnss.forEach(zan => athBag.addMany(_any(ansmap[zan.key], "**"), zan.count));
+        zanArts.forEach(zan => athBag.addMany(_any(artmap[zan.key], "**"), zan.count));
+        let authors = athBag.removeAll("**").toArray("desc");//remove unknown author
+        if (limit)
+            authors = authors.slice(0, limit);
+        const blobstr = Analyse.generateBlob(authors);
+        chrome.tabs.create({ active: true, url: "StatVoter.html?votblob=" + blobstr });
+    }
+
     /**
      * @param {number | number[]} ansid
      * @param {number | number[]} artid

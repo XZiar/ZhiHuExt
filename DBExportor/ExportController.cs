@@ -49,6 +49,7 @@ namespace DBExportor.Controllers
         }
 
         [HttpPost("accept")]
+        [RequestSizeLimit(200_000_000)]
         public IActionResult AcceptRecords([FromQuery]string table)
         {
             if (!CheckAuth())

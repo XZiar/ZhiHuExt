@@ -26,7 +26,13 @@ function reportSpam(id, type)
 
 let CUR_ANSWER = null;
 let CUR_ARTICLE = null;
+let LIM_FetchVoter = 12000;
 
+function setLimVoter(count)
+{
+    console.log(`set Voter Fetch Limit from ${LIM_FetchVoter} to ${count}`);
+    LIM_FetchVoter = count;
+}
 
 /**
  * @param {HTMLElement} element
@@ -99,6 +105,12 @@ function monitorVoter(voterPopup)
         const btn1 = createButton(["Btn-CheckAllStatus", "Button--primary"], "检测全部");
         const btn2 = createButton(["Btn-AssocAns", "Button--primary"], "启发");
         const btn3 = createButton(["Btn-Similarity", "Button--primary"], "相似性");
+
+        if (CUR_ANSWER)
+            btn2.dataset.id = CUR_ANSWER, btn2.dataset.qname = "ansid";
+        else if (CUR_ARTICLE)
+            btn2.dataset.id = CUR_ARTICLE, btn2.dataset.qname = "artid";
+
         title.appendChild(btn1);
         title.appendChild(btn2);
         title.appendChild(btn3);
@@ -219,7 +231,7 @@ $("body").on("click", "button.Btn-CheckSpam", async function (e)
     }
     else
     {
-        const voters = await ContentBase.fetchTheVoters(type, id, 10000, e.ctrlKey ? "old" : "new",
+        const voters = await ContentBase.fetchTheVoters(type, id, LIM_FetchVoter, e.ctrlKey ? "old" : "new",
             (cur, all) => btn.innerText = "=>" + cur + "/" + all);
         {
             const rep = { users: voters };
@@ -319,13 +331,8 @@ $("body").on("click", "span.Voters", function ()
 });
 $("body").on("click", "button.Btn-AssocAns", e =>
 {
-    let query;
-    if (CUR_ANSWER)
-        query = "ansid=" + CUR_ANSWER;
-    else if (CUR_ARTICLE)
-        query = "artid=" + CUR_ARTICLE;
-    else
-        return;
+    const btn = e.target;
+    const query = `${btn.dataset.qname}=${btn.dataset.id}`;
     const target = e.ctrlKey ? "StatVoter.html?" : "AssocAns.html?";
     chrome.runtime.sendMessage({ action: "openpage", isBackground: false, target: target + query });
 });

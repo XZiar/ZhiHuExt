@@ -264,7 +264,7 @@ class SimpleBag
     {
         for (let idx = 0; idx < elements.length; ++idx)
         {
-            const ele = elments[idx];
+            const ele = elements[idx];
             this._map.delete(ele);
         }
         return this;

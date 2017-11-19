@@ -100,7 +100,9 @@
             let offset = 0;
             while (true)
             {
-                const part = await fetchdb(tables[i], offset, partlen);
+                const parturl = await fetchdb(tables[i], offset, partlen);
+                const part = await (await fetch(parturl)).text();
+                URL.revokeObjectURL(parturl);
                 if (part === "[]")
                     break;
                 const pms = sendpart(tables[i], part, addr, timeid);

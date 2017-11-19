@@ -37,7 +37,7 @@ async function AssocByAnswers(anss)
         const ans = ansMap[cur.key];
         if (ans == null)
         {
-            data.push({ ansid: cur.key, qst: { qid: -1 }, author: { name: "", id: "" }, date: -1, count: cur.count });
+            data.push({ ansid: cur.key, qst: { qid: -1 }, author: { name: "", id: "" }, date: -1, zancnt: -1, count: cur.count });
             continue;
         }
         const qstid = ans.question;
@@ -45,7 +45,7 @@ async function AssocByAnswers(anss)
         const title = qst == null ? qstid : qst.title;
         const athname = usrMap[ans.author];
         const author = { name: athname == null ? ans.author : athname, id: ans.author };
-        const dat = { ansid: ans.id, qst: { title: title, aid: ans.id, qid: qstid }, author: author, date: ans.timeC, count: cur.count };
+        const dat = { ansid: ans.id, qst: { title: title, aid: ans.id, qid: qstid }, author: author, date: ans.timeC, zancnt: ans.zancnt, count: cur.count };
         data.push(dat);
     }
 
@@ -54,7 +54,7 @@ async function AssocByAnswers(anss)
             paging: true,
             lengthMenu: [[20, 50, 100, -1], [20, 50, 100, "All"]],
             data: data,
-            order: [[4, "desc"]],
+            order: [[5, "desc"]],
             columns:
             [
                 { data: "ansid" },
@@ -71,6 +71,7 @@ async function AssocByAnswers(anss)
                     data: "date",
                     render: displayRender(dat => dat === -1 ? "No record" : new Date(dat * 1000).toLocaleString()),
                 },
+                { data: "zancnt" },
                 { data: "count" }
             ]
         });
@@ -83,10 +84,10 @@ $(document).on("click", "#stat", e =>
 });
 $(document).on("click", "#export", e =>
 {
-    const head = "\uFEFF" + "answerId,questionId,标题,作者,authorId,日期,计数\n";
+    const head = "\uFEFF" + "answerId,questionId,标题,作者,authorId,日期,回答赞数,计数\n";
     let txt = head;
     const defDate = new Date(0).toLocaleString();
-    finalData.forEach(dat => txt += `${dat.ansid},${dat.qst.qid},"${dat.qst.title}","${dat.author.name}",${dat.author.id},${dat.date === -1 ? defDate : new Date(dat.date * 1000).toLocaleString()},${dat.count}\n`);
+    finalData.forEach(dat => txt += `${dat.ansid},${dat.qst.qid},"${dat.qst.title}","${dat.author.name}",${dat.author.id},${dat.date === -1 ? defDate : new Date(dat.date * 1000).toLocaleString()},${dat.zancnt},${dat.count}\n`);
     const time = new Date().Format("yyyyMMdd-hhmm");
     DownloadMan.exportDownload(txt, "txt", `AssocAns-${time}.csv`);
 });
@@ -103,6 +104,24 @@ $(document).on("click", "#export", e =>
         const artid = qs.artid.split("*").map(Number);
         voters = await DBfunc("getVoters", artid, "article");
     }
+    else if (qs.ansid != null)
+    {
+        const ansid = qs.ansid.split("*").map(Number);
+        voters = await DBfunc("getVoters", ansid, "answer");
+    }
+    else if (qs.qid != null)
+    {
+        const qid = qs.qid.split("*").map(Number);
+        const ansid = await DBfunc("getAnsIdByQuestion", qid);
+        voters = await DBfunc("getVoters", ansid, "answer");
+    }
+    else if (qs.uid != null)
+    {
+        const athid = qs.uid.split("*");
+        const [ansid, artid] = await Promise.all([DBfunc("getIdByAuthor", athid, "answer"), DBfunc("getIdByAuthor", athid, "article")]);
+        const [ansvoters, artvoters] = await Promise.all([DBfunc("getVoters", ansid, "answer"), DBfunc("getVoters", artid, "article")]);
+        voters = new SimpleBag().union(ansvoters).union(artvoters).toArray();
+    }
     else if (qs.votid != null)
     {
         voters = qs.votid.split("*");
@@ -112,23 +131,6 @@ $(document).on("click", "#export", e =>
         const anss = await (await fetch(qs.ansblob)).json()
         AssocByAnswers(anss);
         return;
-    }
-    else
-    {
-        /**@type {number[]}*/
-        let ansid;
-        if (qs.ansid != null)
-        {
-            ansid = qs.ansid.split("*").map(Number);
-        }
-        else if (qs.authorid != null)
-        {
-            const athid = qs.authorid.split("*");
-            ansid = (await DBfunc("getAnsIdByVoter", athid)).mapToProp("key");
-        }
-        else
-            return;
-        voters = await DBfunc("getVoters", ansid, "answer");
     }
     if (voters != null)
         AssocByVoters(voters);

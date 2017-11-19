@@ -23,6 +23,8 @@ async function StatVoters(...voters)
     {
         const user = usrMap[uid];
         sum += count;
+        if (!user)
+            return { usr: { name: uid, id: uid }, status: "", artcnt: -1, anscnt: -1, follower: -1, zancnt: -1, count: count };
         if (user.status === "ban" || user.status === "sban")
             bansum += count;
         return { usr: { name: user.name, id: user.id }, status: user.status, artcnt: user.artcnt, anscnt: user.anscnt, follower: user.follower, zancnt: user.zancnt, count: count };
@@ -77,7 +79,7 @@ $(document).on("click", "#chkAllStatus", async e =>
     const btn = e.target;
     /**@type {HTMLAnchorElement[]}*/
     const anchors = $("#maintable").find(".usr").toArray();
-    const objs = anchors.map(a => [a, finalUserMap[a.dataset.id]]).filter(([a, u]) => u.status === "" && u.id !== "");
+    const objs = anchors.map(a => [a, finalUserMap[a.dataset.id]]).filter(([a, u]) => u && u.status === "" && u.id !== "");
     console.log(`here [${objs.length}] obj users`);
     for (let i = 0; i < objs.length; ++i)
     {
@@ -136,9 +138,9 @@ $(document).on("click", "#export", e =>
         const aids = qs.artid.split("*").map(Number);
         voters = [await DBfunc("getVoters", aids, "article")];
     }
-    else if (qs.vblob != null)
+    else if (qs.votblob != null)
     {
-        voters = [await fetch(qs.vblob)];
+        voters = [await (await fetch(qs.votblob)).json()];
     }
     if (voters != null)
         StatVoters(...voters);
