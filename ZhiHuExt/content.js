@@ -260,16 +260,17 @@ $("body").on("click", "button.Btn-CheckSpam", async function (e)
     const green = ratio < 0 ? 224 : 224 - Math.ceil(ratio * 192);
     btn.style.backgroundColor = "rgb(" + red + "," + green + "," + blue + ")";
 });
-$("body").on("click", "button.Btn-CheckStatus", async function (e)
+
+async function onChkStatus(e)
 {
-    const btn = $(this)[0];
+    const btn = e.target;
     const uid = btn.dataset.id;
     if (e.ctrlKey)
     {
         chrome.runtime.sendMessage({ action: "openpage", target: "https://www.zhihu.com/people/" + uid + "/activities", isBackground: true });
         return;
     }
-    const user = await ContentBase.checkUserState(uid);
+    const user = await ContentBase.checkUserState(uid, undefined, [4]);
     if (!user)
         return;
     if (user.status === "ban" || user.status === "sban")
@@ -282,8 +283,9 @@ $("body").on("click", "button.Btn-CheckStatus", async function (e)
         btn.style.backgroundColor = "rgb(0,224,32)";
         $(btn).siblings(".Btn-ReportSpam")[0].style.backgroundColor = "";
     }
-    //ContentBase._report("users", user);//entity has include this user
-});
+}
+
+$("body").on("click", "button.Btn-CheckStatus", onChkStatus);
 $("body").on("click", "button.Btn-CheckAllStatus", async function (e)
 {
     const btn = $(this)[0];
@@ -308,8 +310,8 @@ $("body").on("click", "button.Btn-CheckAllStatus", async function (e)
     for (let idx = 0; idx < btnList.length; ++idx)
     {
         btn.textContent = btnList[idx].name;
-        btnList[idx].btn.click();
-        await _sleep(1000);
+        const event = { target: btnList[idx].btn, ctrlKey: false };
+        await Promise.all([onChkStatus(event), _sleep(800 + idx * 40)]);
     }
     btn.textContent = "检测全部";
 });

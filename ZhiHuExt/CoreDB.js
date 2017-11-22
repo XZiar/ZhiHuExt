@@ -219,7 +219,7 @@ class ZhiHuDB
         }
         else if (data.length > 0)
         {
-            data = ZhiHuDB.insertfix(target, data);
+            data = StandardDB.innerMerge(target, data);
             count = data.length;
             pms = table.bulkPut(data);
         }

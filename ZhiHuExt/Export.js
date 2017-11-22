@@ -71,10 +71,10 @@
         return pms;
     }
 
-    function finish(addr, id)
+    function finish(addr, id, extra)
     {
         const pms = $.Deferred();
-        $.ajax(addr + "/finish",
+        $.ajax(addr + "/finish" + (extra ? "?" + extra : ""),
             {
                 type: "GET",
                 headers: { "objid": id, "authval": auth }
@@ -112,7 +112,9 @@
                 await pms;
             }
         }
-        await finish(addr, timeid);
+        shouldSlim = $("#slimExcerpt")[0].checked;
+        extra = "slim=" + shouldSlim ? "true" : "false";
+        await finish(addr, timeid, extra);
     }
 
     /**

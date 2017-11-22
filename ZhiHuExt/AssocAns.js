@@ -69,7 +69,7 @@ async function AssocByAnswers(anss)
                 },
                 {
                     data: "date",
-                    render: displayRender(dat => dat === -1 ? "No record" : new Date(dat * 1000).toLocaleString()),
+                    render: displayRender(dat => dat === -1 ? "No record" : new Date(dat * 1000).toLocaleString(undefined, { hour12: false })),
                 },
                 { data: "zancnt" },
                 { data: "count" }

@@ -1,9 +1,12 @@
 "use strict"
 
 const fetchVoters = Symbol("_fetchAnsVoters");
+const fetchActs = Symbol("_fetchUserActs");
 let _CUR_USER;
 let _CUR_ANSWER;
 let _CUR_QUESTION;
+/**@type {UserToken}*/
+let _CUR_TOKEN;
 class ContentBase
 {
     static get CUR_USER() { return _CUR_USER; }
@@ -12,6 +15,8 @@ class ContentBase
     static set CUR_ANSWER(ans) { _CUR_ANSWER = ans; }
     static get CUR_QUESTION() { return _CUR_QUESTION; }
     static set CUR_QUESTION(qst) { _CUR_QUESTION = qst; }
+    static get CUR_TOKEN() { return _CUR_TOKEN; }
+    static set CUR_TOKEN(token) { _CUR_TOKEN = token; }
 
     /**
      * @param {"answer" | "article"} obj
@@ -37,23 +42,48 @@ class ContentBase
                 else
                     console.warn("fetchVoter fail:" + xhr.status);
                 pms.reject();
+            });
+        return pms;
+    }
+    /**
+     * @param {object} header
+     * @param {string} uid
+     * @param {number} [time]
+     */
+    static [fetchActs](header, uid, time)
+    {
+        const pms = $.Deferred();
+        time = time || Math.round(new Date().getTime() / 1000)
+        ContentBase._get(`https://www.zhihu.com/api/v4/members/${uid}/activities?limit=20&after_id=${time}&desktop=True`, undefined, header)
+            .done((data, status, xhr) =>
+            {
+                pms.resolve(data.data);
             })
+            .fail((data, status, xhr) =>
+            {
+                if (data.responseJSON)
+                    console.warn("fetchActs fail:" + xhr.status, data.responseJSON.error.message);
+                else
+                    console.warn("fetchActs fail:" + xhr.status);
+                pms.reject();
+            });
         return pms;
     }
 
-    static _get(url, data, type)
+    static _get(url, data, headers)
     {
         return $.ajax(url,
             {
                 type: "GET",
                 data: data,
+                headers: headers,
                 statusCode:
                 {
                     429: xhr => xhr.fail()
                 }
             });
     }
-    static _post(url, data)
+    static _post(url, data, headers)
     {
         let cType;
         if (typeof data == "string")
@@ -67,10 +97,14 @@ class ContentBase
             {
                 type: "POST",
                 contentType: cType,
-                //dataType: "json",
+                headers: headers,
                 data: data
             });
     }
+    /**
+     * @param {"batch" | string} target
+     * @param {object[] | object | StandardDB} data
+     */
     static _report(target, data)
     {
         if (!data || (data instanceof Array && data.length === 0))
@@ -99,6 +133,7 @@ class ContentBase
      */
     static async fetchTheVoters(obj, id, limit, config, onProgress)
     {
+        let errcnt = 0;
         const first = await ContentBase[fetchVoters](obj, id, 0);
         /**@type {User[]}*/
         let ret = first.users;
@@ -112,26 +147,94 @@ class ContentBase
         let isEnd = false;
         while (left > 0 && !isEnd)
         {
-            const part = await ContentBase[fetchVoters](obj, id, offset);
-            ret = ret.concat(part.users);
-            const len = part.users.length;
-            offset += len, left -= len;
-            if (onProgress)
-                onProgress(ret.length, total);
-            isEnd = part.end;
+            try
+            {
+                const part = await ContentBase[fetchVoters](obj, id, offset);
+                ret = ret.concat(part.users);
+                const len = part.users.length;
+                offset += len, left -= len;
+                if (onProgress)
+                    onProgress(ret.length, total);
+                isEnd = part.end;
+            }
+            catch (e)
+            {
+                if (++errcnt > 5)
+                    break;
+                else
+                    continue;
+            }
         }
         return ret;
     }
     /**
-     * @param {number | string} uid
-     * @param {function({[x:string]:any[]}):boolean} [bypass]
+     * @param {string} uid
+     * @param {number} maxloop
+     * @param {number} [limittime]
+     * @param {number} [begintime]
+     * @param {function(number, number):void} onProgress
+     */
+    static async fetchUserActs(uid, maxloop, limittime, begintime, onProgress)
+    {
+        let errcnt = 0;
+        let time = begintime || Math.round(new Date().getTime() / 1000)
+        limittime = limittime || 0;
+        const tokenhead = ContentBase.CUR_TOKEN.toHeader();
+        const ret = new StandardDB();
+        for (let i = 0; i < maxloop && time > limittime; ++i)
+        {
+            try
+            {
+                const actjson = await ContentBase[fetchActs](tokenhead, uid, time);
+                const lastitem = actjson.last();
+                if (!lastitem)
+                    break;
+                const acts = APIParser.parsePureActivities(actjson);
+                ret.add(acts);
+                time = lastitem.created_time;
+                if (onProgress)
+                    onProgress(i, time);
+            }
+            catch (e)
+            {
+                if (++errcnt > 5)
+                    break;
+                else
+                    continue;
+            }
+        }
+        return { acts: ret, lasttime: time };
+    }
+    /**
+     * @param {string} uid
+     * @param {function(StandardDB, string, number):boolean} [bypass]
+     * @param {[number, number=, function=]} [chkacts]
      * @returns {Promise<User>}
      */
-    static checkUserState(uid, bypass)
+    static checkUserState(uid, bypass, chkacts)
     {
         const pms = $.Deferred();
+        const curtime = Math.round(new Date().getTime() / 1000);
+        const tail = async function (state)
+        {
+            const entities = APIParser.parseEntities(state.entities);
+            let reportdata;
+            let lasttime = Math.min(curtime, ...Object.keys(state.entities.activities).map(Number));
+            if (chkacts && lasttime != curtime)
+            {
+                const actsret = await ContentBase.fetchUserActs(uid, chkacts[0], chkacts[1], lasttime, chkacts[2]);
+                lasttime = actsret.lasttime;
+                reportdata = entities.add(actsret.acts);
+            }
+            else
+                reportdata = entities;
+            const shouldReport = bypass ? bypass(entities, uid, lasttime) : true;
+            if (shouldReport)
+                ContentBase._report("batch", entities);
+            console.log(entities);
+        };
         ContentBase._get("https://www.zhihu.com/people/" + uid + "/activities")
-            .done((data) =>
+            .then(data =>
             {
                 const newData = ContentBase.keepOnlyDataDiv(data);
                 const div = document.createElement("div");
@@ -143,6 +246,7 @@ class ContentBase
                     return;
                 }
                 const state = JSON.parse(dataElement.dataset.state);
+                ContentBase.CUR_TOKEN = new UserToken(state.token);
                 const theuser = state.entities.users[uid];
                 if (!theuser)
                 {
@@ -151,16 +255,9 @@ class ContentBase
                 }
                 const user = User.fromRawJson(theuser);
                 pms.resolve(user);
-                //console.log(theuser);
-                {
-                    const entities = APIParser.parseEntities(state.entities);
-                    const shouldReport = bypass ? bypass(entities) : true;
-                    if (shouldReport)
-                        ContentBase._report("batch", entities);
-                    console.log(entities);
-                }
-            })
-            .fail((e) => { console.warn(e); pms.resolve(null); });
+
+                tail(state);
+            }, (e) => { console.warn(e); pms.resolve(null); });
         return pms;
     }
 
@@ -190,6 +287,7 @@ class ContentBase
         return;
     function FetchHook(extid)
     {
+        "use strict"
         /**
          * @param {string} req
          * @param {string} api
@@ -226,16 +324,23 @@ class ContentBase
             //https://www.zhihu.com/api/v4/explore/recommendations?include=data%5B*%5D.answer.voteup_count%3Bdata%5B*%5D.article.voteup_count
             if (!req.includes("www.zhihu.com/api/v4/"))
                 return oldfetch(req, init);
+            const apiparts = req.substring(req.indexOf("/api/v4/") + 8, req.indexOf("?")).split("/");
             let newreq = req;
             {
                 newreq = newreq.replace("limit=10", "limit=20");//accelerate
-                if (newreq.includes("/api/v4/articles"))//simple fix for articles api(lacks voteup_count field)
+                if (apiparts[0] === "articles")//simple fix for articles api(lacks voteup_count field)
                     newreq = newreq.replace("follower_count%2C", "answer_count%2Carticles_count%2Cfollower_count%2C");//detail
                 else
                     newreq = newreq.replace("follower_count%2C", "voteup_count%2Canswer_count%2Carticles_count%2Cfollower_count%2C");//detail
+                if (apiparts[0] === "members" && !apiparts[2])//quick check for statis
+                {
+                    if (newreq.includes("?include="))
+                        newreq = newreq.replace("?include=", "?include=account_status,voteup_count,answer_count,articles_count,follower_count");
+                    else
+                        newreq = newreq + "?include=account_status,voteup_count,answer_count,articles_count,follower_count"
+                }
             }
             const pms = oldfetch(newreq, init);
-            const apiparts = req.substring(req.indexOf("/api/v4/") + 8, req.indexOf("?")).split("/");
             if (apiparts[0] === "members")//capture [members, {id}, ...]
             {
                 return sendData(req, pms, "members", apiparts[2] || "empty");

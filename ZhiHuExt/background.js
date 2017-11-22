@@ -208,7 +208,7 @@ chrome.runtime.onMessageExternal.addListener(
             case "articles":
             case "questions":
                 {
-                    const res = APIParser.batch;
+                    const res = new StandardDB();
                     data.data.forEach(act => APIParser.parseByType(res, act));
                     db.insert("batch", res, putBadge);
                     if (request.api === "questions")
@@ -239,7 +239,7 @@ chrome.runtime.onMessageExternal.addListener(
                 } break;
             case "recommendations":
                 {
-                    const res = APIParser.batch;
+                    const res = new StandardDB();
                     Object.values(data.data).forEach(act => APIParser.parseByType(res, act));
                     db.insert("batch", res, putBadge);
                     console.log("recommends", res);

@@ -1,14 +1,16 @@
 "use strict"
 
-/**@type {User[]}}*/
-const users = [];
-const uids = new Set();
+/**@type {Map<string, User>}}*/
+const uids = new Map();
+/**@type {Map<string, number>}}*/
+const utimeOld = new Map(), utimeNew = new Map();
 const u404s = new Set();
-const chkreports = APIParser.batch;
+const chkreports = new StandardDB();
 let isRunning = false;
+let rowcount = 0;
 
 /**@type {HTMLInputElement}}*/
-const aloneRec = $("#aloneRec")[0], repeatIn = $("#repeat")[0], wtime = $("#waittime")[0];
+const aloneRec = $("#aloneRec")[0], repeat = $("#repeat")[0], wtime = $("#waittime")[0], maxact = $("#maxact")[0];
 
 const thetable = $("#maintable").DataTable(
     {
@@ -34,32 +36,102 @@ const thetable = $("#maintable").DataTable(
         ]
     });
 
-
-const bypasser = rec =>
+/**
+ * @param {StandardDB} rec
+ */
+const bypasser = (rec, uid, lasttime) =>
 {
-    for (const en of Object.entries(rec))
-        chkreports[en[0]].push(...en[1]);
-    return false;
+    utimeOld.set(uid, lasttime);
+    if (aloneRec.checked)
+    {
+        chkreports.add(rec);
+        return false;
+    }
+    else
+        return true;
 }
 
-/**
- * @param {string} uid
- */
-async function chkUser(uid)
+function pmsbypasser()
 {
-    const user = await ContentBase.checkUserState(uid, aloneRec.checked ? bypasser : undefined);
+    const pms = $.Deferred();
+    /**@param {StandardDB} rec*/
+    const bypasser2 = (rec, uid, lasttime) =>
+    {
+        utimeOld.set(uid, lasttime);
+        pms.resolve();
+        if (aloneRec.checked)
+        {
+            chkreports.add(rec);
+            return false;
+        }
+        else
+            return true;
+    }
+    return [pms, bypasser2];
+}
+
+async function fastChk(bypass, uid, begintime, limittime)
+{
+    const user = await ContentBase.checkUserState(uid, bypass, [maxact.value, limittime]);
     if (!user)
     {
         u404s.add(uid);
         return;
     }
-    users.push(user);
-    uids.add(user.id);
-    const idx = users.length;
-    const newdata = { usr: { id: user.id, name: user.name }, index: idx };
+    uids.set(user.id, user);
+    utimeNew.set(uid, begintime);
+    const newdata = { usr: { id: user.id, name: user.name }, index: rowcount++ };
     Object.assign(newdata, user);
     thetable.row.add(newdata);
     thetable.draw(false);
+}
+
+async function monitorCycle(btn, objs)
+{
+    while (isRunning)
+    {
+        for (let i = 0; isRunning && i < objs.length; ++i)
+        {
+            const uid = objs[i];
+            btn.textContent = uid;
+            let limittime = 0, begintime = Math.floor(new Date().getTime() / 1000);
+            const fixsleeper = _sleep(Number(wtime.value));
+            let chkpms;
+            if (!uids.has(uid))
+            {
+                if (maxact.value == 0)
+                {
+                    fastChk(bypasser, uid);
+                }
+                else
+                {
+                    const [pms, bypass2] = pmsbypasser();
+                    fastChk(bypass2, uid);
+                    await pms;
+                    utimeNew.set(uid, begintime);
+                }
+            }
+            else if(maxact.value > 0)
+            {
+                limittime = utimeNew.get(uid);
+                utimeNew.set(uid, begintime);
+                const actspms = ContentBase.fetchUserActs(uid, maxact.value, limittime, begintime);
+                const user = uids.get(uid);
+                const newdata = { usr: { id: user.id, name: user.name }, index: rowcount++ };
+                Object.assign(newdata, user);
+                thetable.row.add(newdata);
+                thetable.draw(false);
+                const acts = (await actspms).acts;
+                if (aloneRec)
+                    chkreports.add(acts);
+                else
+                    ContentBase._report("batch", acts);
+            }
+            await fixsleeper;
+        }
+        if (!repeat.checked)
+            return;
+    }
 }
 
 $(document).on("click", "#show404", e =>
@@ -78,11 +150,7 @@ $(document).on("click", "#export", e =>
 {
     const btn = e.target;
     btn.textContent = "合并";
-    const res = {};
-    for (const en of Object.entries(chkreports))
-    {
-        res[en[0]] = ZhiHuDB.insertfix(en[0], en[1]);
-    }
+    const res = chkreports.selfMerge();
     btn.textContent = "导出";
     const time = new Date().Format("yyyyMMdd-hhmm");
     DownloadMan.exportDownload(res, "json", `AutoSpider-${time}.json`);
@@ -103,6 +171,7 @@ $(document).on("click", "#import", e =>
     }
     reader.readAsText(files[0]);
 });
+
 $(document).on("click", "#go", async e =>
 {
     const btn = e.target;
@@ -117,25 +186,17 @@ $(document).on("click", "#go", async e =>
     try
     {
         const txt = $("#userinput")[0].value;
-        let objs = JSON.parse(txt).filter(uid => !uids.has(uid));
+        let objs = JSON.parse(txt);
+        if (!repeat.checked)
+            objs = objs.filter(uid => !uids.has(uid));
         const banset = isCtrl ? new Set() : (await ContentBase.checkSpam("users", objs)).banned;
         objs = objs.filter(uid => !u404s.has(uid) && !banset.has(uid));
-
         console.log(`here [${objs.length}] obj users`);
-        for (let i = 0; isRunning && i < objs.length; ++i)
-        {
-            const uid = objs[i];
-            chkUser(uid);
-            btn.textContent = uid;
-            await _sleep(Number(wtime.value));
-        }
+
+        await monitorCycle(btn, objs);
+
         isRunning = false;
         btn.textContent = "完毕";
-        if (repeatIn.checked)
-        {
-            uids.clear();
-            $("#go")[0].click();
-        }
     }
     catch (e)
     {

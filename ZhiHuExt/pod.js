@@ -1,5 +1,24 @@
 "use strict"
 
+class UserToken
+{
+    /**
+     * @param {{carCompose:string, xUDID:string, xsrf:string}} token
+     */
+    constructor(token)
+    {
+        this.authorization = token.carCompose.split("|");
+        this.xUDID = token.xUDID;
+        this.xsrf = token.xsrf;
+    }
+    toHeader()
+    {
+        const auth = this.authorization ? "Bearer " + this.authorization.map(x => x.startsWith("4:") ? "4:z_c0" : x).join("|")
+            : "oauth c3cef7c66a1843f8b3a9e6a1e3160e20";
+        return { authorization: auth, "X-UDID": this.xUDID, "X-API-VERSION": "3.0.40" }
+    }
+}
+
 class User
 {
     constructor()
@@ -143,6 +162,101 @@ class Zan
     }
 }
 
+class StandardDB
+{
+    constructor()
+    {
+        /**@type {User[]} users*/
+        this.users = [];
+        /**@type {Zan[]} zans*/
+        this.zans = [];
+        /**@type {Zan[]} zanarts*/
+        this.zanarts = [];
+        /**@type {Topic[]} topics*/
+        this.topics = [];
+        /**@type {Answer[]} answers*/
+        this.answers = [];
+        /**@type {Question[]} questions*/
+        this.questions = [];
+        /**@type {Article[]} articles*/
+        this.articles = [];
+    }
+    /**
+     * @template T
+     * @param {string} field
+     * @param {T[]} items
+     * @return {T[]}
+     */
+    static innerMerge(field, items)
+    {
+        /**@type {Map<string, T>}*/
+        const tmpmap = new Map();
+        switch (field)
+        {
+            case "zans":
+            case "zanarts":
+                for (let i = 0; i < items.length; ++i)
+                {
+                    const zan = items[i];
+                    const id = zan.from + "," + zan.to;
+                    const last = tmpmap.get(id);
+                    if (last == null)
+                        tmpmap.set(id, zan);
+                    else if (last.time === -1)
+                        last.time = zan.time;
+                }
+                break;
+            case "topics":
+            case "spams":
+                return items;//skip
+            default:
+                for (let i = 0; i < items.length; ++i)
+                {
+                    const item = items[i];
+                    const id = item.id;
+                    const last = tmpmap.get(id);
+                    if (last != null)
+                    {
+                        const entries = Object.entries(last);
+                        for (let i = 0; i < entries.length; ++i)
+                        {
+                            const [key, val] = entries[i];
+                            if (val === -1 || val === null)
+                                last[key] = item[key];
+                        }
+                    }
+                    else
+                        tmpmap.set(id, item);
+                }
+        }
+        return Array.from(tmpmap.values());
+    }
+    selfMerge()
+    {
+        const ret = new StandardDB();
+        ret.zans = StandardDB.innerMerge("zans", this.zans);
+        ret.zanarts = StandardDB.innerMerge("zanarts", this.zanarts);
+        ret.users = StandardDB.innerMerge("users", this.users);
+        ret.answers = StandardDB.innerMerge("answers", this.answers);
+        ret.articles = StandardDB.innerMerge("articles", this.articles);
+        ret.questions = StandardDB.innerMerge("questions", this.questions);
+        ret.topics = StandardDB.innerMerge("topics", this.topics);
+        return ret;
+    }
+    /**
+     * @param {StandardDB} other
+     */
+    add(other)
+    {
+        this.zans.push(...other.zans);
+        this.zanarts.push(...other.zanarts);
+        this.users.push(...other.users);
+        this.answers.push(...other.answers);
+        this.articles.push(...other.articles);
+        this.questions.push(...other.questions);
+        this.topics.push(...other.topics);
+    }
+}
 
 /**
  * @typedef { Object } UserType
@@ -194,9 +308,6 @@ class Zan
 
 class APIParser
 {
-    /**@type {{ users: User[], zans: Zan[], zanarts: Zan[], topics: Topic[], answers: Answer[], questions: Question[], articles: Article[] }}*/
-    static get batch() { return { users: [], zans: [], zanarts: [], topics: [], answers: [], questions: [], articles: [] }; }
-    
     /**
      * @param {{}} output
      * @param {{type: string, [x:string]: any}} obj
@@ -265,7 +376,7 @@ class APIParser
      */
     static parseEntities(data)
     {
-        const output = APIParser.batch;
+        const output = new StandardDB();
         /**@type {Activity[]}*/
         const acts = Object.values(data.activities);
         for (let i = 0; i < acts.length; ++i)
@@ -289,7 +400,7 @@ class APIParser
      */
     static parsePureActivities(acts)
     {
-        const output = APIParser.batch;
+        const output = new StandardDB();
         acts.forEach(act =>
         {
             switch (act.verb)

@@ -27,10 +27,14 @@ Array.prototype.findInArray = function(array)
     }
     return ret;
 }
+Array.prototype.last = function ()
+{
+    return this[this.length - 1];
+}
 /**
  * @param {string} keyName
  */
-Array.prototype.mapToProp = function (keyName)
+Array.prototype.mapToProp = (keyName) =>
 {
     const ret = [];
     for (let idx = 0; idx < this.length; ++idx)
@@ -76,6 +80,17 @@ String.prototype.removeSuffix = function (count)
 
 Math.minmax = (num, min, max) => Math.max(Math.min(num, max), min);
 
+
+const _DateForamter =
+    {
+        "M+": /(M+)/,
+        "d+": /(d+)/,
+        "h+": /(h+)/,
+        "m+": /(m+)/,
+        "s+": /(s+)/,
+        "q+": /(q+)/,
+        "S": /(S+)/
+    };
 Date.prototype.Format = function (fmt)
 { //author: meizz
     const o =
@@ -90,8 +105,8 @@ Date.prototype.Format = function (fmt)
     };
     if (/(y+)/.test(fmt))
         fmt = fmt.replace(RegExp.$1, (this.getFullYear() + "").substr(4 - RegExp.$1.length));
-    for (let k in o)
-        if (new RegExp("(" + k + ")").test(fmt))
+    for (const k in o)
+        if (_DateForamter[k].test(fmt))
             fmt = fmt.replace(RegExp.$1, (RegExp.$1.length == 1) ? (o[k]) : (("00" + o[k]).substr(("" + o[k]).length)));
     return fmt;
 }
