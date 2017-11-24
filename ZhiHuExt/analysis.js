@@ -76,16 +76,14 @@ class Analyse
      */
     static async filterOutsideVotersById(ansid, artid, mincount, ...filters)
     {
-        const ansv = await db.getVoters(ansid, "answer");
-        const artv = await db.getVoters(artid, "article");
+        const pmss = [db.getVoters(ansid, "answer"), db.getVoters(artid, "article")];
+        const filset = new Set();
+        for (const f of filters)
+            for (const ele of f)
+                filset.add(ele);
+        const [ansv, artv] = await Promise.all(pmss);
         const bag = new SimpleBag().union(ansv).union(artv);
-        const ret = bag.above(mincount).filter(uid =>
-        {
-            for (const f of filters)
-                if (f.has(uid))
-                    return false;
-            return true;
-        }).elements();
+        const ret = bag.above(mincount).filter(uid => !filset.has(uid)).elements();
         $("#copyData").val(JSON.stringify(ret));
         $("#copyBtn")[0].click();
         console.log("copied");
@@ -97,9 +95,15 @@ class Analyse
      */
     static async filterOutsideVotersByAuthor(author, mincount, ...filters)
     {
-        const ansid = await db.getIdByAuthor(author, "answer");
-        const artid = await db.getIdByAuthor(author, "article");
-        Analyse.filterOutsideVotersById(ansid, artid, mincount, ...filters);
+        const voterPms = db.getVotersByAuthor(author, "desc", mincount);
+        const filset = new Set();
+        for (const f of filters)
+            for (const ele of f)
+                filset.add(ele);
+        const ret = (await voterPms).filter(x => !filset.has(x.key))
+        $("#copyData").val(JSON.stringify(ret));
+        $("#copyBtn")[0].click();
+        console.log("copied");
     }
 
     static async findQuestOfUserVote(uid)

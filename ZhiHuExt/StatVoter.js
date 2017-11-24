@@ -11,11 +11,13 @@ let finalBag;
 async function StatVoters(...voters)
 {
     console.log("arrive voters", voters);
-    const bag = voters.filter(v => v != null).reduce((prev, cur) => prev.union(cur), new SimpleBag());
+    let bag = voters.filter(v => v != null).reduce((prev, cur) => prev.union(cur), new SimpleBag());
+    if (bag.size > 10000)
+        bag = bag.above(1);
     const uids = bag.elements();
 
     /**@type {{[x:string]: User}}*/
-    const usrMap = await DBfunc("getDetailMapOfIds", "users", uids, "id");
+    const usrMap = await DBfunc("getDetailMapOfIds", "users", uids, "id", "head");
 
     let bansum = 0, sum = 0;
 
@@ -63,10 +65,11 @@ async function StatVoters(...voters)
 /**
  * @param {User} objuser
  * @param {HTMLAnchorElement} anchor
+ * @param {number} deep
  */
-async function chkUser(objuser, anchor)
+async function chkUser(objuser, anchor, deep)
 {
-    const user = await ContentBase.checkUserState(objuser.id);
+    const user = await ContentBase.checkUserState(objuser.id, undefined, [deep ? 20 : 4], deep);
     if (!user)
         return;
     finalUserMap[user.id] = user;
@@ -79,14 +82,14 @@ $(document).on("click", "#chkAllStatus", async e =>
     const btn = e.target;
     /**@type {HTMLAnchorElement[]}*/
     const anchors = $("#maintable").find(".usr").toArray();
-    const objs = anchors.map(a => [a, finalUserMap[a.dataset.id]]).filter(([a, u]) => u && u.status === "" && u.id !== "");
+    const objs = anchors.map(a => [a, finalUserMap[a.dataset.id]]).filter(([a, u]) => u && u.id !== "")
+        .filter(e.ctrlKey ? ([a, u]) => a.style.background == "red" : ([a, u]) => u.status === "");
     console.log(`here [${objs.length}] obj users`);
     for (let i = 0; i < objs.length; ++i)
     {
         const [anchor, objuser] = objs[i];
-        chkUser(objuser, anchor);
         btn.textContent = objuser.id;
-        await _sleep(1000);
+        await Promise.all([chkUser(objuser, anchor, e.ctrlKey), _sleep(800 + 40 * i)]);
     }
     btn.textContent = "检测全部";
 });
@@ -117,10 +120,8 @@ $(document).on("click", "#export", e =>
 
     if (qs.uid != null)
     {
-        const uids = qs.uid.split("*");
-        /**@type {[number[], number[]]}*/
-        const [artids, ansids] = await Promise.all([DBfunc("getIdByAuthor", uids, "article"), DBfunc("getIdByAuthor", uids, "answer")]);
-        voters = await Promise.all([DBfunc("getVoters", artids, "article"), DBfunc("getVoters", ansids, "answer")]);
+        const athid = qs.uid.split("*");
+        voters = [await DBfunc("getVotersByAuthor", athid)];
     }
     else if (qs.qid != null)
     {
@@ -137,6 +138,11 @@ $(document).on("click", "#export", e =>
     {
         const aids = qs.artid.split("*").map(Number);
         voters = [await DBfunc("getVoters", aids, "article")];
+    }
+    else if (qs.vid != null)
+    {
+        const vid = qs.vid.split("*");
+        voters = [await DBfunc("getVotersByVoter", vid)];
     }
     else if (qs.votblob != null)
     {

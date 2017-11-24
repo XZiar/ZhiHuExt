@@ -35,12 +35,11 @@
         if (feedbackNodes.length > 0)
             addQuickCheckBtns(feedbackNodes);
     });
-
-    $("body").on("click", "button.Btn-QCheckStatus", async function (e)
+    async function onChkStatus(e)
     {
-        const btn = $(this)[0];
+        const btn = e.target;
         const uid = btn.dataset.id;
-        const user = await ContentBase.checkUserState(uid);
+        const user = await ContentBase.checkUserState(uid, undefined, [20], true);
         if (!user)
             return;
         if (user.status === "ban" || user.status === "sban")
@@ -51,19 +50,18 @@
         {
             btn.style.background = "rgb(0,224,32)";
         }
-        ContentBase._report("users", user);
-    });
+    }
+    $("body").on("click", "button.Btn-QCheckStatus", onChkStatus);
     $("body").on("click", "button.Btn-QCheckStatusAll", async function (e)
     {
-        const thisbtn = $(this)[0];
+        const thisbtn = e.target;
         /**@type {HTMLButtonElement[]}*/
         const btns = $("button.Btn-QCheckStatus", document).toArray()
             .filter(x => x.style.background === "");
         for (let i = 0; i < btns.length; ++i)
         {
-            btns[i].click();
             thisbtn.textContent = btns[i].dataset.name;
-            await _sleep(1000);
+            await Promise.all([onChkStatus({ target: btns[i] }), _sleep(1000)]);
         }
         thisbtn.textContent = "检测全部";
     });

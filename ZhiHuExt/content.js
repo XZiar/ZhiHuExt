@@ -270,7 +270,7 @@ async function onChkStatus(e)
         chrome.runtime.sendMessage({ action: "openpage", target: "https://www.zhihu.com/people/" + uid + "/activities", isBackground: true });
         return;
     }
-    const user = await ContentBase.checkUserState(uid, undefined, [4]);
+    const user = await ContentBase.checkUserState(uid, undefined, [1]);
     if (!user)
         return;
     if (user.status === "ban" || user.status === "sban")
@@ -311,7 +311,7 @@ $("body").on("click", "button.Btn-CheckAllStatus", async function (e)
     {
         btn.textContent = btnList[idx].name;
         const event = { target: btnList[idx].btn, ctrlKey: false };
-        await Promise.all([onChkStatus(event), _sleep(800 + idx * 40)]);
+        await Promise.all([onChkStatus(event), _sleep(700 + idx * 30)]);
     }
     btn.textContent = "检测全部";
 });

@@ -10,7 +10,7 @@ let isRunning = false;
 let rowcount = 0;
 
 /**@type {HTMLInputElement}}*/
-const aloneRec = $("#aloneRec")[0], repeat = $("#repeat")[0], wtime = $("#waittime")[0], maxact = $("#maxact")[0];
+const aloneRec = $("#aloneRec")[0], repeat = $("#repeat")[0], wtime = $("#waittime")[0], maxact = $("#maxact")[0], limitdate = $("#limitdate")[0];
 
 const thetable = $("#maintable").DataTable(
     {
@@ -41,6 +41,7 @@ const thetable = $("#maintable").DataTable(
  */
 const bypasser = (rec, uid, lasttime) =>
 {
+    if (!rec) return;
     utimeOld.set(uid, lasttime);
     if (aloneRec.checked)
     {
@@ -57,6 +58,11 @@ function pmsbypasser()
     /**@param {StandardDB} rec*/
     const bypasser2 = (rec, uid, lasttime) =>
     {
+        if (!rec)
+        {
+            pms.resolve();
+            return;
+        }
         utimeOld.set(uid, lasttime);
         pms.resolve();
         if (aloneRec.checked)
@@ -70,9 +76,11 @@ function pmsbypasser()
     return [pms, bypasser2];
 }
 
-async function fastChk(bypass, uid, begintime, limittime)
+async function fastChk(bypass, uid, begintime, wailtAll)
 {
-    const user = await ContentBase.checkUserState(uid, bypass, [maxact.value, limittime]);
+    const limdate = new Date(limitdate.value);
+    ContentBase.BASE_LIM_DATE = limdate;
+    const user = await ContentBase.checkUserState(uid, bypass, [maxact.value], wailtAll);
     if (!user)
     {
         u404s.add(uid);
@@ -94,26 +102,19 @@ async function monitorCycle(btn, objs)
         {
             const uid = objs[i];
             btn.textContent = uid;
-            let limittime = 0, begintime = Math.floor(new Date().getTime() / 1000);
-            const fixsleeper = _sleep(Number(wtime.value));
+            let begintime = Math.floor(new Date().getTime() / 1000);
+            const sleeper = _sleep(Number(wtime.value));
             let chkpms;
             if (!uids.has(uid))
             {
                 if (maxact.value == 0)
-                {
-                    fastChk(bypasser, uid);
-                }
+                    fastChk(bypasser, uid, begintime);
                 else
-                {
-                    const [pms, bypass2] = pmsbypasser();
-                    fastChk(bypass2, uid);
-                    await pms;
-                    utimeNew.set(uid, begintime);
-                }
+                    await fastChk(bypasser, uid, begintime, true);
             }
             else if(maxact.value > 0)
             {
-                limittime = utimeNew.get(uid);
+                const limittime = utimeNew.get(uid);
                 utimeNew.set(uid, begintime);
                 const actspms = ContentBase.fetchUserActs(uid, maxact.value, limittime, begintime);
                 const user = uids.get(uid);
@@ -127,7 +128,7 @@ async function monitorCycle(btn, objs)
                 else
                     ContentBase._report("batch", acts);
             }
-            await fixsleeper;
+            await sleeper;
         }
         if (!repeat.checked)
             return;

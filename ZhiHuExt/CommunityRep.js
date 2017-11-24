@@ -73,14 +73,13 @@
      */
     async function checkUserStatus(uid, cell)
     {
-        const user = await ContentBase.checkUserState(uid);
+        const user = await ContentBase.checkUserState(uid, undefined, [20]);
         if (!user)
             return;
         if (user.status === "ban" || user.status === "sban")
             cell.style.background = "black";
         else
             cell.style.background = "rgb(0,224,32)";
-        //ContentBase._report("users", user);//checkUserState has included thisuser
     }
 
     $("body").on("click", "button.Btn-QCheckStatusAll", async function (e)

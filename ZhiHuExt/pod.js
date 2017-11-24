@@ -7,7 +7,7 @@ class UserToken
      */
     constructor(token)
     {
-        this.authorization = token.carCompose.split("|");
+        this.authorization = token.carCompose ? token.carCompose.split("|") : null;
         this.xUDID = token.xUDID;
         this.xsrf = token.xsrf;
     }

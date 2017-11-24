@@ -34,7 +34,7 @@ Array.prototype.last = function ()
 /**
  * @param {string} keyName
  */
-Array.prototype.mapToProp = (keyName) =>
+Array.prototype.mapToProp = function (keyName)
 {
     const ret = [];
     for (let idx = 0; idx < this.length; ++idx)
@@ -456,6 +456,15 @@ function _getQueryString(qurl)
 function _sleep(ms)
 {
     return new Promise(resolve => setTimeout(resolve, ms));
+}
+/**
+ * @param {number} timestamp
+ * @param {string} [defVal]
+ */
+function timeString(timestamp, defVal)
+{
+    if (timestamp < 0) return defVal;
+    return new Date(timestamp * 1000).toLocaleString(undefined, { hour12: false });
 }
 /**
  * @template T

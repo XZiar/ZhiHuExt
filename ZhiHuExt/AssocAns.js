@@ -19,15 +19,17 @@ async function AssocByVoters(voters)
     await AssocByAnswers(anss);
 }
 /**
- * @param {BagArray} voters
+ * @param {BagArray} anss
  */
 async function AssocByAnswers(anss)
 {
     console.log(`${anss.length} answers`, anss);
+    if (anss.length > 10000)
+        anss = anss.filter(x => x.count > 5);
     /**@type {{[x:number]: Answer}}*/
-    const ansMap = await DBfunc("getDetailMapOfIds", "answers", anss.mapToProp("key"), "id");
-    /**@type {{[x:number]: Question}}*/
-    const qstMap = await DBfunc("getDetailMapOfIds", "questions", Object.values(ansMap).mapToProp("question"), "id");
+    const ansMap = await DBfunc("getDetailMapOfIds", "answers", anss.mapToProp("key"), "id", "excerpt");
+    /**@type {{[x:number]: string}}*/
+    const qstMap = await DBfunc("getPropMapOfIds", "questions", Object.values(ansMap).mapToProp("question"), "title");
     /**@type {{[x:string]: string}}*/
     const usrMap = await DBfunc("getPropMapOfIds", "users", Object.values(ansMap).mapToProp("author"), "name");
     const data = [];
@@ -41,8 +43,7 @@ async function AssocByAnswers(anss)
             continue;
         }
         const qstid = ans.question;
-        const qst = qstMap[qstid];
-        const title = qst == null ? qstid : qst.title;
+        const title = qstMap[qstid] || qstid;
         const athname = usrMap[ans.author];
         const author = { name: athname == null ? ans.author : athname, id: ans.author };
         const dat = { ansid: ans.id, qst: { title: title, aid: ans.id, qid: qstid }, author: author, date: ans.timeC, zancnt: ans.zancnt, count: cur.count };
@@ -69,7 +70,7 @@ async function AssocByAnswers(anss)
                 },
                 {
                     data: "date",
-                    render: displayRender(dat => dat === -1 ? "No record" : new Date(dat * 1000).toLocaleString(undefined, { hour12: false })),
+                    render: displayRender(dat => timeString(dat, "No record")),
                 },
                 { data: "zancnt" },
                 { data: "count" }
@@ -86,8 +87,8 @@ $(document).on("click", "#export", e =>
 {
     const head = "\uFEFF" + "answerId,questionId,标题,作者,authorId,日期,回答赞数,计数\n";
     let txt = head;
-    const defDate = new Date(0).toLocaleString();
-    finalData.forEach(dat => txt += `${dat.ansid},${dat.qst.qid},"${dat.qst.title}","${dat.author.name}",${dat.author.id},${dat.date === -1 ? defDate : new Date(dat.date * 1000).toLocaleString()},${dat.zancnt},${dat.count}\n`);
+    const defDate = timeString(0);
+    finalData.forEach(dat => txt += `${dat.ansid},${dat.qst.qid},"${dat.qst.title}","${dat.author.name}",${dat.author.id},${timeString(dat.date, defDate)},${dat.zancnt},${dat.count}\n`);
     const time = new Date().Format("yyyyMMdd-hhmm");
     DownloadMan.exportDownload(txt, "txt", `AssocAns-${time}.csv`);
 });
@@ -118,9 +119,7 @@ $(document).on("click", "#export", e =>
     else if (qs.uid != null)
     {
         const athid = qs.uid.split("*");
-        const [ansid, artid] = await Promise.all([DBfunc("getIdByAuthor", athid, "answer"), DBfunc("getIdByAuthor", athid, "article")]);
-        const [ansvoters, artvoters] = await Promise.all([DBfunc("getVoters", ansid, "answer"), DBfunc("getVoters", artid, "article")]);
-        voters = new SimpleBag().union(ansvoters).union(artvoters).toArray();
+        voters = await DBfunc("getVotersByAuthor", athid);
     }
     else if (qs.votid != null)
     {

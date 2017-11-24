@@ -55,7 +55,7 @@
         {
             const thisbtn = e.target;
             const uid = thisbtn.dataset.id;
-            const ret = await ContentBase.fetchUserActs(uid, e.ctrlKey ? 100 : 5, undefined, undefined,
+            const ret = await ContentBase.fetchUserActs(uid, e.ctrlKey ? 30 : 5, undefined, undefined,
                 (cur, time) => thisbtn.innerText = cur + "/" + new Date(time * 1000).Format("MMdd"));
             const acts = ret.acts.selfMerge();
             thisbtn.innerText = (acts.zans.length + acts.zanarts.length) + "赞";
@@ -70,19 +70,20 @@
         const btn1 = createButton(["Btn-ReportSpam", "Button--primary"], "广告");
         btn1.dataset.id = user.id;
         btn1.dataset.type = "member";
-        const btn2 = createButton(["Btn-StatVoter", "Button--primary"], "最粉");
+        const btn2 = createButton(["Btn-StatVoter", "Button--primary"], "粉丝");
         btn2.dataset.id = user.id;
         btn2.dataset.qname = "uid";
-        const btn3 = createButton(["Btn-AutoActSpider", "Button--primary"], "爬");
+        const btn3 = createButton(["Btn-StatVoter", "Button--primary"], "赞谁");
         btn3.dataset.id = user.id;
+        btn3.dataset.qname = "vid";
+        const btn4 = createButton(["Btn-AutoActSpider", "Button--primary"], "爬");
+        btn4.dataset.id = user.id;
         if (!header.hasChild(".ProfileButtonGroup"))
         {
             const dummydiv = document.createElement("div");
             dummydiv.className = "MemberButtonGroup ProfileButtonGroup ProfileHeader-buttons";
             $(".ProfileHeader-contentFooter", header).append(dummydiv);
         }
-        $(".ProfileButtonGroup", header).prepend(btn1);
-        $(".ProfileButtonGroup", header).prepend(btn2);
-        $(".ProfileButtonGroup", header).prepend(btn3);
+        $(".ProfileButtonGroup", header).prepend(btn1, btn2, btn3, btn4);
     }, 640);
 }()

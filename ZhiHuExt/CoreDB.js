@@ -2,6 +2,9 @@
 //import { Dexie } from "./dexie.min.js"
 
 
+/**
+ * @param {string} prop
+ */
 async function toNameMap(prop)
 {
     const result = {};
@@ -25,56 +28,6 @@ var SPAM_UID = new Set();
 
 class ZhiHuDB
 {
-    /**
-     * @template T
-     * @param {string} table
-     * @param {T[]} items
-     */
-    static insertfix(table, items)
-    {
-        /**@type {Map<string, T>}*/
-        const tmpmap = new Map();
-        switch (table)
-        {
-            case "zans":
-            case "zanarts":
-                for (let i = 0; i < items.length; ++i)
-                {
-                    const zan = items[i];
-                    const id = zan.from + "," + zan.to;
-                    const last = tmpmap.get(id);
-                    if (last == null)
-                        tmpmap.set(id, zan);
-                    else if (last.time === -1)
-                        last.time = zan.time;
-                }
-                break;
-            case "topics":
-            case "spams":
-                return items;//skip
-            default:
-                for (let i = 0; i < items.length; ++i)
-                {
-                    const item = items[i];
-                    const id = item.id;
-                    const last = tmpmap.get(id);
-                    if (last != null)
-                    {
-                        const entries = Object.entries(last);
-                        for (let i = 0; i < entries.length; ++i)
-                        {
-                            const [key, val] = entries[i];
-                            if (val === -1 || val === null)
-                                last[key] = item[key];
-                        }
-                    }
-                    else
-                        tmpmap.set(id, item);
-                }
-        }
-        return Array.from(tmpmap.values());
-    }
-
     static hook(thedb)
     {
         thedb.spams.hook("creating", (primKey, obj, trans) =>
@@ -309,12 +262,21 @@ class ZhiHuDB
      * @param {string} table
      * @param {any} id
      * @param {string} name
+     * @param {...string} except
      * @returns {{[id:string]: object}}
      */
-    async getDetailMapOfIds(table, id, name)
+    async getDetailMapOfIds(table, id, name, except)
     {
         const ids = await toPureArray(id);
-        const retMap = await this.db[table].where("id").anyOf(ids).toNameMap(name);
+        const ret = await this.db[table].where("id").anyOf(ids).toArray();
+        const retMap = {};
+        for (let i = 0; i < ret.length; ++i)
+        {
+            const obj = ret[i];
+            for (const ex of except)
+                delete obj[ex];
+            retMap[obj[name]] = obj;
+        }
         return retMap;
     }
     /**
@@ -330,8 +292,56 @@ class ZhiHuDB
         /**@type {Zan[]}*/
         const zans = await table.where("to").anyOf(ids).toArray();
         console.log("get [" + zans.length + "] zans");
-        const zanUsers = new SimpleBag(zans.mapToProp("from")).toArray("desc");
-        return zanUsers;
+        const zanBag = new SimpleBag(zans.mapToProp("from"));
+        return zanBag.toArray("desc");
+    }
+    /**
+     * @param {number | number[] | BagArray | Promise<Any>} uid
+     * @param {"desc" | "asc"} [order]
+     * @param {number} [minrate]
+     * @returns {Promise<BagArray>}
+     */
+    async getVotersByVoter(uid, order, minrate)
+    {
+        const uids = await toPureArray(uid);
+        console.log("here [" + uids.length + "] initial voters");
+        const pmss = [this.db.zans.where("from").anyOf(uid).toArray(), this.db.zanarts.where("from").anyOf(uid).toArray()];
+        const [anszan1, artzan1] = await Promise.all(pmss);
+        console.log(`here [${anszan1.length}] answer zans, [${artzan1.length}] article zans`);
+
+        const ansid = new Set(anszan1.mapToProp("to")).toArray(), artid = new Set(artzan1.mapToProp("to")).toArray();
+        const pmss2 = [this.db.zans.where("to").anyOf(ansid).toArray(), this.db.zanarts.where("to").anyOf(artid).toArray()];
+        const [anszan2, artzan2] = await Promise.all(pmss2);
+        console.log(`here [${anszan2.length}] answer voters, [${artzan2.length}] article voters`);
+
+        const bag = new SimpleBag(anszan2.mapToProp("from")).adds(artzan2.mapToProp("from"));
+        if (!minrate)
+            return bag.toArray(order);
+        const mincount = minrate < 1 ? minrate * (anszan1.length + artzan1.length) : minrate;
+        return bag.above(mincount).toArray(order);
+    }
+    /**
+     * @param {number | number[] | BagArray | Promise<Any>} uid
+     * @param {"desc" | "asc"} [order]
+     * @param {number} [mincount]
+     * @returns {Promise<BagArray>}
+     */
+    async getVotersByAuthor(uid, order, mincount)
+    {
+        const uids = await toPureArray(uid);
+        console.log("here [" + uids.length + "] authors");
+        const pmss = [this.db.answers.where("author").anyOf(uids).primaryKeys(), this.db.articles.where("author").anyOf(uids).primaryKeys()];
+        const [ansid, artid] = await Promise.all(pmss);
+        console.log(`here [${ansid.length}] answer ids, [${artid.length}] article ids`);
+
+        const pmss2 = [this.db.zans.where("to").anyOf(ansid).toArray(), this.db.zanarts.where("to").anyOf(artid).toArray()];
+        const [anszan, artzan] = await Promise.all(pmss2);
+        console.log(`here [${anszan.length}] answer voters, [${artzan.length}] article voters`);
+        const bag = new SimpleBag(anszan.mapToProp("from")).adds(artzan.mapToProp("from"));
+        if (mincount)
+            return bag.above(mincount).toArray(order);
+        else
+            return bag.toArray(order);
     }
     /**
      * @param {string | string[] | BagArray | Promise<Any>} uid

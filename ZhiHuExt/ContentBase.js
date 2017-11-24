@@ -7,6 +7,7 @@ let _CUR_ANSWER;
 let _CUR_QUESTION;
 /**@type {UserToken}*/
 let _CUR_TOKEN;
+let _Base_Lim_Date = Math.floor(new Date(2017, 7, 1).getTime() / 1000);
 class ContentBase
 {
     static get CUR_USER() { return _CUR_USER; }
@@ -17,6 +18,8 @@ class ContentBase
     static set CUR_QUESTION(qst) { _CUR_QUESTION = qst; }
     static get CUR_TOKEN() { return _CUR_TOKEN; }
     static set CUR_TOKEN(token) { _CUR_TOKEN = token; }
+    static get BASE_LIM_DATE() { return _Base_Lim_Date; }
+    static set BASE_LIM_DATE(time) { time = _Base_Lim_Date; }
 
     /**
      * @param {"answer" | "article"} obj
@@ -53,7 +56,6 @@ class ContentBase
     static [fetchActs](header, uid, time)
     {
         const pms = $.Deferred();
-        time = time || Math.round(new Date().getTime() / 1000)
         ContentBase._get(`https://www.zhihu.com/api/v4/members/${uid}/activities?limit=20&after_id=${time}&desktop=True`, undefined, header)
             .done((data, status, xhr) =>
             {
@@ -128,7 +130,7 @@ class ContentBase
      * @param {"answer" | "article"} obj
      * @param {string | number} id
      * @param {number} limit
-     * @param {"old" | "new"} config
+     * @param {"old" | "new" | "old+"} config
      * @param {function(number, number):void} onProgress
      */
     static async fetchTheVoters(obj, id, limit, config, onProgress)
@@ -136,13 +138,13 @@ class ContentBase
         let errcnt = 0;
         const first = await ContentBase[fetchVoters](obj, id, 0);
         /**@type {User[]}*/
-        let ret = first.users;
+        let ret = config === "old+" ? [] : first.users;
         const total = Math.min(first.total, limit);
         let left = total - first.users.length;
         if (left <= 0)
             return ret;
         let offset = 20;
-        if (config === "old")
+        if (config === "old" || config === "old+")
             offset = first.total - left;
         let isEnd = false;
         while (left > 0 && !isEnd)
@@ -178,7 +180,7 @@ class ContentBase
     {
         let errcnt = 0;
         let time = begintime || Math.round(new Date().getTime() / 1000)
-        limittime = limittime || 0;
+        limittime = limittime || ContentBase.BASE_LIM_DATE;
         const tokenhead = ContentBase.CUR_TOKEN.toHeader();
         const ret = new StandardDB();
         for (let i = 0; i < maxloop && time > limittime; ++i)
@@ -209,13 +211,15 @@ class ContentBase
      * @param {string} uid
      * @param {function(StandardDB, string, number):boolean} [bypass]
      * @param {[number, number=, function=]} [chkacts]
+     * @param {boolean} [waitAll]
      * @returns {Promise<User>}
      */
-    static checkUserState(uid, bypass, chkacts)
+    static checkUserState(uid, bypass, chkacts, waitAll)
     {
+        waitAll = waitAll || false; 
         const pms = $.Deferred();
         const curtime = Math.round(new Date().getTime() / 1000);
-        const tail = async function (state)
+        const tail = async function (state, user)
         {
             const entities = APIParser.parseEntities(state.entities);
             let reportdata;
@@ -228,6 +232,8 @@ class ContentBase
             }
             else
                 reportdata = entities;
+            if (waitAll)
+                pms.resolve(user);
             const shouldReport = bypass ? bypass(entities, uid, lasttime) : true;
             if (shouldReport)
                 ContentBase._report("batch", entities);
@@ -243,6 +249,7 @@ class ContentBase
                 if (!dataElement)
                 {
                     pms.resolve(null);
+                    if (bypass) bypass();
                     return;
                 }
                 const state = JSON.parse(dataElement.dataset.state);
@@ -251,13 +258,14 @@ class ContentBase
                 if (!theuser)
                 {
                     pms.resolve(null);
+                    if (bypass) bypass();
                     return;
                 }
                 const user = User.fromRawJson(theuser);
-                pms.resolve(user);
-
-                tail(state);
-            }, (e) => { console.warn(e); pms.resolve(null); });
+                if (!waitAll)
+                    pms.resolve(user);
+                tail(state, user);
+            }, (e) => { console.warn(e); pms.resolve(null); if (bypass) bypass(); });
         return pms;
     }
 

@@ -1,7 +1,17 @@
 .QuestionHeader-footer-inner .QuestionHeader-side {
 	width: auto;
 }
-
 .QuestionHeader-footer-inner .QuestionHeader-footer-main {
 	width: auto;
+}
+.QuestionButtonGroup .Button {
+    margin: 0 4px !important;
+}
+
+.MemberButtonGroup .Button + .Button {
+    margin-left: 8px !important;
+}
+
+.AuthorInfo .Button {
+    margin: 0 4px !important;
 }
