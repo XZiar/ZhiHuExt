@@ -60,7 +60,7 @@
     function parseData(artdata)
     {
         const artdb = artdata.database;
-        const output = APIParser.batch;
+        const output = new StandardDB();
         const users = [], articles = [], topics = [], zanarts = [];
         {//process user
             const selfUser = artdata.me.slug;

@@ -172,6 +172,24 @@ $(document).on("click", "#import", e =>
     }
     reader.readAsText(files[0]);
 });
+$(document).on("click", "#chkban", async e =>
+{
+    const btn = e.target;
+    if (isRunning)
+    {
+        isRunning = false;
+        btn.textContent = "复查封禁";
+        return;
+    }
+    isRunning = true;
+    const objs = Array.from(uids.values()).filter(u => u.status !== "").mapToProp("id");
+    console.log(`here [${objs.length}] obj users`);
+
+    await monitorCycle(btn, objs);
+
+    isRunning = false;
+    btn.textContent = "完毕";
+});
 
 $(document).on("click", "#go", async e =>
 {

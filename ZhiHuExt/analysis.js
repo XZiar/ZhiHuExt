@@ -100,7 +100,7 @@ class Analyse
         for (const f of filters)
             for (const ele of f)
                 filset.add(ele);
-        const ret = (await voterPms).filter(x => !filset.has(x.key))
+        const ret = (await voterPms).mapToProp("key").filter(x => !filset.has(x));
         $("#copyData").val(JSON.stringify(ret));
         $("#copyBtn")[0].click();
         console.log("copied");

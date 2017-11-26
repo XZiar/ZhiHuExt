@@ -69,6 +69,12 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "template", "template", "{D3
 		template\voters-api.json = template\voters-api.json
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "3rd", "3rd", "{30046561-6196-4231-96CA-494F6AD31CDB}"
+	ProjectSection(SolutionItems) = preProject
+		ZhiHuExt\3rd\nouislider.min.css = ZhiHuExt\3rd\nouislider.min.css
+		ZhiHuExt\3rd\nouislider.min.js = ZhiHuExt\3rd\nouislider.min.js
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -86,6 +92,7 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{E8E9AB37-4664-46E6-9213-3E924CD6B125} = {93675B82-EC6C-4F02-80C6-4872E07264D3}
 		{D348C6E8-E1A4-4D91-A246-BACD33EE99A0} = {BFFEC1DB-48AB-4FFA-B5E1-8273096F39F8}
+		{30046561-6196-4231-96CA-494F6AD31CDB} = {E476A3D7-D0E1-40EA-990A-D165CFDB83D7}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {032E8EC3-655A-4377-BA13-6692BB5DC119}

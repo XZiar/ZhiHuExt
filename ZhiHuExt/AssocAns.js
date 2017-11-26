@@ -1,6 +1,9 @@
 "use strict"
 
 let finalData;
+let mindate = new Date().getTime(), maxdate = -1;
+let mainTable;
+let sliderHandle, missdate;
 
 /**
  * @param {string[] | BagArray} voters
@@ -50,22 +53,28 @@ async function AssocByAnswers(anss)
         data.push(dat);
     }
 
-    $("#maintable").DataTable(
+    mainTable = $("#maintable").DataTable(
         {
             paging: true,
+            deferRender: true,
             lengthMenu: [[20, 50, 100, -1], [20, 50, 100, "All"]],
             data: data,
             order: [[5, "desc"]],
             columns:
             [
-                { data: "ansid" },
+                {
+                    data: "ansid",
+                    orderable: false
+                },
                 {
                     data: "qst",
+                    orderable: false,
                     render: displayRender(dat => dat.qid == -1 ? "" : `<a class="bgopen" href="https://www.zhihu.com/question/${dat.qid}/answer/${dat.aid}">${dat.title}</a>`,
                         dat => dat.qid),
                 },
                 {
                     data: "author",
+                    orderable: false,
                     render: displayRender(dat => `<a class="bgopen" href="https://www.zhihu.com/people/${dat.id}">${dat.name}</a>`, dat => dat.name),
                 },
                 {
@@ -74,9 +83,59 @@ async function AssocByAnswers(anss)
                 },
                 { data: "zancnt" },
                 { data: "count" }
-            ]
+            ],
+            dom: `<"#dummytitle">lfrtip`,
+            fnInitComplete: () => initSlider(data)
         });
     finalData = data;
+}
+
+function filterTime(setting, data, index)
+{
+    if (!sliderHandle || !missdate)
+        return true;
+    const dtime = data[3];
+    return dtime === -1 ? mindate.checked : (mindate <= dtime && maxdate >= dtime);
+}
+
+function initSlider(data)
+{
+    const divhtml =
+        `<div style="float:left; margin-right:20px;">
+        <div id="drange" style="float:left; margin:0 20px; width:300px;"></div>
+        <div style="float:left">包含-1<input id="missdate" type="checkbox" checked /></div>
+        <p id="rangetxt" style="float:left; margin:0 8px; font-weight: bolder; font-size: larger;"></p>
+        </div>`;
+    $("#dummytitle")[0].innerHTML = divhtml;
+    sliderHandle = $("#drange")[0];
+    missdate = $("#missdate")[0];
+    const rangetext = $("#rangetxt")[0];
+    
+    const toDate = t => new Date(t * 1000).Format("yy/MM/dd");
+    data.filter(x => x.date > 0).forEach(x => { mindate = Math.min(mindate, x.date); maxdate = Math.max(maxdate, x.date); });
+    rangetext.textContent = toDate(mindate) + "  ~  " + toDate(maxdate);
+    const dateRange = { "min": [mindate], "max": [maxdate] };
+    if (mindate < maxdate - 3600 * 24 * 365)
+        dateRange["10%"] = [maxdate - 3600 * 24 * 365];
+    if (mindate < maxdate - 3600 * 24 * 180)
+        dateRange["40%"] = [maxdate - 3600 * 24 * 180];
+    noUiSlider.create(sliderHandle,
+        {
+            start: [0, maxdate],
+            range: dateRange,
+            connect: true
+        });
+    sliderHandle.noUiSlider.on("update", (value, handle, unencode) =>
+    {
+        [mindate, maxdate] = unencode;
+        rangetext.textContent = toDate(mindate) + "  ~  " + toDate(maxdate);
+    });
+    sliderHandle.noUiSlider.on("set", (value, handle, unencode) =>
+    {
+        [mindate, maxdate] = unencode;
+        mainTable.draw(false);
+    });
+    $(missdate).on("change", e => mainTable.draw(false));
 }
 
 $(document).on("click", "#stat", e =>
@@ -95,6 +154,7 @@ $(document).on("click", "#export", e =>
 
 !async function()
 {
+    $.fn.dataTableExt.afnFiltering.push(filterTime);
     /**@type {{[x: string]: string}}*/
     const qs = _getQueryString();
 

@@ -98,17 +98,19 @@
         for (let i = 0; i < tables.length; ++i)
         {
             let offset = 0;
+            const tabname = tables[i];
+            const len = (tabname === "zans" || tabname === "zanarts") ? partlen * 3 : partlen;
             while (true)
             {
-                const parturl = await fetchdb(tables[i], offset, partlen);
+                const parturl = await fetchdb(tabname, offset, len);
                 const part = await (await fetch(parturl)).text();
                 URL.revokeObjectURL(parturl);
                 if (part === "[]")
                     break;
-                const pms = sendpart(tables[i], part, addr, timeid);
+                const pms = sendpart(tabname, part, addr, timeid);
                 if (onProgress)
-                    onProgress(tables[i], offset);
-                offset += partlen;
+                    onProgress(tabname, offset);
+                offset += len;
                 await pms;
             }
         }

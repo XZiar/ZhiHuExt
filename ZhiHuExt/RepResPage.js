@@ -39,7 +39,7 @@
     {
         const btn = e.target;
         const uid = btn.dataset.id;
-        const user = await ContentBase.checkUserState(uid, undefined, [20], true);
+        const user = await ContentBase.checkUserState(uid, undefined, [24], true);
         if (!user)
             return;
         if (user.status === "ban" || user.status === "sban")

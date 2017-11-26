@@ -73,7 +73,7 @@
      */
     async function checkUserStatus(uid, cell)
     {
-        const user = await ContentBase.checkUserState(uid, undefined, [20]);
+        const user = await ContentBase.checkUserState(uid, undefined, [24]);
         if (!user)
             return;
         if (user.status === "ban" || user.status === "sban")

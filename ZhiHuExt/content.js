@@ -277,6 +277,8 @@ async function onChkStatus(e)
     {
         btn.style.backgroundColor = "black";
         $(btn).siblings(".Btn-ReportSpam")[0].style.backgroundColor = "black";
+        const acts = (await ContentBase.fetchUserActs(uid, 24)).acts;
+        ContentBase._report("batch", acts);
     }
     else
     {
@@ -311,7 +313,7 @@ $("body").on("click", "button.Btn-CheckAllStatus", async function (e)
     {
         btn.textContent = btnList[idx].name;
         const event = { target: btnList[idx].btn, ctrlKey: false };
-        await Promise.all([onChkStatus(event), _sleep(700 + idx * 30)]);
+        await Promise.all([onChkStatus(event), _sleep(800 + idx * 18)]);
     }
     btn.textContent = "检测全部";
 });
@@ -388,16 +390,44 @@ $("body").on("click", "button.Modal-closeButton", function ()
     CUR_ANSWER = null;
     CUR_ARTICLE = null;
 });
-$("body").on("click", "div#MarkBtn", e =>
-{
-});
-
 
 
 {
     const curAnsArts = $(".AnswerItem, .ArticleItem").toArray();
     console.log("init " + curAnsArts.length + " answer/article");
     addAASpamBtns(curAnsArts);
+}
+async function AllinDropper(ev)
+{
+    ev.preventDefault();
+    /**@type {string}*/
+    const txt = ev.dataTransfer.getData("text");
+    let report;
+    if (txt.includes("http"))
+    {
+        const mth1 = txt.match(/zhihu.com\/question\/\d*\/answer\/(\d*)/i);
+        if (mth1)
+            report = { id: Number(mth1[1]), type: "badans" };
+        else
+        {
+            const mth2 = txt.match(/zhuanlan.zhihu.com\/p\/{\d*}/i);
+            if (mth2)
+                report = { id: Number(mth2[1]), type: "badart" };
+        }
+    }
+    else if (txt.startsWith("{"))
+    {
+        const dat = JSON.parse(txt);
+        report = { id: Number(dat.id), type: dat.type === "answer" ? "badans" : "badart" };
+    }
+    if (report)
+    {
+        if (!ev.ctrlKey)
+        {
+            ContentBase._report("spams", report);
+            return;
+        }
+    }
 }
 {
     const fbtns = document.body.querySelector(".CornerButtons");
@@ -416,33 +446,7 @@ $("body").on("click", "div#MarkBtn", e =>
     btndiv.addClass("CornerAnimayedFlex");
     btndiv.appendChild(btn);
     btndiv.ondragover = ev => ev.preventDefault();
-    btndiv.ondrop = ev =>
-    {
-        ev.preventDefault();
-        /**@type {string}*/
-        const txt = ev.dataTransfer.getData("text");
-        let report;
-        if (txt.includes("http"))
-        {
-            const mth1 = txt.match(/zhihu.com\/question\/\d*\/answer\/(\d*)/i);
-            if (mth1)
-                report = { id: Number(mth1[1]), type: "badans" };
-            else
-            {
-                const mth2 = txt.match(/zhuanlan.zhihu.com\/p\/{\d*}/i);
-                if (mth2)
-                    report = { id: Number(mth2[1]), type: "badart" };
-            }
-        }
-        else if (txt.startsWith("{"))
-        {
-            const dat = JSON.parse(txt);
-            report = { id: Number(dat.id), type: dat.type === "answer" ? "badans" : "badart" };
-        }
-        if (report)
-            //console.log("drop", txt, report);
-            ContentBase._report("spams", report);
-    };
+    btndiv.ondrop = AllinDropper;
 
     if (fbtns)
         fbtns.prepend(btndiv);

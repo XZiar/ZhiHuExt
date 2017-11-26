@@ -99,6 +99,8 @@ class ZhiHuDB
                 if ((val === -1 || val === null))
                     ret[key] = obj[key];//skip unset values
             }
+            if (mods.author === "" && obj.author !== "")
+                ret.author = obj.author;//prevent turning to anonymous
             return ret;
         });
         thedb.questions.hook("creating", (primKey, obj, trans) =>

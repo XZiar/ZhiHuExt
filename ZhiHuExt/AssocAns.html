@@ -10,6 +10,8 @@
     <script src="DownloadMan.js"></script>
     <link rel="stylesheet" href="https://cdn.datatables.net/1.10.16/css/jquery.dataTables.min.css">
     <script src="https://cdn.datatables.net/1.10.16/js/jquery.dataTables.min.js"></script>
+    <link rel="stylesheet" href="3rd/nouislider.min.css">
+    <script src="3rd/nouislider.min.js"></script>
     <title>联想回答</title>
     <style>
         td:last-child {
@@ -17,6 +19,9 @@
         }
         table.dataTable tbody td {
             padding: 6px 10px;
+        }
+        table.dataTable tbody td {
+            padding: 6px 8px;
         }
     </style>
 </head>
@@ -26,8 +31,8 @@
             <thead>
                 <tr>
                     <th width="8%">AnswerId</th>
-                    <th width="50%">链接/标题</th>
-                    <th width="12%">作者</th>
+                    <th width="45%">链接/标题</th>
+                    <th width="15%">作者</th>
                     <th width="16%">日期</th>
                     <th width="7%">回答赞数</th>
                     <th width="7%">计数</th>
