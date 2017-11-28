@@ -116,9 +116,11 @@ function initSlider(data)
     rangetext.textContent = toDate(mindate) + "  ~  " + toDate(maxdate);
     const dateRange = { "min": [mindate], "max": [maxdate] };
     if (mindate < maxdate - 3600 * 24 * 365)
-        dateRange["10%"] = [maxdate - 3600 * 24 * 365];
+        dateRange["5%"] = [maxdate - 3600 * 24 * 365];
     if (mindate < maxdate - 3600 * 24 * 180)
-        dateRange["40%"] = [maxdate - 3600 * 24 * 180];
+        dateRange["30%"] = [maxdate - 3600 * 24 * 180];
+    if (mindate < maxdate - 3600 * 24 * 30)
+        dateRange["60%"] = [maxdate - 3600 * 24 * 180];
     noUiSlider.create(sliderHandle,
         {
             start: [0, maxdate],
@@ -181,9 +183,9 @@ $(document).on("click", "#export", e =>
         const athid = qs.uid.split("*");
         voters = await DBfunc("getVotersByAuthor", athid);
     }
-    else if (qs.votid != null)
+    else if (qs.vid != null)
     {
-        voters = qs.votid.split("*");
+        voters = qs.vid.split("*");
     }
     else if (qs.ansblob != null)
     {

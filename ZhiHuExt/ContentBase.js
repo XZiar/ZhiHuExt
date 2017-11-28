@@ -7,7 +7,7 @@ let _CUR_ANSWER;
 let _CUR_QUESTION;
 /**@type {UserToken}*/
 let _CUR_TOKEN;
-let _Base_Lim_Date = Math.floor(new Date(2017, 7, 1).getTime() / 1000);
+let _Base_Lim_Date = new Date(2017, 7, 1).toUTCSeconds();
 class ContentBase
 {
     static get CUR_USER() { return _CUR_USER; }
@@ -147,13 +147,17 @@ class ContentBase
         if (config === "old" || config === "old+")
             offset = first.total - left;
         let isEnd = false;
+        const usrset = new Set(ret.mapToProp("id"))
         while (left > 0 && !isEnd)
         {
             try
             {
                 const part = await ContentBase[fetchVoters](obj, id, offset);
-                ret = ret.concat(part.users);
-                const len = part.users.length;
+                const newusrs = part.users.filter(u => !usrset.has(u.id));
+                const anocnt = part.users.filter(u => u.id === "").length;
+                newusrs.forEach(u => usrset.add(u.id));
+                ret = ret.concat(newusrs);
+                const len = newusrs.length + anocnt;
                 offset += len, left -= len;
                 if (onProgress)
                     onProgress(ret.length, total);
@@ -179,7 +183,7 @@ class ContentBase
     static async fetchUserActs(uid, maxloop, limittime, begintime, onProgress)
     {
         let errcnt = 0;
-        let time = begintime || Math.round(new Date().getTime() / 1000)
+        let time = begintime || new Date().toUTCSeconds(); 
         limittime = limittime || ContentBase.BASE_LIM_DATE;
         const tokenhead = ContentBase.CUR_TOKEN.toHeader();
         const ret = new StandardDB();
@@ -218,7 +222,7 @@ class ContentBase
     {
         waitAll = waitAll || false; 
         const pms = $.Deferred();
-        const curtime = Math.round(new Date().getTime() / 1000);
+        const curtime = new Date().toUTCSeconds();
         const tail = async function (state, user)
         {
             const entities = APIParser.parseEntities(state.entities);
@@ -272,7 +276,7 @@ class ContentBase
     /**
      * @param {"users" | "answer" | "article"} target
      * @param {string | string[]} data
-     * @returns {{banned: Set<string>, spamed: Set<string>, total: number}}
+     * @returns {{banned: Set<string>, spamed: Set<string>, total: number, normal: string[]}}
      */
     static checkSpam(target, data)
     {
@@ -283,7 +287,7 @@ class ContentBase
         {
             const users = (data instanceof Array ? data : [data]);
             chrome.runtime.sendMessage({ action: "chkspam", target: target, data: users },
-                ret => pms.resolve({ banned: new Set(ret.banned), spamed: new Set(ret.spamed), total: ret.total }));
+                ret => pms.resolve({ banned: new Set(ret.banned), spamed: new Set(ret.spamed), total: ret.total, normal: ret.normal }));
         }
         return pms;
     }

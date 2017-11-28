@@ -110,6 +110,11 @@ Date.prototype.Format = function (fmt)
             fmt = fmt.replace(RegExp.$1, (RegExp.$1.length == 1) ? (o[k]) : (("00" + o[k]).substr(("" + o[k]).length)));
     return fmt;
 }
+Date.prototype.toUTCSeconds = function ()
+{
+    return Math.floor(this.getTime() / 1000);
+}
+Date.fromUTCSeconds = (time) => new Date(time * 1000);
 
 $.prototype.forEach = function (consumer)
 {
@@ -464,7 +469,7 @@ function _sleep(ms)
 function timeString(timestamp, defVal)
 {
     if (timestamp < 0) return defVal;
-    return new Date(timestamp * 1000).toLocaleString(undefined, { hour12: false });
+    return Date.fromUTCSeconds(timestamp).toLocaleString(undefined, { hour12: false });
 }
 /**
  * @template T

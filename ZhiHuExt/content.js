@@ -4,14 +4,16 @@
 function reportSpam(id, type)
 {
     const payload = { "resource_id": id, "type": type, "reason_type": "spam", "source": "web" };
-    ContentBase._report("spams", { id: id, type: type });
     //req.setRequestHeader("Referer", "https://www.zhihu.com/people/" + id + "/activities");
     const pms = $.Deferred();
     ContentBase._post("https://www.zhihu.com/api/v4/reports", payload)
         .done((data, status, xhr) =>
         {
             if (xhr.status === 204 || xhr.status === 200)
+            {
                 pms.resolve();
+                ContentBase._report("spams", { id: id, type: type });
+            }
         })
         .fail((data, status, xhr) =>
         {
@@ -26,12 +28,82 @@ function reportSpam(id, type)
 
 let CUR_ANSWER = null;
 let CUR_ARTICLE = null;
-let LIM_FetchVoter = 12000;
+let LIM_FetchVoter = 20000;
 
 function setLimVoter(count)
 {
     console.log(`set Voter Fetch Limit from ${LIM_FetchVoter} to ${count}`);
     LIM_FetchVoter = count;
+}
+
+async function autoReportAll(ev)
+{
+    ev.preventDefault();
+    const thisbtn = ev.target;
+    /**@type {string}*/
+    const txt = ev.dataTransfer.getData("text");
+    let report;
+    let type;
+    if (txt.includes("http"))
+    {
+        const mth1 = txt.match(/zhihu.com\/question\/\d*\/answer\/(\d*)/i);
+        const mth2 = txt.match(/zhuanlan.zhihu.com\/p\/(\d*)/i);
+        const mth3 = txt.match(/www.zhihu.com\/people\/([^\/]*)/i);
+        if (mth1)
+        {
+            report = { id: Number(mth1[1]), type: "badans" }; type = "answer";
+        }
+        else if (mth2)
+        {
+            report = { id: Number(mth2[1]), type: "badart" }; type = "article";
+        }
+        else if (mth3)
+        {
+            reportSpam(mth3[1], "member");
+        }
+    }
+    else if (txt.startsWith("{"))
+    {
+        const dat = JSON.parse(txt);
+        report = { id: Number(dat.id), type: dat.type === "answer" ? "badans" : "badart" };
+        type = dat.type;
+    }
+    if (!report)
+        return;
+    ContentBase._report("spams", report);
+    const result = await ContentBase.checkSpam(type, report.id);
+    const uids = result.normal.filter(u => u != "");
+    thisbtn.textContent = `${uids.length}/${result.total}`;
+    let cnt = 0;
+    for (let i = 0; i < uids.length; ++i)
+    {
+        const uid = uids[i];
+        const user = await ContentBase.checkUserState(uid, undefined, [1]);
+        if (!user)
+            continue;
+        thisbtn.textContent = uid;
+        if (user.status === "ban" || user.status === "sban")
+        {
+            thisbtn.style.backgroundColor = "black";
+            const acts = (await ContentBase.fetchUserActs(uid, 24)).acts;
+            ContentBase._report("batch", acts);
+        }
+        else
+        {
+            try
+            {
+                thisbtn.style.backgroundColor = "rgb(0,224,32)";
+                await reportSpam(uid, "member");
+                cnt++;
+            }
+            catch (e)
+            {
+                break;
+            }
+        }
+    }
+    thisbtn.style.backgroundColor = "";
+    thisbtn.textContent = cnt + "个";
 }
 
 /**
@@ -43,6 +115,11 @@ function setDraggable(element)
     element.ondragstart = (ev) =>
     {
         ev.dataTransfer.setData("text", JSON.stringify(ev.target.dataset));
+    }
+    if (element.classList.contains("Btn-ReportSpam"))
+    {
+        element.ondragover = ev => ev.preventDefault();
+        element.ondrop = autoReportAll;
     }
 }
 
@@ -313,7 +390,7 @@ $("body").on("click", "button.Btn-CheckAllStatus", async function (e)
     {
         btn.textContent = btnList[idx].name;
         const event = { target: btnList[idx].btn, ctrlKey: false };
-        await Promise.all([onChkStatus(event), _sleep(800 + idx * 18)]);
+        await Promise.all([onChkStatus(event), _sleep(800 + idx * 15)]);
     }
     btn.textContent = "检测全部";
 });

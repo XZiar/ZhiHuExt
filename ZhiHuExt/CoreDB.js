@@ -60,20 +60,17 @@ class ZhiHuDB
                     if (obj.hasOwnProperty(key))
                         ret[key] = obj[key];//skip unset values
             }
-            //console.log("compare", mods, ret);
             return ret;
         });
         thedb.zans.hook("updating", (mods, primKey, obj, trans) =>
         {
             if (mods.time === -1)
                 return { time: obj.time };//skip empty time
-            return;
         });
         thedb.zanarts.hook("updating", (mods, primKey, obj, trans) =>
         {
             if (mods.time === -1)
                 return { time: obj.time };//skip empty time
-            return;
         });
         thedb.articles.hook("updating", (mods, primKey, obj, trans) =>
         {
@@ -118,12 +115,21 @@ class ZhiHuDB
                 ret.topics = obj.topics;
             return ret;
         });
+        thedb.rectime.hook("updating", (mods, primKey, obj, trans) =>
+        {
+            const ret = {};
+            if (mods.new < obj.new)
+                ret.new = obj.new;
+            if (mods.old > obj.old)
+                ret.old = obj.old;
+            return ret;
+        });
     }
 
     /**
      * @param {string} dbname
      * @param {{[x:string]: string}[]} def
-     * @param {function(any):void[]} upgrader
+     * @param {(function(any):void)[]} upgrader
      * @param {function():void} onDone
      */
     constructor(dbname, def, upgrader, onDone)
@@ -146,7 +152,7 @@ class ZhiHuDB
 
     /**
      * @param {string} target
-     * @param {object | object[]} data
+     * @param {object[] | object | StandardDB} data
      * @param {function(number):void} [notify]
      */
     insert(target, data, notify)
@@ -157,6 +163,24 @@ class ZhiHuDB
             Object.entries(data).forEach(([key, val]) => sum += this.insert(key, val));
             if (notify)
                 notify(sum);
+            if (data.zans && data.zanarts)
+            {
+                /**@type {Map<string,number[]>} */
+                const zantime = new Map();
+                const curtime = new Date().toUTCSeconds();
+                data.zans.concat(data.zanarts).forEach(zan =>
+                {
+                    const oldtime = zantime.get(zan.from);
+                    if (!oldtime)
+                        zantime.set(zan.from, [zan.time, zan.time]);
+                    else if (zan.time > oldtime[0])
+                        zantime.set(zan.from, [zan.time, oldtime[1]]);
+                    else if (zan.time < oldtime[1])
+                        zantime.set(zan.from, [oldtime[0], zan.time]);
+                });
+                const recs = Array.from(zantime.entries()).map(x => ({ id: x[0], new: x[1][0], old: x[1][1] }));
+                this.db.rectime.bulkPut(recs);
+            }
             return sum;
         }
         const table = this.db[target];
@@ -242,11 +266,34 @@ class ZhiHuDB
     async part(table, from, count)
     {
         if (table == null)
-            return this.db.tables.mapToProp("name");
+            return this.db.tables.mapToProp("name").filter(x => x !== "rectime");
         return JSON.stringify(await this.db[table].offset(from).limit(count).toArray());
     }
 
 
+
+    /**
+     * @param {number} [hours]
+     * @returns {Set<string>}
+     */
+    async recentChecked(hours)
+    {
+        const time = new Date().toUTCSeconds() - 3600 * (hours || 72);
+        return new Set(await db.rectime.where("new").above(time).primaryKeys());
+    }
+    /**
+     * @param {any} uid
+     * @param {number} [limit]
+     * @returns {Set<string>}
+     */
+    async recentOrder(uid, limit)
+    {
+        const uids = await toPureArray(uid);
+        let recs = await db.rectime.where("id").anyOf(uids).reverse().sortBy("new");
+        if (limit)
+            recs = recs.slice(0, limit);
+        return recs.mapToProp("id");
+    }
 
     /**
      * @param {string} table
@@ -267,7 +314,7 @@ class ZhiHuDB
      * @param {...string} except
      * @returns {{[id:string]: object}}
      */
-    async getDetailMapOfIds(table, id, name, except)
+    async getDetailMapOfIds(table, id, name, ...except)
     {
         const ids = await toPureArray(id);
         const ret = await this.db[table].where("id").anyOf(ids).toArray();

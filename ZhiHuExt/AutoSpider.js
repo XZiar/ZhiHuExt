@@ -52,35 +52,10 @@ const bypasser = (rec, uid, lasttime) =>
         return true;
 }
 
-function pmsbypasser()
+async function fastChk(uid, begintime, wailtAll)
 {
-    const pms = $.Deferred();
-    /**@param {StandardDB} rec*/
-    const bypasser2 = (rec, uid, lasttime) =>
-    {
-        if (!rec)
-        {
-            pms.resolve();
-            return;
-        }
-        utimeOld.set(uid, lasttime);
-        pms.resolve();
-        if (aloneRec.checked)
-        {
-            chkreports.add(rec);
-            return false;
-        }
-        else
-            return true;
-    }
-    return [pms, bypasser2];
-}
-
-async function fastChk(bypass, uid, begintime, wailtAll)
-{
-    const limdate = new Date(limitdate.value);
-    ContentBase.BASE_LIM_DATE = limdate;
-    const user = await ContentBase.checkUserState(uid, bypass, [maxact.value], wailtAll);
+    ContentBase.BASE_LIM_DATE = new Date(limitdate.value).toUTCSeconds();
+    const user = await ContentBase.checkUserState(uid, bypasser, [maxact.value], wailtAll);
     if (!user)
     {
         u404s.add(uid);
@@ -102,20 +77,23 @@ async function monitorCycle(btn, objs)
         {
             const uid = objs[i];
             btn.textContent = uid;
-            let begintime = Math.floor(new Date().getTime() / 1000);
+            let begintime = new Date().toUTCSeconds();
             const sleeper = _sleep(Number(wtime.value));
             let chkpms;
             if (!uids.has(uid))
             {
                 if (maxact.value == 0)
-                    fastChk(bypasser, uid, begintime);
+                    fastChk(uid, begintime, false);
                 else
-                    await fastChk(bypasser, uid, begintime, true);
+                    await fastChk(uid, begintime, true);
             }
             else if(maxact.value > 0)
             {
-                const limittime = utimeNew.get(uid);
-                utimeNew.set(uid, begintime);
+                const limittime = repeat.checked ? utimeNew.get(uid) : new Date(limitdate.value).toUTCSeconds();
+                if (!repeat.checked)
+                    begintime = utimeOld.get(uid);
+                else
+                    utimeNew.set(uid, begintime);
                 const actspms = ContentBase.fetchUserActs(uid, maxact.value, limittime, begintime);
                 const user = uids.get(uid);
                 const newdata = { usr: { id: user.id, name: user.name }, index: rowcount++ };
@@ -175,6 +153,7 @@ $(document).on("click", "#import", e =>
 $(document).on("click", "#chkban", async e =>
 {
     const btn = e.target;
+    repeat.checked = false;
     if (isRunning)
     {
         isRunning = false;

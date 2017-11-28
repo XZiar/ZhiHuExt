@@ -56,7 +56,7 @@
             const thisbtn = e.target;
             const uid = thisbtn.dataset.id;
             const ret = await ContentBase.fetchUserActs(uid, e.ctrlKey ? 70 : 5, undefined, undefined,
-                (cur, time) => thisbtn.innerText = cur + "/" + new Date(time * 1000).Format("MMdd"));
+                (cur, time) => thisbtn.innerText = cur + "/" + Date.fromUTCSeconds(time).Format("MMdd"));
             const acts = ret.acts.selfMerge();
             thisbtn.innerText = (acts.zans.length + acts.zanarts.length) + "赞";
             ContentBase._report("batch", acts);

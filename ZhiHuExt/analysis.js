@@ -34,17 +34,6 @@ class Analyse
         return URL.createObjectURL(blob);
     }
 
-    static get STR_AUTHOR()
-    { return 'Analyse.findAuthorOfUserVote(BAN_UID).then(x=>console.log(x.map(y=>y.count+" --- "+(y.user instanceof Object?y.user.name+"  ===  "+y.user.id+"  ===  "+y.user.status:"    ===  "+y.user))))'; }
-    static get STR_QUEST()
-    { return 'Analyse.findQuestOfUserVote(BAN_UID).then(x=>console.log(x.map(y=>y.count+" --- "+(y.question instanceof Object?y.question.title+"  ===  "+y.question.id:"   ===  "+y.question))))'; }
-    static get STR_TOPIC()
-    { return 'Analyse.findTopicOfUserVote(BAN_UID).then(x=>console.log(x.map(y=>y.count+" --- "+(y.topic instanceof Object?y.topic.name+"  ===  "+y.topic.id:"   ===  "+y.topic))))'; }
-    static get STR_QST_URL()
-    { return 'Analyse.findQuestOfUserVote(BAN_UID).then(x=>hurls=x.map(y=>"https://www.zhihu.com/question/"+(y.question instanceof Object?y.question.id:y.question)))'; }
-    static get STR_MISS_TOPIC()
-    { return 'Analyse.findQuestOfUserVote(BAN_UID).then(x=>console.log(x.filter(y=>y.question instanceof Object?!(y.question.topics||y.question.topics.length>0):true).map(y=>y.count+" --- https://www.zhihu.com/question/"+(y.question instanceof Object?y.question.id:y.question))))'; }
-
     static async showPopAnswer(uid, limit)
     {
         let zanAnss = await db.getAnsIdByVoter(uid, "desc");
@@ -67,6 +56,29 @@ class Analyse
         const blobstr = Analyse.generateBlob(authors);
         chrome.tabs.create({ active: true, url: "StatVoter.html?votblob=" + blobstr });
     }
+    /**
+     * @param {any} uid
+     * @param {number} limit
+     * @param {number} limitVoter
+     * @param {...Set<string>} filters
+     */
+    static async findSimilarVoter(uid, limit, limitVoter, ...filters)
+    {
+        const uids = await toPureArray(uid);
+        const [zanAnss, zanArts] = await Promise.all([db.getIdByVoter(uid, "answer"), db.getIdByVoter(uid, "article")]);
+        const ansid = zanAnss.filter(x => x.count > limit).mapToProp("key"), artid = zanArts.filter(x => x.count > limit).mapToProp("key");
+        const pmss = [db.getVoters(ansid, "answer"), db.getVoters(artid, "article")];
+        const filset = new Set(uids);
+        for (const f of filters)
+            for (const ele of f)
+                filset.add(ele);
+        let [ansVoter, artVoter] = await Promise.all(pmss);
+        const voterBag = new SimpleBag().union(ansVoter.filter(x => !filset.has(x.key))).union(artVoter.filter(x => !filset.has(x.key)));
+        const voters = voterBag.above(limitVoter).toArray("desc");
+        const blobstr = Analyse.generateBlob(voters);
+        chrome.tabs.create({ active: true, url: "StatVoter.html?votblob=" + blobstr });
+    }
+
 
     /**
      * @param {number | number[]} ansid
@@ -113,19 +125,6 @@ class Analyse
         const qstMap = await db.getDetailMapOfIds(db.questions, qsts, "id");
         console.log("get [" + Object.keys(qstMap).length + "] questions");
         return tryReplaceDetailed(qsts, qstMap, "question");
-    }
-    static async findAuthorOfUserVote(uid)
-    {
-        const zanAnss = await db.getAnsIdByVoter(uid);
-        const ansMap = await db.getPropMapOfIds(db.answers, zanAnss, "author");
-        console.log("get [" + Object.keys(ansMap).length + "] answers");
-        const authorBag = new SimpleBag();
-        zanAnss.forEach(zanans => authorBag.addMany(ansMap[zanans.key], zanans.count));
-        const aths = authorBag.toArray("desc");
-        console.log("reduce to [" + aths.length + "] authors");
-        const athMap = await db.getDetailMapOfIds(db.users, aths, "id");
-        console.log("get [" + Object.keys(athMap).length + "] authors");
-        return tryReplaceDetailed(aths, athMap, "user");
     }
     static async findSimilarUserOfAnswerVote(ansid)
     {

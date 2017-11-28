@@ -12,7 +12,7 @@ async function StatVoters(...voters)
 {
     console.log("arrive voters", voters);
     let bag = voters.filter(v => v != null).reduce((prev, cur) => prev.union(cur), new SimpleBag());
-    if (bag.size > 10000)
+    if (bag.size > 20000)
         bag = bag.above(1);
     const uids = bag.elements();
 
@@ -36,6 +36,7 @@ async function StatVoters(...voters)
     $("#maintable").DataTable(
         {
             paging: true,
+            deferRender: true,
             lengthMenu: [[20, 50, 100, -1], [20, 50, 100, "All"]],
             data: data,
             order: [[6, "desc"], [5, "desc"], [1, "asc"]],
@@ -109,6 +110,13 @@ $(document).on("click", "#export", e =>
     const time = new Date().Format("yyyyMMdd-hhmm");
     DownloadMan.exportDownload(txt, "txt", `StatVoter-${time}.csv`);
 });
+$(document).on("click", "#copyusr", e =>
+{
+    const request = { action: "copy", data: JSON.stringify(finalBag.elements()) };
+    SendMsgAsync(request);
+});
+
+new Clipboard('#copyBtn');
 
 !async function()
 {

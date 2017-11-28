@@ -73,7 +73,7 @@
      */
     async function checkUserStatus(uid, cell)
     {
-        const user = await ContentBase.checkUserState(uid, undefined, [24]);
+        const user = await ContentBase.checkUserState(uid, undefined, [28]);
         if (!user)
             return;
         if (user.status === "ban" || user.status === "sban")
@@ -109,7 +109,7 @@
             const [uid, cell] = objs[i];
             thisbtn.textContent = uid;
             checkUserStatus(uid, cell);
-            await _sleep(600);
+            await _sleep(900);
         }
         thisbtn.textContent = "检测全部";
     });

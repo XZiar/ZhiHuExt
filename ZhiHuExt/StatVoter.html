@@ -4,6 +4,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta charset="UTF-8">
     <script src="jquery-3.2.1.min.js"></script>
+    <script src="clipboard.min.js"></script>
     <script src="pod.js"></script>
     <script src="utils.js"></script>
     <script src="ContentBase.js"></script>
@@ -43,6 +44,9 @@
         <div style="text-align:center">
             <button id="assoc">联想回答</button>
             <button id="export">导出csv</button>
+            <button id="copyusr">复制用户</button>
+            <input id="copyData" style="display:none" value="https://github.com/XZiar/ZhiHuExt/">
+            <button id="copyBtn" style="display:none" data-clipboard-target="#copyData"></button>
         </div>
     </div>
     <script src="StatVoter.js"></script>

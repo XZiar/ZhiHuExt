@@ -38,7 +38,45 @@ const db = new ZhiHuDB("ZhihuDB", [
         questions: "id,timeC",
         articles: "id,author,timeC",
         topics: "id"
-    }], [null, trans => trans.users.toCollection().modify(u => u.zancnt = -1)], async () =>
+    },
+    {
+        spams: "id,type",
+        users: "id,status,anscnt,follower,zancnt",
+        follows: "[from+to],from,to",
+        zans: "[from+to],from,to,time",
+        zanarts: "[from+to],from,to,time",
+        answers: "id,author,question,timeC",
+        questions: "id,timeC",
+        articles: "id,author,timeC",
+        topics: "id",
+        rectime: "id,new,old"
+    }], [
+        null,
+        trans => trans.users.toCollection().modify(u => u.zancnt = -1),
+        async trans =>
+        {
+            /**@type {Map<string,number[]>} */
+            const zantime = new Map();
+            const curtime = new Date().toUTCSeconds();
+            const jober = zan =>
+            {
+                const oldtime = zantime.get(zan.from);
+                if (!oldtime)
+                    zantime.set(zan.from, [zan.time, zan.time]);
+                else if (zan.time > oldtime[0])
+                    zantime.set(zan.from, [zan.time, oldtime[1]]);
+                else if (zan.time < oldtime[1])
+                    zantime.set(zan.from, [oldtime[0], zan.time]);
+            };
+            await trans.zanarts.where("time").above(0).each(jober);
+            console.log("[zanarts] iterated");
+            await trans.zans.where("time").above(0).each(jober);
+            console.log("[zans] iterated");
+            const recs = Array.from(zantime.entries()).map(x => ({ id: x[0], new: x[1][0], old: x[1][1] }));
+            console.log("[rectime] mapped");
+            await trans.rectime.bulkAdd(recs);
+        }],
+    async () =>
     {
         console.log("initializing reading");
         const loader = [db.users.where("status").anyOf(["ban", "sban"]).primaryKeys(), db.spams.where("type").equals("member").primaryKeys()];
@@ -65,15 +103,18 @@ function fetchTopic(tid)
 
 /**
  * @param {string[]} waitUsers
+ * @param {boolean} [keepNormal]
  */
-function checkSpamUser(waitUsers)
+function checkSpamUser(waitUsers, keepNormal)
 {
-    const ret = { banned: [], spamed: [] };
+    const ret = { banned: [], spamed: [], normal: [] };
     const [bannedPart, unbannedPart] = splitInOutSide(waitUsers, BAN_UID);
     ret.banned = bannedPart;
 
-    const [spamedIds,] = splitInOutSide(unbannedPart, SPAM_UID);
+    const [spamedIds, normalPart] = splitInOutSide(unbannedPart, SPAM_UID);
     ret.spamed = spamedIds;
+    if (keepNormal)
+        ret.normal = normalPart;
     return ret;
 }
 
@@ -96,7 +137,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) =>
     {
         case "copy":
             $("#copyData").val(request.data);
-            $("#copyBtn").trigger("click");
+            $("#copyBtn")[0].click();
             break;
         case "stat":
             db.count().then(result =>
@@ -113,7 +154,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) =>
                 {
                     db.getVoters(request.data, request.target).then(voters =>
                     {
-                        const result = checkSpamUser(voters.mapToProp("key"));
+                        const result = checkSpamUser(voters.mapToProp("key"), true);
                         result.total = voters.length;
                         sendResponse(result);
                     });

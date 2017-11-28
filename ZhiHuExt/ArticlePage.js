@@ -80,7 +80,7 @@
             const post = Object.values(artdb.Post)[0];
             output.topics.push(...post.topics.map(t => new Topic(t.id, t.name)));
             const article = new Article(post.slug, post.title, post.author, post.likesCount, post.summary.replace(/<[^>]+>/g, ""),
-                Math.floor(Date.parse(post.publishedTime) / 1000), Math.floor(Date.parse(post.updated) / 1000));
+                Date.parse(post.publishedTime).toUTCSeconds(), Date.parse(post.updated).toUTCSeconds());
             output.articles.push(article);
             post.lastestLikers.forEach(theuser =>
             {
@@ -95,7 +95,7 @@
                 output.users.push(ath);
                 output.topics.push(...p.topics.map(t => new Topic(t.id, t.name)));
                 const subart = new Article(p.slug, p.title, ath.id, p.likesCount, p.summary.replace(/<[^>]+>/g, ""),
-                    Math.floor(Date.parse(p.publishedTime) / 1000));//no updated time
+                    Date.parse(p.publishedTime).toUTCSeconds());//no updated time
                 output.articles.push(subart);
             });
         }

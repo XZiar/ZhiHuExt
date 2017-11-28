@@ -360,9 +360,9 @@ class APIParser
                     const ath = APIParser.parseByType(output, obj.author);
                     let timeC = obj.created, timeU = obj.updated;
                     if (timeC == null && obj.publishedTime)
-                        timeC = Math.floor(Date.parse(obj.publishedTime) / 1000);
-                    if (typeof(timeU) === "string")
-                        timeU = Math.floor(Date.parse(timeU) / 1000);
+                        timeC = Date.parse(obj.publishedTime).toUTCSeconds();
+                    if (typeof (timeU) === "string")
+                        timeU = Date.parse(timeU).toUTCSeconds();
                     const art = new Article(obj.id, obj.title, ath.id, _any(obj.voteup_count, obj.voteupCount),
                         _any(obj.excerpt_new, obj.excerptNew), timeC, timeU);
                     output.articles.push(art);
