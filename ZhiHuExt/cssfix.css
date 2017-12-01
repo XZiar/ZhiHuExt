@@ -6,12 +6,18 @@
 }
 .QuestionButtonGroup .Button {
     margin: 0 4px !important;
+    padding: 0 10px !important;
 }
 
 .MemberButtonGroup .Button + .Button {
     margin-left: 8px !important;
+    padding: 0 12px !important;
 }
 
 .AuthorInfo .Button {
     margin: 0 4px !important;
+}
+
+.ContentItem-extra .Button {
+    padding: 0 12px !important;
 }

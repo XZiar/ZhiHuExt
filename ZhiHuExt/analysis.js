@@ -36,7 +36,7 @@ class Analyse
 
     static async showPopAnswer(uid, limit)
     {
-        let zanAnss = await db.getAnsIdByVoter(uid, "desc");
+        let zanAnss = await db.getIdByVoter(uid, "answer", "desc");
         if (limit)
             zanAnss = zanAnss.slice(0, limit);
         const blobstr = Analyse.generateBlob(zanAnss);
@@ -78,7 +78,70 @@ class Analyse
         const blobstr = Analyse.generateBlob(voters);
         chrome.tabs.create({ active: true, url: "StatVoter.html?votblob=" + blobstr });
     }
-
+    /**
+     * @param {any} uid
+     * @param {number} limit
+     */
+    static async findRelatedAnswers(uid, limit)
+    {
+        let zanAnss = await db.getIdByVoter(uid, "answer", "desc");
+        if (limit)
+            zanAnss = zanAnss.slice(0, limit);
+        const zanBag = new SimpleBag(await db.zans.where("to").anyOf(zanAnss.mapToProp("key")).keys());
+        const blobstr = Analyse.generateBlob(zanBag.toArray());
+        chrome.tabs.create({ active: true, url: "AssocAns.html?ansblob=" + blobstr });
+    }
+    /**
+     * @param {any} uid
+     * @param {number} days
+     * @param {...Set<string>} filters
+     */
+    static async findRecentAnswers(uid, days, ...filters)
+    {
+        const uids = await toPureArray(uid);
+        const limtime = new Date().toUTCSeconds() - days * 24 * 3600;
+        const zans = await db.zans.where("from").anyOf(uids).toArray();
+        const zanBag = new SimpleBag(zans.filter(zan => zan.time < 0 || zan.time > limtime).mapToProp("to"))
+        const blobstr = Analyse.generateBlob(zanBag.toArray());
+        chrome.tabs.create({ active: true, url: "AssocAns.html?ansblob=" + blobstr });
+    }
+    static async outputUserActs(uid, returnit)
+    {
+        const uids = await toPureArray(uid);
+        const zans = await db.zans.where("from").anyOf(uids).toArray();
+        const head = "\uFEFF" + "点赞人,点赞目标,点赞时间,点赞日期,当日计秒,当日分钟\n";
+        const zandata = zans.map(zan =>
+        {
+            const [, mon, day, hour, minu, sec,] = new Date(zan.time * 1000).getDetailCHN();
+            return [zan.from, zan.to, zan.time, `${mon}/${day}`, sec + minu * 60 + hour * 3600, minu + hour * 60];
+        });
+        if (returnit)
+            return zandata;
+        const csvstr = zandata.map(dat => dat.join(',')).join('\n');
+        DownloadMan.exportDownload(head + csvstr, "txt", `acts-(${uids})-${new Date().Format("yyMMdd-hhmm")}.csv`);
+    }
+    static async outputAnswerActs(aid, returnit)
+    {
+        const aids = await toPureArray(aid);
+        /**@type {[Zan[], Answer[]]}*/
+        const [zans, anss] = await Promise.all([db.zans.where("to").anyOf(aids).toArray(), db.answers.where("id").anyOf(aids).toArray()]);
+        const head = "\uFEFF" + "点赞人,点赞目标,点赞时间,点赞日期,当日计秒,当日分钟\n";
+        const selfdata = anss.map(ans =>
+        {
+            const [, mon, day, hour, minu, sec,] = new Date(ans.timeC * 1000).getDetailCHN();
+            return [ans.author, ans.id, ans.timeC, `${mon}/${day}`, sec + minu * 60 + hour * 3600, minu + hour * 60];
+        });
+        const zandata = zans.map(zan =>
+        {
+            const [, mon, day, hour, minu, sec,] = new Date(zan.time * 1000).getDetailCHN();
+            return [zan.from, zan.to, zan.time, `${mon}/${day}`, sec + minu * 60 + hour * 3600, minu + hour * 60];
+        });
+        const csvdata = zandata.concat(selfdata);
+        if (returnit)
+            return csvdata;
+        const csvstr = csvdata.map(dat => dat.join(',')).join('\n');
+        DownloadMan.exportDownload(head + csvstr, "txt", `acts-(${aids})-${new Date().Format("yyMMdd-hhmm")}.csv`);
+    }
 
     /**
      * @param {number | number[]} ansid
@@ -120,7 +183,7 @@ class Analyse
 
     static async findQuestOfUserVote(uid)
     {
-        const zanAnss = await db.getAnsIdByVoter(uid);
+        const zanAnss = await db.getIdByVoter(uid, "answer");
         const qsts = await db.getQuestIdByAnswer(zanAnss);
         const qstMap = await db.getDetailMapOfIds(db.questions, qsts, "id");
         console.log("get [" + Object.keys(qstMap).length + "] questions");
@@ -146,12 +209,12 @@ class Analyse
     }
     static async findTopicOfUserVote(uid)
     {
-        const quests = await db.getAnsIdByVoter(uid);
+        const answers = await db.getIdByVoter(uid, "answer");
         const topicBag = new SimpleBag();
-        quests.forEach(quest =>
+        answers.forEach(ans =>
         {
-            if (quest.question instanceof Object)
-                quest.question.topics.forEach(tid => topicBag.addMany(tid, quest.count));
+            if (ans.question instanceof Object)
+                ans.question.topics.forEach(tid => topicBag.addMany(tid, ans.count));
         });
         const tps = topicBag.toArray("desc");
         console.log("reduce to [" + tps.length + "] topics");

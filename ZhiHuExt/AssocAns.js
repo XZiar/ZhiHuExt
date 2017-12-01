@@ -111,7 +111,7 @@ function initSlider(data)
     missdate = $("#missdate")[0];
     const rangetext = $("#rangetxt")[0];
     
-    const toDate = t => new Date(t * 1000).Format("yy/MM/dd");
+    const toDate = t => new Date(t * 1000).FormatCHN("yy/MM/dd");
     data.filter(x => x.date > 0).forEach(x => { mindate = Math.min(mindate, x.date); maxdate = Math.max(maxdate, x.date); });
     rangetext.textContent = toDate(mindate) + "  ~  " + toDate(maxdate);
     const dateRange = { "min": [mindate], "max": [maxdate] };

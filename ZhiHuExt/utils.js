@@ -94,21 +94,47 @@ const _DateForamter =
 Date.prototype.Format = function (fmt)
 { //author: meizz
     const o =
-    {
-        "M+": this.getMonth() + 1, //月份
-        "d+": this.getDate(), //日
-        "h+": this.getHours(), //小时
-        "m+": this.getMinutes(), //分
-        "s+": this.getSeconds(), //秒
-        "q+": Math.floor((this.getMonth() + 3) / 3), //季度
-        "S": this.getMilliseconds() //毫秒
-    };
+        {
+            "M+": this.getMonth() + 1, //月份
+            "d+": this.getDate(), //日
+            "h+": this.getHours(), //小时
+            "m+": this.getMinutes(), //分
+            "s+": this.getSeconds(), //秒
+            "q+": Math.floor((this.getMonth() + 3) / 3), //季度
+            "S": this.getMilliseconds() //毫秒
+        };
     if (/(y+)/.test(fmt))
         fmt = fmt.replace(RegExp.$1, (this.getFullYear() + "").substr(4 - RegExp.$1.length));
     for (const k in o)
         if (_DateForamter[k].test(fmt))
             fmt = fmt.replace(RegExp.$1, (RegExp.$1.length == 1) ? (o[k]) : (("00" + o[k]).substr(("" + o[k]).length)));
     return fmt;
+}
+Date.prototype.FormatCHN = function (fmt)
+{
+    const chndate = new Date(this.getTime() + 8 * 3600000);
+    //author: meizz
+    const o =
+        {
+            "M+": chndate.getUTCMonth() + 1, //月份
+            "d+": chndate.getUTCDate(), //日
+            "h+": chndate.getUTCHours(), //小时
+            "m+": chndate.getUTCMinutes(), //分
+            "s+": chndate.getUTCSeconds(), //秒
+            "q+": Math.floor((chndate.getUTCMonth() + 3) / 3), //季度
+            "S": chndate.getUTCMilliseconds() //毫秒
+        };
+    if (/(y+)/.test(fmt))
+        fmt = fmt.replace(RegExp.$1, (chndate.getUTCFullYear() + "").substr(4 - RegExp.$1.length));
+    for (const k in o)
+        if (_DateForamter[k].test(fmt))
+            fmt = fmt.replace(RegExp.$1, (RegExp.$1.length == 1) ? (o[k]) : (("00" + o[k]).substr(("" + o[k]).length)));
+    return fmt;
+}
+Date.prototype.getDetailCHN = function ()
+{
+    const chndate = new Date(this.getTime() + 8 * 3600000);
+    return [chndate.getUTCFullYear(), chndate.getUTCMonth() + 1, chndate.getUTCDate(), chndate.getUTCHours(), chndate.getUTCMinutes(), chndate.getUTCSeconds(), chndate.getUTCMilliseconds()];
 }
 Date.prototype.toUTCSeconds = function ()
 {
@@ -469,7 +495,7 @@ function _sleep(ms)
 function timeString(timestamp, defVal)
 {
     if (timestamp < 0) return defVal;
-    return Date.fromUTCSeconds(timestamp).toLocaleString(undefined, { hour12: false });
+    return Date.fromUTCSeconds(timestamp).FormatCHN("yyyy/MM/dd hh:mm");
 }
 /**
  * @template T

@@ -182,6 +182,27 @@
     {
         chrome.runtime.sendMessage({ action: "export" });
     });
+    $(document).on("click", "button#quickimport", e =>
+    {
+        const btn = e.target;
+        const files = $("#infile")[0].files;
+        if (files.length <= 0)
+            return;
+        const reader = new FileReader();
+        reader.onload = e =>
+        {
+            const content = e.target.result;
+            const report = JSON.parse(content);
+            delete report.rectime;
+            quickfix(report.questions);
+            quickfix(report.answers);
+            quickfix(report.articles);
+            quickfix(report.users);
+            console.log(report);
+            ContentBase._report("batch", report);
+        }
+        reader.readAsText(files[0]);
+    });
     $(document).on("click", "button#send", async (e) =>
     {
         /**@type {HTMLButtonElement}*/

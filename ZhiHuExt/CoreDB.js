@@ -23,7 +23,9 @@ if (typeof Dexie !== "undefined")
     Dexie.addons.push(x => x.Collection.prototype.toPropMap = toPropMap);
 }
 
+/**@type {Set<string>}*/
 var BAN_UID = new Set();
+/**@type {Set<string>}*/
 var SPAM_UID = new Set();
 
 class ZhiHuDB
@@ -280,6 +282,10 @@ class ZhiHuDB
     {
         const time = new Date().toUTCSeconds() - 3600 * (hours || 72);
         return new Set(await db.rectime.where("new").above(time).primaryKeys());
+    }
+    unbanned()
+    {
+        return SPAM_UID.toArray().filter(uid => !BAN_UID.has(uid));
     }
     /**
      * @param {any} uid

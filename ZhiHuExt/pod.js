@@ -47,7 +47,7 @@ class User
         user.follower = _any(theuser.followerCount, theuser.follower_count, -1);
         user.artcnt = _any(theuser.articlesCount, theuser.articles_count, -1);
         user.zancnt = _any(theuser.voteupCount, theuser.voteup_count, -1);
-        const statuss = theuser.accountStatus;
+        const statuss = theuser.accountStatus || theuser.account_status;
         if (statuss)
         {
             if (statuss.find(x => x.name === "hang" || x.name === "lock"))
@@ -309,7 +309,7 @@ class StandardDB
 class APIParser
 {
     /**
-     * @param {{}} output
+     * @param {StandardDB} output
      * @param {{type: string, [x:string]: any}} obj
      * @returns {User | Answer | Question}
      */
@@ -368,6 +368,12 @@ class APIParser
                     output.articles.push(art);
                     return art;
                 }
+            case "topic":
+                {
+                    const topic = new Topic(obj.id, obj.name);
+                    output.topics.push(topic);
+                    return topic;
+                }
         }
     }
 
@@ -406,7 +412,7 @@ class APIParser
             switch (act.verb)
             {
                 case "TOPIC_FOLLOW":
-                    output.topics.push(new Topic(act.target.id, act.target.name));
+                    APIParser.parseByType(output, act.target);
                     break;
                 case "QUESTION_FOLLOW":
                     APIParser.parseByType(output, act.target);

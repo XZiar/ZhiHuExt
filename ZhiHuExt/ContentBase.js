@@ -59,7 +59,9 @@ class ContentBase
         ContentBase._get(`https://www.zhihu.com/api/v4/members/${uid}/activities?limit=20&after_id=${time}&desktop=True`, undefined, header)
             .done((data, status, xhr) =>
             {
-                pms.resolve(data.data);
+                const acts = APIParser.parsePureActivities(data.data);
+                const lastitem = data.data.last();
+                pms.resolve({ acts: acts, end: data.paging.is_end, lasttime: lastitem ? lastitem.created_time : undefined });
             })
             .fail((data, status, xhr) =>
             {
@@ -139,13 +141,13 @@ class ContentBase
         const first = await ContentBase[fetchVoters](obj, id, 0);
         /**@type {User[]}*/
         let ret = config === "old+" ? [] : first.users;
-        const total = Math.min(first.total, limit);
-        let left = total - first.users.length;
+        let oldtotal = first.total;
+        let left = Math.min(oldtotal, limit) - first.users.length;
         if (left <= 0)
             return ret;
         let offset = 20;
         if (config === "old" || config === "old+")
-            offset = first.total - left;
+            offset = oldtotal - left;
         let isEnd = false;
         const usrset = new Set(ret.mapToProp("id"))
         while (left > 0 && !isEnd)
@@ -153,14 +155,14 @@ class ContentBase
             try
             {
                 const part = await ContentBase[fetchVoters](obj, id, offset);
+                const newtotal = part.total;
                 const newusrs = part.users.filter(u => !usrset.has(u.id));
-                const anocnt = part.users.filter(u => u.id === "").length;
                 newusrs.forEach(u => usrset.add(u.id));
                 ret = ret.concat(newusrs);
-                const len = newusrs.length + anocnt;
-                offset += len, left -= len;
+                const len = 20;
+                offset += len, left -= len - (newtotal - oldtotal);
                 if (onProgress)
-                    onProgress(ret.length, total);
+                    onProgress(ret.length, newtotal);
                 isEnd = part.end;
             }
             catch (e)
@@ -187,19 +189,19 @@ class ContentBase
         limittime = limittime || ContentBase.BASE_LIM_DATE;
         const tokenhead = ContentBase.CUR_TOKEN.toHeader();
         const ret = new StandardDB();
-        for (let i = 0; i < maxloop && time > limittime; ++i)
+        let isEnd = false;
+        for (let i = 0; i < maxloop && time > limittime && !isEnd; ++i)
         {
             try
             {
-                const actjson = await ContentBase[fetchActs](tokenhead, uid, time);
-                const lastitem = actjson.last();
-                if (!lastitem)
+                const part = await ContentBase[fetchActs](tokenhead, uid, time);
+                if (!part.lasttime)
                     break;
-                const acts = APIParser.parsePureActivities(actjson);
-                ret.add(acts);
-                time = lastitem.created_time;
+                ret.add(part.acts);
+                time = part.lasttime;
                 if (onProgress)
                     onProgress(i, time);
+                isEnd = part.end;
             }
             catch (e)
             {
@@ -300,6 +302,7 @@ class ContentBase
     function FetchHook(extid)
     {
         "use strict"
+        window.BLOCKING_VOTER = false;
         /**
          * @param {string} req
          * @param {string} api
@@ -315,8 +318,7 @@ class ContentBase
                 try
                 {
                     const cloned = resp.clone();
-                    chrome.runtime.sendMessage(extid,
-                        { url: req, api: api, target: target, data: await cloned.text(), extra: extra });
+                    chrome.runtime.sendMessage(extid, { url: req, api: api, target: target, data: await cloned.text(), extra: extra });
                 }
                 catch (e)
                 {
@@ -324,6 +326,24 @@ class ContentBase
                 }
             }
             return resp;
+        }
+        /**
+         * @param {string} api
+         * @param {string} id
+         * @returns {Promise<Response>}
+         */
+        function blockVoter(api, id)
+        {
+            id = typeof (window.BLOCKING_VOTER) === "number" ? window.BLOCKING_VOTER : id;
+            return new Promise(resolve =>
+            {
+                chrome.runtime.sendMessage(extid, { api: api, target: "BLOCKING", id: Number(id), data: null }, ret =>
+                {
+                    const resp = new Response(new Blob([ret], { type: "application/json" }),
+                        { status: 200, statusText: "OK", headers: new Headers({ "X-Backend-Server": "ZhiHuExt---localhost[127.0.0.1]" }) });
+                    resolve(resp);
+                });
+            });
         }
         const oldfetch = fetch;
         /**
@@ -353,17 +373,19 @@ class ContentBase
                 }
             }
             const pms = oldfetch(newreq, init);
+            const BLOCKING_FLAG = document.querySelector("#ZHE_BLOCKING_VOTER");
+            const shouldBlock = window.BLOCKING_VOTER ? window.BLOCKING_VOTER : (BLOCKING_FLAG ? true : false);
             if (apiparts[0] === "members")//capture [members, {id}, ...]
             {
                 return sendData(req, pms, "members", apiparts[2] || "empty");
             }
             else if (apiparts[0] === "answers" && apiparts[2] === "voters")
             {
-                return sendData(req, pms, "answers", "voters", { id: apiparts[1] });
+                return shouldBlock ? blockVoter("answer", apiparts[1]) : sendData(req, pms, "answers", "voters", { id: apiparts[1] });
             }
             else if (apiparts[0] === "articles" && apiparts[2] === "likers")
             {
-                return sendData(req, pms, "articles", "voters", { id: apiparts[1] });
+                return shouldBlock ? blockVoter("article", apiparts[1]) : sendData(req, pms, "articles", "voters", { id: apiparts[1] });
             }
             else if (apiparts[0] === "questions" && apiparts[2] === "answers")
             {

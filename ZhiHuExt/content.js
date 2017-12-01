@@ -29,6 +29,9 @@ function reportSpam(id, type)
 let CUR_ANSWER = null;
 let CUR_ARTICLE = null;
 let LIM_FetchVoter = 20000;
+const BLOCKING_FLAG = createButton([])
+BLOCKING_FLAG.style.display = "none";
+BLOCKING_FLAG.id = "ZHE_BLOCKING_VOTER";
 
 function setLimVoter(count)
 {
@@ -75,6 +78,7 @@ async function autoReportAll(ev)
     const uids = result.normal.filter(u => u != "");
     thisbtn.textContent = `${uids.length}/${result.total}`;
     let cnt = 0;
+    let alldone = true;
     for (let i = 0; i < uids.length; ++i)
     {
         const uid = uids[i];
@@ -85,7 +89,7 @@ async function autoReportAll(ev)
         if (user.status === "ban" || user.status === "sban")
         {
             thisbtn.style.backgroundColor = "black";
-            const acts = (await ContentBase.fetchUserActs(uid, 24)).acts;
+            const acts = (await ContentBase.fetchUserActs(uid, 36)).acts;
             ContentBase._report("batch", acts);
         }
         else
@@ -98,11 +102,12 @@ async function autoReportAll(ev)
             }
             catch (e)
             {
+                alldone = false;
                 break;
             }
         }
     }
-    thisbtn.style.backgroundColor = "";
+    thisbtn.style.backgroundColor = alldone ? "rgb(0,224,32)" : "rgb(224,0,32)";
     thisbtn.textContent = cnt + "个";
 }
 
@@ -136,7 +141,17 @@ async function addSpamVoterBtns(voterNodes)
             continue;
         const uid = nameLink.getAttribute("href").split("/").pop();
         users.push(uid);
-
+        const dset = JSON.parse(node.children[0].dataset.zaModuleInfo);
+        const hashid = dset.card.content.member_hash_id;
+        if (hashid.startsWith("#") && hashid != "#-1")
+        {
+            const votedate = Number(hashid.substr(1));
+            const [, , , hour, minu, ,] = new Date(votedate * 1000).getDetailCHN();
+            const vdspan = document.createElement("span");
+            vdspan.className = "ContentItem-statusItem";
+            vdspan.textContent = `${hour}:${minu}`;
+            $(".ContentItem-status", node).append(vdspan);
+        }
 
         const btn = createButton(["Btn-ReportSpam", "Button--primary"], "广告");
         btn.dataset.id = uid;
@@ -170,6 +185,8 @@ const voterObserver = new MutationObserver(records =>
 function monitorVoter(voterPopup)
 {
     voterObserver.disconnect();
+    if (document.body.querySelector("#ZHE_BLOCKING_VOTER"))
+        document.body.removeChild(BLOCKING_FLAG);
     console.log("detected voter-popup", voterPopup);
     const curVoters = $(voterPopup).find(".List-item").toArray()
         .filter(node => !node.hasChild(".Btn-ReportSpam"));
@@ -303,6 +320,13 @@ $("body").on("click", "button.Btn-CheckSpam", async function (e)
     let total, result;
     if (e.shiftKey)
     {
+        if (e.ctrlKey)
+        {
+            document.body.appendChild(BLOCKING_FLAG);
+            const showbtn = btn.parentNode.parentNode.querySelector(".Voters").querySelector("button");
+            showbtn.click();
+            return;
+        }
         result = await ContentBase.checkSpam(type, Number(id));
         total = result.total;
     }
@@ -354,7 +378,7 @@ async function onChkStatus(e)
     {
         btn.style.backgroundColor = "black";
         $(btn).siblings(".Btn-ReportSpam")[0].style.backgroundColor = "black";
-        const acts = (await ContentBase.fetchUserActs(uid, 24)).acts;
+        const acts = (await ContentBase.fetchUserActs(uid, 36)).acts;
         ContentBase._report("batch", acts);
     }
     else
@@ -413,7 +437,9 @@ $("body").on("click", "span.Voters", function ()
 $("body").on("click", "button.Btn-AssocAns", e =>
 {
     const btn = e.target;
-    const query = `${btn.dataset.qname}=${btn.dataset.id}`;
+    let query = `${btn.dataset.qname}=${btn.dataset.id}`;
+    if (!btn.dataset.qname)
+        query = `vid=` + $(".Btn-CheckStatus").toArray().map(x => x.dataset.id).join("*");
     const target = e.ctrlKey ? "StatVoter.html?" : "AssocAns.html?";
     chrome.runtime.sendMessage({ action: "openpage", isBackground: false, target: target + query });
 });
@@ -470,6 +496,7 @@ $("body").on("click", "button.Modal-closeButton", function ()
 
 
 {
+    $(".Btn-ReportSpam").toArray().forEach(setDraggable);
     const curAnsArts = $(".AnswerItem, .ArticleItem").toArray();
     console.log("init " + curAnsArts.length + " answer/article");
     addAASpamBtns(curAnsArts);

@@ -130,6 +130,58 @@ async function checkUserSimilarity(target, id)
     return result;
 }
 
+/**
+ * @param {string} api
+ * @param {number} id
+ */
+async function blocking(api, id)
+{
+    /**@type {Zan[]}*/
+    const zans = await (api === "answer" ? db.zans : db.zanarts).where("to").equals(id).toArray();
+    /**@type {{[x:string]: User}}*/
+    const voters = await db.getDetailMapOfIds("users", zans.mapToProp("from"), "id");
+    const retdata = zans.sort((x, y) => y.time - x.time)
+        .filter(zan => voters[zan.from] != null)
+        .map(zan =>
+        {
+            const usr = voters[zan.from];
+            const ret =
+            {
+                answer_count: usr.anscnt,
+                articles_count: usr.artcnt,
+                avatar_url: "",
+                avatar_url_template: "",
+                badge: [],
+                follower_count: usr.follower,
+                gender: 0,
+                headline: "已被知乎疯牛病接管",
+                id: "#" + zan.time,
+                is_advertiser: false,
+                is_followed: false,
+                is_org: false,
+                name: usr.name,
+                type: "people",
+                url: `http://www.zhihu.com/api/v4/people/${usr.id}`,
+                url_token: usr.id,
+                user_type: "people"
+                };
+            return ret;
+        });
+
+    const ret =
+        {
+            data: retdata,
+            paging:
+            {
+                is_end: true,
+                is_start: true,
+                next: "",
+                previous: "",
+                totals: voters.length
+            }
+        };
+    return ret;
+}
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) =>
 {
@@ -287,6 +339,10 @@ chrome.runtime.onMessageExternal.addListener(
                 } break;
             case "publications":
                 break;
+            case "BLOCKING":
+                {
+                    blocking(request.api, request.id).then(x => sendResponse(JSON.stringify(x)));
+                } return true;
             default:
                 console.log("unknown-extern", request.target, request.url, data);
         }
