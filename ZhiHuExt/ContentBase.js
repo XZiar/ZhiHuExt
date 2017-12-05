@@ -2,12 +2,13 @@
 
 const fetchVoters = Symbol("_fetchAnsVoters");
 const fetchActs = Symbol("_fetchUserActs");
+const fetchAnss = Symbol("_fetchAnswers");
 let _CUR_USER;
 let _CUR_ANSWER;
 let _CUR_QUESTION;
 /**@type {UserToken}*/
 let _CUR_TOKEN;
-let _Base_Lim_Date = new Date(2017, 7, 1).toUTCSeconds();
+let _Base_Lim_Date = new Date(2017, 1, 1).toUTCSeconds();
 class ContentBase
 {
     static get CUR_USER() { return _CUR_USER; }
@@ -62,6 +63,28 @@ class ContentBase
                 const acts = APIParser.parsePureActivities(data.data);
                 const lastitem = data.data.last();
                 pms.resolve({ acts: acts, end: data.paging.is_end, lasttime: lastitem ? lastitem.created_time : undefined });
+            })
+            .fail((data, status, xhr) =>
+            {
+                if (data.responseJSON)
+                    console.warn("fetchActs fail:" + xhr.status, data.responseJSON.error.message);
+                else
+                    console.warn("fetchActs fail:" + xhr.status);
+                pms.reject();
+            });
+        return pms;
+    }
+    /**
+     * @param {string | number} qid
+     * @param {number} offset
+     */
+    static [fetchAnss](qid, offset)
+    {
+        const pms = $.Deferred();
+        ContentBase._get(`https://www.zhihu.com/api/v4/questions/${qid}/answers?include=data[*].is_normal,admin_closed_comment,reward_info,is_collapsed,annotation_action,annotation_detail,collapse_reason,is_sticky,collapsed_by,suggest_edit,comment_count,can_comment,content,editable_content,voteup_count,reshipment_settings,comment_permission,created_time,updated_time,review_info,question,excerpt,relationship.is_authorized,is_author,voting,is_thanked,is_nothelp,upvoted_followees;data[*].mark_infos[*].url;data[*].author.voteup_count,answer_count,articles_count,follower_count,badge[?(type=best_answerer)].topics&offset=${offset}&limit=30&sort_by=default`)
+            .done((data, status, xhr) =>
+            {
+                pms.resolve({ data: data.data, end: data.paging.is_end });
             })
             .fail((data, status, xhr) =>
             {
@@ -141,8 +164,8 @@ class ContentBase
         const first = await ContentBase[fetchVoters](obj, id, 0);
         /**@type {User[]}*/
         let ret = config === "old+" ? [] : first.users;
-        let oldtotal = first.total;
-        let left = Math.min(oldtotal, limit) - first.users.length;
+        let oldtotal = first.total, demand = Math.min(oldtotal, limit)
+        let left = demand - first.users.length;
         if (left <= 0)
             return ret;
         let offset = 20;
@@ -160,9 +183,10 @@ class ContentBase
                 newusrs.forEach(u => usrset.add(u.id));
                 ret = ret.concat(newusrs);
                 const len = 20;
+                demand += newtotal - oldtotal;
                 offset += len, left -= len - (newtotal - oldtotal);
                 if (onProgress)
-                    onProgress(ret.length, newtotal);
+                    onProgress(ret.length, demand);
                 isEnd = part.end;
             }
             catch (e)
@@ -213,6 +237,31 @@ class ContentBase
         }
         return { acts: ret, lasttime: time };
     }
+
+    static async fetchAnswers(qid, limit)
+    {
+        const whole = [];
+        let isEnd = false;
+        for (let offset = 0; offset < limit && !isEnd;)
+        {
+            try
+            {
+                const part = await ContentBase[fetchAnss](qid, offset);
+                whole.push(...part.data);
+                isEnd = part.end;
+                offset += part.data.length;
+            }
+            catch (e)
+            {
+                if (++errcnt > 5)
+                    break;
+                else
+                    continue;
+            }
+        }
+        return whole;
+    }
+
     /**
      * @param {string} uid
      * @param {function(StandardDB, string, number):boolean} [bypass]
@@ -303,6 +352,22 @@ class ContentBase
     {
         "use strict"
         window.BLOCKING_VOTER = false;
+        /**@description parse query string to key-value object
+         * @param {string} qurl URL's query string
+         * @returns {{[x:string]: string}} key-value object
+         */
+        function _getQueryString(qurl)
+        {
+            const querys = qurl.split("&");
+            const ret = {};
+            for (let i = 0; i < querys.length; ++i)
+            {
+                const p = querys[i].split('=');
+                if (p.length != 2) continue;
+                ret[p[0]] = decodeURIComponent(p[1].replace(/\+/g, " "));
+            }
+            return ret;
+        };
         /**
          * @param {string} req
          * @param {string} api
@@ -353,10 +418,9 @@ class ContentBase
          */
         async function newfetch(req, init)
         {
-            //https://www.zhihu.com/api/v4/explore/recommendations?include=data%5B*%5D.answer.voteup_count%3Bdata%5B*%5D.article.voteup_count
-            if (!req.includes("www.zhihu.com/api/v4/"))
+            if (!req.includes("www.zhihu.com/api/v"))
                 return oldfetch(req, init);
-            const apiparts = req.substring(req.indexOf("/api/v4/") + 8, req.indexOf("?")).split("/");
+            const apiparts = req.substring(req.indexOf("/api/v") + 8, req.indexOf("?")).split("/");
             let newreq = req;
             {
                 newreq = newreq.replace("limit=10", "limit=20");//accelerate
@@ -395,6 +459,15 @@ class ContentBase
             {
                 return sendData(req, pms, "explore", "recommendations");
             }
+            else if (apiparts[0] === "search_v3")
+            {
+                const query = _getQueryString(req.substring(req.indexOf("?") + 1));
+                return sendData(req, pms, "search", query.t);
+            }
+            else if (apiparts[0] === "feed" && apiparts[1] === "topstory")//apiv3
+            {
+                return sendData(req, pms, "feed", "topstory");
+            }
             else
                 return pms;
         }
@@ -406,6 +479,7 @@ class ContentBase
     const inj = document.createElement("script");
     inj.innerHTML = `(${FetchHook})("${chrome.runtime.id}");`;
     document.documentElement.appendChild(inj);
+    $(document).ready(() => { console.log("ready", $("#id")[0]); });
 }()
 
 

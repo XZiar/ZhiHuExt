@@ -126,9 +126,9 @@ new Clipboard('#copyBtn');
     /**@type {BagArray[]}*/
     let voters;
 
-    if (qs.uid != null)
+    if (qs.athid != null)
     {
-        const athid = qs.uid.split("*");
+        const athid = qs.athid.split("*");
         voters = [await DBfunc("getVotersByAuthor", athid)];
     }
     else if (qs.qid != null)

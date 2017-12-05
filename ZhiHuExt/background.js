@@ -288,6 +288,15 @@ chrome.runtime.onMessageExternal.addListener(
     /**@param {{ url: string, api: string, target: string, data: string, extra: {} }} request*/
     (request, sender, sendResponse) =>
     {
+        if (request.api === "search")
+        {
+            const data = JSON.parse(request.data.replace(/<\\?\/?em>/g, ""));
+            const res = new StandardDB();
+            data.data.forEach(dat => APIParser.parseByType(res, dat.object));
+            db.insert("batch", res, putBadge);
+            console.log("search", request.target, res);
+            return;
+        }
         const data = JSON.parse(request.data);
         switch (request.target)
         {
@@ -297,6 +306,13 @@ chrome.runtime.onMessageExternal.addListener(
                     db.insert("batch", res, putBadge);
                     console.log(request.target, res);
                 } break;
+            case "topstory":
+                {
+                    //console.log(request.target, "raw", data.data);
+                    const res = APIParser.parsePureActivities(data.data);
+                    db.insert("batch", res, putBadge);
+                    console.log(request.target, res);
+                }
             case "answers":
             case "articles":
             case "questions":
@@ -304,8 +320,6 @@ chrome.runtime.onMessageExternal.addListener(
                     const res = new StandardDB();
                     data.data.forEach(act => APIParser.parseByType(res, act));
                     db.insert("batch", res, putBadge);
-                    if (request.api === "questions")
-                        res.questions = [res.questions[0]];//reduce duplicated qsts
                     console.log(request.target, res);
                 } break;
             case "relations":

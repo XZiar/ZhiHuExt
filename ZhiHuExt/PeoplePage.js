@@ -42,7 +42,8 @@
             const uid = document.location.pathname.split("/")[2];
             if (!uid)
                 return;
-            ContentBase.CUR_USER = entities.users.filter(u => u.id === uid)[0]
+            ContentBase.CUR_USER = entities.users.filter(u => u.id === uid)[0];
+
             ContentBase.CUR_TOKEN = new UserToken(state.token);
             console.log(ContentBase.CUR_USER);
         }
@@ -72,10 +73,10 @@
         btn1.dataset.type = "member";
         const btn2 = createButton(["Btn-StatVoter", "Button--primary"], "粉丝");
         btn2.dataset.id = user.id;
-        btn2.dataset.qname = "uid";
+        btn2.dataset.qname = "athid";
         const btn3 = createButton(["Btn-StatVoter", "Button--primary"], "赞谁");
         btn3.dataset.id = user.id;
-        btn3.dataset.qname = "vid";
+        btn3.dataset.qname = "uid";
         const btn4 = createButton(["Btn-AutoActSpider", "Button--primary"], "爬");
         btn4.dataset.id = user.id;
         if (!header.hasChild(".ProfileButtonGroup"))

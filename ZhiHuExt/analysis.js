@@ -105,20 +105,30 @@ class Analyse
         const blobstr = Analyse.generateBlob(zanBag.toArray());
         chrome.tabs.create({ active: true, url: "AssocAns.html?ansblob=" + blobstr });
     }
+
+    /**
+     * @param {Zan[]} zans
+     * @return {[string, number, number, string, number, number][]}
+     */
+    static _zanToCSV(zans)
+    {
+        return zans.sort((a, b) => a.time - b.time).map(zan =>
+        {
+            const [, mon, day, hour, minu, sec,] = Date.getDetailCHN(zan.time);
+            return [zan.from, zan.to, zan.time, `${mon}/${day}`, sec + minu * 60 + hour * 3600, minu + hour * 60];
+        });
+    }
     static async outputUserActs(uid, returnit)
     {
         const uids = await toPureArray(uid);
-        const zans = await db.zans.where("from").anyOf(uids).toArray();
+        /**@type {[Zan[],Zan[]]}*/
+        const [zans, zanarts] = await Promise.all([db.zans.where("from").anyOf(uids).toArray(), db.zanarts.where("from").anyOf(uids).toArray()]);
         const head = "\uFEFF" + "点赞人,点赞目标,点赞时间,点赞日期,当日计秒,当日分钟\n";
-        const zandata = zans.map(zan =>
-        {
-            const [, mon, day, hour, minu, sec,] = new Date(zan.time * 1000).getDetailCHN();
-            return [zan.from, zan.to, zan.time, `${mon}/${day}`, sec + minu * 60 + hour * 3600, minu + hour * 60];
-        });
+        const zandata = Analyse._zanToCSV(zans.concat(zanarts));
         if (returnit)
             return zandata;
         const csvstr = zandata.map(dat => dat.join(',')).join('\n');
-        DownloadMan.exportDownload(head + csvstr, "txt", `acts-(${uids})-${new Date().Format("yyMMdd-hhmm")}.csv`);
+        DownloadMan.exportDownload(head + csvstr, "txt", `acts#${uids}#${new Date().Format("yyMMdd-hhmm")}.csv`);
     }
     static async outputAnswerActs(aid, returnit)
     {
@@ -126,21 +136,53 @@ class Analyse
         /**@type {[Zan[], Answer[]]}*/
         const [zans, anss] = await Promise.all([db.zans.where("to").anyOf(aids).toArray(), db.answers.where("id").anyOf(aids).toArray()]);
         const head = "\uFEFF" + "点赞人,点赞目标,点赞时间,点赞日期,当日计秒,当日分钟\n";
-        const selfdata = anss.map(ans =>
+        const selfdata = anss.sort((a, b) => a.timeC - b.timeC).map(ans =>
         {
             const [, mon, day, hour, minu, sec,] = new Date(ans.timeC * 1000).getDetailCHN();
             return [ans.author, ans.id, ans.timeC, `${mon}/${day}`, sec + minu * 60 + hour * 3600, minu + hour * 60];
         });
-        const zandata = zans.map(zan =>
-        {
-            const [, mon, day, hour, minu, sec,] = new Date(zan.time * 1000).getDetailCHN();
-            return [zan.from, zan.to, zan.time, `${mon}/${day}`, sec + minu * 60 + hour * 3600, minu + hour * 60];
-        });
+        const zandata = Analyse._zanToCSV(zans);
         const csvdata = zandata.concat(selfdata);
         if (returnit)
             return csvdata;
         const csvstr = csvdata.map(dat => dat.join(',')).join('\n');
-        DownloadMan.exportDownload(head + csvstr, "txt", `acts-(${aids})-${new Date().Format("yyMMdd-hhmm")}.csv`);
+        DownloadMan.exportDownload(head + csvstr, "txt", `acts#${aids}#${new Date().Format("yyMMdd-hhmm")}.csv`);
+    }
+    static async outputQuestActs(qid, returnit)
+    {
+        return await Analyse.outputAnswerActs(await db.getAnsIdByQuestion(qid), returnit);
+    }
+    /**
+     * @param {[string, number, number, string, number, number][]} zandata
+     * @param {{[x:number]:number}} objmap
+     * @return {[string, number, number, string, number, number, number, number, number][]}
+     */
+    static _ZanAndObj(zandata, objmap)
+    {
+        return zandata.map(x =>
+        {
+            const timec = objmap[x[1]] || -1;
+            const diffC = x[2] - timeC;
+            const fixtime = diffC < 0 ? -1 : Math.max(Math.round(diffC / 60), 60 * 24);
+            return x.concat([timeC, diffC, fixtime]);
+        });
+    }
+    static async outputReactSpeed(uid, returnit)
+    {
+        const uids = await toPureArray(uid);
+        /**@type {[Zan[],Zan[]]}*/
+        const [zans, zanarts] = await Promise.all([db.zans.where("from").anyOf(uids).toArray(), db.zanarts.where("from").anyOf(uids).toArray()]);
+        const pmss = Promise.all([db.getPropMapOfIds("answers", zans.mapToProp("to"), "timeC"), db.getPropMapOfIds("articles", zanarts.mapToProp("to"), "timeC")]);
+        const head = "\uFEFF" + "点赞人,点赞目标,点赞时间,点赞日期,当日计秒,当日分钟,目标时间,间隔秒,间隔分钟\n";
+        const ansdata = Analyse._zanToCSV(zans);
+        const artdata = Analyse._zanToCSV(zanarts);
+        /**@type {{[x:number]:number}[]}*/
+        const [anstime, arttime] = await pmss;
+        const retdata = Analyse._ZanAndObj(ansdata, anstime).concat(Analyse._ZanAndObj(artdata, arttime)).sort((a, b) => a[2] - b[2]);
+        if (returnit)
+            return retdata;
+        const csvstr = retdata.map(dat => dat.join(',')).join('\n');
+        DownloadMan.exportDownload(head + csvstr, "txt", `racspd#${uids}#${new Date().Format("yyMMdd-hhmm")}.csv`);
     }
 
     /**
@@ -222,6 +264,7 @@ class Analyse
         console.log("get [" + Object.keys(topicMap).length + "] topics");
         return tryReplaceDetailed(tps, topicMap, "topic");
     }
+
     static async findUserSimilarityInVote(uid)
     {
         const uid0 = await toPureArray(uid);

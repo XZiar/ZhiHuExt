@@ -398,6 +398,26 @@ class ZhiHuDB
         else
             return bag.toArray(order);
     }
+
+    async getAuthorsByVoter(uid, limit)
+    {
+        const uids = await toPureArray(uid);
+        const pmss = [this.db.zans.where("from").anyOf(uids).primaryKeys(), this.db.zanarts.where("from").anyOf(uids).primaryKeys()];
+        /**@type {[string,number][][]}*/
+        const [zanAnss, zanArts] = await Promise.all(pmss);
+        /**@type {number[]}*/
+        const ansid = zanAnss.mapToProp(1), artid = zanArts.mapToProp(1);
+        /**@type {{[x:number]:string}[]}*/
+        const [ansmap, artmap] = await Promise.all([db.getPropMapOfIds("answers", ansid, "author"), db.getPropMapOfIds("articles", artid, "author")]);
+        const athBag = new SimpleBag();
+        ansid.forEach(aid => athBag.add(_any(ansmap[aid], "**")));
+        artid.forEach(aid => athBag.add(_any(artmap[aid], "**")));
+        let authors = athBag.removeAll("**").toArray("desc");//remove unknown author
+        if (limit)
+            authors = authors.slice(0, limit);
+        return authors;
+    }
+
     /**
      * @param {string | string[] | BagArray | Promise<Any>} uid
      * @param {"answer" | "article"} target
@@ -428,16 +448,11 @@ class ZhiHuDB
         console.log(`here [${ids.length}] ${target} ids`);
         return ids;
     }
-    async getAnsIdByVoter(uid, order)
-    {
-        const uids = await toPureArray(uid);
-        console.log("here [" + uids.length + "] uids");
-        const zans = await this.db.zans.where("from").anyOf(uids).toArray();
-        console.log("get [" + zans.length + "] zans");
-        const ansids = new SimpleBag(zans.mapToProp("to")).toArray(order);
-        console.log("reduce to [" + ansids.length + "] answers");
-        return ansids;
-    }
+
+    /**
+     * @param {any} qsts
+     * @returns {Answer[]}
+     */
     async getAnswerByQuestion(qsts)
     {
         const qids = await toPureArray(qsts);
@@ -446,6 +461,10 @@ class ZhiHuDB
         console.log("get [" + answers.length + "] questions");
         return answers;
     }
+    /**
+     * @param {any} qsts
+     * @returns {number[]}
+     */
     async getAnsIdByQuestion(qsts)
     {
         const qids = await toPureArray(qsts);

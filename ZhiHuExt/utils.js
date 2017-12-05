@@ -136,6 +136,11 @@ Date.prototype.getDetailCHN = function ()
     const chndate = new Date(this.getTime() + 8 * 3600000);
     return [chndate.getUTCFullYear(), chndate.getUTCMonth() + 1, chndate.getUTCDate(), chndate.getUTCHours(), chndate.getUTCMinutes(), chndate.getUTCSeconds(), chndate.getUTCMilliseconds()];
 }
+Date.getDetailCHN = function (time)
+{
+    const chndate = new Date(time * 1000 + 8 * 3600000);
+    return [chndate.getUTCFullYear(), chndate.getUTCMonth() + 1, chndate.getUTCDate(), chndate.getUTCHours(), chndate.getUTCMinutes(), chndate.getUTCSeconds(), chndate.getUTCMilliseconds()];
+}
 Date.prototype.toUTCSeconds = function ()
 {
     return Math.floor(this.getTime() / 1000);

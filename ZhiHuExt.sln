@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.27004.2008
+VisualStudioVersion = 15.0.27130.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ZhiHuExt", "ZhiHuExt", "{93675B82-EC6C-4F02-80C6-4872E07264D3}"
 	ProjectSection(SolutionItems) = preProject
@@ -71,8 +71,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "template", "template", "{D3
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "3rd", "3rd", "{30046561-6196-4231-96CA-494F6AD31CDB}"
 	ProjectSection(SolutionItems) = preProject
-		ZhiHuExt\3rd\nouislider.min.css = ZhiHuExt\3rd\nouislider.min.css
-		ZhiHuExt\3rd\nouislider.min.js = ZhiHuExt\3rd\nouislider.min.js
+		ZhiHuExt\3rd\js\jquery.dataTables.min.js = ZhiHuExt\3rd\js\jquery.dataTables.min.js
+		ZhiHuExt\3rd\js\nouislider.min.js = ZhiHuExt\3rd\js\nouislider.min.js
 	EndProjectSection
 EndProject
 Global

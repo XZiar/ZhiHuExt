@@ -161,6 +161,7 @@ async function addSpamVoterBtns(voterNodes)
 
         const btn2 = createButton(["Btn-CheckStatus", "Button--primary"], "检测");
         btn2.dataset.id = uid;
+        setDraggable(btn2);
         $(".ContentItem-extra", node).prepend(btn2);
     }
     const result = await ContentBase.checkSpam("users", users);
@@ -197,6 +198,21 @@ function monitorVoter(voterPopup)
     if (title)
     {
         const btn1 = createButton(["Btn-CheckAllStatus", "Button--primary"], "检测全部");
+        btn1.ondrop = ev =>
+        {
+            ev.preventDefault();
+            const thisbtn = ev.target;
+            /**@type {{uid:string}}*/
+            const ds = JSON.parse(ev.dataTransfer.getData("text"));
+            const btns = $(".Btn-CheckStatus", voterPopup).toArray();
+            for (let i = 0; i < btns.length; ++i)
+            {
+                if (btn.dataset.uid == ds.uid)
+                    break;
+                if (btn.style.backgroundColor == "")
+                    btn.style.backgroundColor = "rgb(0, 224, 32)";
+            }
+        }
         const btn2 = createButton(["Btn-AssocAns", "Button--primary"], "启发");
         const btn3 = createButton(["Btn-Similarity", "Button--primary"], "相似性");
 
@@ -551,6 +567,11 @@ async function AllinDropper(ev)
     btndiv.appendChild(btn);
     btndiv.ondragover = ev => ev.preventDefault();
     btndiv.ondrop = AllinDropper;
+    btndiv.draggable = true;
+    btndiv.ondragstart = (ev) =>
+    {
+        ev.dataTransfer.setData("text", "MarkBtn");
+    }
 
     if (fbtns)
         fbtns.prepend(btndiv);

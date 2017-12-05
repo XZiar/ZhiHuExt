@@ -61,5 +61,26 @@
             qstArea.prepend(btn2);
             qstArea.prepend(btn3);
         }
+        const qstHead = $(".QuestionHeader")[0];
+        qstHead.ondragover = ev => ev.preventDefault();
+        qstHead.ondrop = saveQuestion;
     }, 800);
+
+    async function saveQuestion(ev)
+    {
+        ev.preventDefault();
+        /**@type {string}*/
+        const txt = ev.dataTransfer.getData("text");
+        if (txt != "MarkBtn") return;
+        const qid = document.location.pathname.split("/")[2];
+        if (!qid)
+            return;
+        const qsturl = `https://www.zhihu.com/api/v4/questions/${qid}?include=excerpt,content,author,answer_count,topics,comment_count,follower_count;data[*].author.voteup_count,answer_count,articles_count,follower_count,badge[?(type=best_answerer)].topics`
+        const anspms = ContentBase.fetchAnswers(qid, 100);
+        const qst = await ContentBase._get(qsturl);
+        qst.answers = await anspms;
+        console.log("question backuped", qst);
+        const time = new Date().Format("yyyyMMdd-hhmm");
+        SendMsgAsync({ action: "download", data: qst, type: "json", fname: `Question-${qid}-${time}.json` });
+    }
 }()

@@ -329,7 +329,14 @@ class APIParser
                         if (tps.length > 0)
                             tpids = tps.mapToProp("id");
                     }
-                    const qst = new Question(obj.id, obj.title, tpids, obj.created);
+                    if (obj.author instanceof Object)
+                    {
+                        APIParser.parseByType(output, obj.author);
+                    }
+                    let title = obj.title;
+                    if (!title)
+                        title = obj.name;//.replace(/<\/?em>/g, "");
+                    const qst = new Question(obj.id, title, tpids, obj.created);
                     output.questions.push(qst);
                     if (qst.author)
                         APIParser.parseByType(output, qst.author);
@@ -343,7 +350,12 @@ class APIParser
                     /**@type {string}*/
                     let excerpt = obj.excerptNew || obj.excerpt_new;
                     if (!excerpt && obj.excerpt)
-                        excerpt = obj.excerpt.replace(/<[^>]+>/g, "");//remove html tags
+                    {
+                        if (obj.attached_info_bytes != null)//from search, use content instead
+                            excerpt = obj.content.replace(/<[^>]+>/g, "");
+                        else
+                            excerpt = obj.excerpt.replace(/<[^>]+>/g, "");//remove html tags
+                    }
                     const ans = new Answer(obj.id, qid, aid, _any(obj.voteup_count, obj.voteupCount), excerpt,
                         _any(obj.created_time, obj.createdTime), _any(obj.updated_time, obj.updatedTime));
                     output.answers.push(ans);
@@ -358,14 +370,24 @@ class APIParser
             case "article":
                 {
                     const ath = APIParser.parseByType(output, obj.author);
-                    let timeC = obj.created, timeU = obj.updated;
+                    let timeC = _any(obj.created_time, obj.createdTime, obj.created), timeU = _any(obj.updated_time, obj.updatedTime, obj.updated);
                     if (timeC == null && obj.publishedTime)
-                        timeC = Date.parse(obj.publishedTime).toUTCSeconds();
+                        timeC = Date.parse(obj.publishedTime) / 1000;
                     if (typeof (timeU) === "string")
-                        timeU = Date.parse(timeU).toUTCSeconds();
-                    const art = new Article(obj.id, obj.title, ath.id, _any(obj.voteup_count, obj.voteupCount),
-                        _any(obj.excerpt_new, obj.excerptNew), timeC, timeU);
+                        timeU = Date.parse(timeU) / 1000;
+                    /**@type {string}*/
+                    let excerpt = obj.excerptNew || obj.excerpt_new;
+                    if (!excerpt && obj.excerpt)
+                    {
+                        if (obj.attached_info_bytes != null)//from search, use content instead
+                            excerpt = obj.content.replace(/<[^>]+>/g, "");
+                        else
+                            excerpt = obj.excerpt.replace(/<[^>]+>/g, "");//remove html tags
+                    }
+                    const art = new Article(obj.id, obj.title, ath.id, _any(obj.voteup_count, obj.voteupCount), excerpt, timeC, timeU);
                     output.articles.push(art);
+                    if (obj.upvoted_followees instanceof Array)
+                        obj.upvoted_followees.forEach(x => output.zanarts.push(new Zan(APIParser.parseByType(output, x), obj.id)));
                     return art;
                 }
             case "topic":
@@ -415,26 +437,41 @@ class APIParser
                     APIParser.parseByType(output, act.target);
                     break;
                 case "QUESTION_FOLLOW":
+                case "MEMBER_FOLLOW_QUESTION":
                     APIParser.parseByType(output, act.target);
                     break;
                 case "ANSWER_CREATE":
+                case "MEMBER_ANSWER_QUESTION":
                 case "MEMBER_CREATE_ARTICLE":
                     APIParser.parseByType(output, act.target);
                     break;
                 case "MEMBER_COLLECT_ANSWER":
                 case "MEMBER_COLLECT_ARTICLE":
+                case "TOPIC_ACKNOWLEDGED_ANSWER":
+                case "TOPIC_ACKNOWLEDGED_ARTICLE":
                     APIParser.parseByType(output, act.target);
                     break;
                 case "ANSWER_VOTE_UP":
+                case "MEMBER_VOTEUP_ANSWER":
                     {
                         const ans = APIParser.parseByType(output, act.target);
-                        output.zans.push(new Zan(act.actor.url_token, ans, act.created_time));
+                        const actor = act.actor || act.actors[0];
+                        output.zans.push(new Zan(actor.url_token, ans, act.created_time));
                     } break;
                 case "MEMBER_VOTEUP_ARTICLE":
                     {
                         const art = APIParser.parseByType(output, act.target);
-                        output.zanarts.push(new Zan(act.actor.url_token, art, act.created_time));
+                        const actor = act.actor || act.actors[0];
+                        output.zanarts.push(new Zan(actor.url_token, art, act.created_time));
                     } break;
+            }
+            if (act.uninterest_reasons instanceof Array)
+            {
+                act.uninterest_reasons.forEach(/**@param {{reason_type: string, reason_id: number, object_token: string, reason_text: string, object_type: string}} ur*/(ur) =>
+                {
+                    if (ur.reason_type === "topic" && ur.object_type === "topic")
+                        output.topics.push(new Topic(ur.object_token, ur.reason_text));
+                });
             }
         });
         return output;

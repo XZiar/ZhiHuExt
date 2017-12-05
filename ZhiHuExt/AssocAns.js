@@ -18,7 +18,7 @@ async function AssocByVoters(voters)
     const uids = uid0.toArray();
 
     /**@type {BagArray}*/
-    const anss = await DBfunc("getAnsIdByVoter", voters, "desc");
+    const anss = await DBfunc("getIdByVoter", voters, "answer", "desc");
     await AssocByAnswers(anss);
 }
 /**
@@ -178,10 +178,14 @@ $(document).on("click", "#export", e =>
         const ansid = await DBfunc("getAnsIdByQuestion", qid);
         voters = await DBfunc("getVoters", ansid, "answer");
     }
+    else if (qs.athid != null)
+    {
+        const athid = qs.athid.split("*");
+        voters = await DBfunc("getVotersByAuthor", athid);
+    }
     else if (qs.uid != null)
     {
-        const athid = qs.uid.split("*");
-        voters = await DBfunc("getVotersByAuthor", athid);
+        voters = qs.uid.split("*");
     }
     else if (qs.vid != null)
     {
