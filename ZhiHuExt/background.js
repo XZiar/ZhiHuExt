@@ -51,35 +51,35 @@ const db = new ZhiHuDB("ZhihuDB", [
         topics: "id",
         rectime: "id,new,old"
     }], [
-        null,
-        trans => trans.users.toCollection().modify(u => u.zancnt = -1),
-        async trans =>
+    null,
+    trans => trans.users.toCollection().modify(u => u.zancnt = -1),
+    async trans =>
+    {
+        /**@type {Map<string,number[]>} */
+        const zantime = new Map();
+        const curtime = new Date().toUTCSeconds();
+        const jober = zan =>
         {
-            /**@type {Map<string,number[]>} */
-            const zantime = new Map();
-            const curtime = new Date().toUTCSeconds();
-            const jober = zan =>
-            {
-                const oldtime = zantime.get(zan.from);
-                if (!oldtime)
-                    zantime.set(zan.from, [zan.time, zan.time]);
-                else if (zan.time > oldtime[0])
-                    zantime.set(zan.from, [zan.time, oldtime[1]]);
-                else if (zan.time < oldtime[1])
-                    zantime.set(zan.from, [oldtime[0], zan.time]);
-            };
-            await trans.zanarts.where("time").above(0).each(jober);
-            console.log("[zanarts] iterated");
-            await trans.zans.where("time").above(0).each(jober);
-            console.log("[zans] iterated");
-            const recs = Array.from(zantime.entries()).map(x => ({ id: x[0], new: x[1][0], old: x[1][1] }));
-            console.log("[rectime] mapped");
-            await trans.rectime.bulkAdd(recs);
-        }],
+            const oldtime = zantime.get(zan.from);
+            if (!oldtime)
+                zantime.set(zan.from, [zan.time, zan.time]);
+            else if (zan.time > oldtime[0])
+                zantime.set(zan.from, [zan.time, oldtime[1]]);
+            else if (zan.time < oldtime[1])
+                zantime.set(zan.from, [oldtime[0], zan.time]);
+        };
+        await trans.zanarts.where("time").above(0).each(jober);
+        console.log("[zanarts] iterated");
+        await trans.zans.where("time").above(0).each(jober);
+        console.log("[zans] iterated");
+        const recs = Array.from(zantime.entries()).map(x => ({ id: x[0], new: x[1][0], old: x[1][1] }));
+        console.log("[rectime] mapped");
+        await trans.rectime.bulkAdd(recs);
+    }],
     async () =>
     {
         console.log("initializing reading");
-        const loader = [db.users.where("status").anyOf(["ban", "sban"]).primaryKeys(), db.spams.where("type").equals("member").primaryKeys()];
+        const loader = [db.users.where("status").anyOf(["ban", "sban"]).primaryKeys(), db.spams.where("type").anyOf(["member", "badusr"]).primaryKeys()];
         const [ban, spam] = await Promise.all(loader);
         BAN_UID = new Set(ban);
         SPAM_UID = new Set(spam);
@@ -312,7 +312,7 @@ chrome.runtime.onMessageExternal.addListener(
                     const res = APIParser.parsePureActivities(data.data);
                     db.insert("batch", res, putBadge);
                     console.log(request.target, res);
-                }
+                } break;
             case "answers":
             case "articles":
             case "questions":

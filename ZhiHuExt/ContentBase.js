@@ -1,8 +1,5 @@
 "use strict"
 
-const fetchVoters = Symbol("_fetchAnsVoters");
-const fetchActs = Symbol("_fetchUserActs");
-const fetchAnss = Symbol("_fetchAnswers");
 let _CUR_USER;
 let _CUR_ANSWER;
 let _CUR_QUESTION;
@@ -22,13 +19,25 @@ class ContentBase
     static get BASE_LIM_DATE() { return _Base_Lim_Date; }
     static set BASE_LIM_DATE(time) { time = _Base_Lim_Date; }
 
+    static _defErrorHandler(name, pms)
+    {
+        return (data, status, xhr) =>
+        {
+            if (data.responseJSON)
+                console.warn(name, "fail:", xhr.status, data.responseJSON.error.message);
+            else
+                console.warn(name, "fail:", xhr.status);
+            pms.reject();
+        };
+    }
+
     /**
      * @param {"answer" | "article"} obj
      * @param {number | string} id
      * @param {number} offset
      * @returns {Promise<{users: User[], end:boolean, start: boolean, total: number}>}
      */
-    static [fetchVoters](obj, id, offset)
+    static _fetchAnsVoters(obj, id, offset)
     {
         const part = (obj === "answer") ? "voters" : "likers";
         const zanquery = (obj === "answer") ? ",voteup_count" : "";
@@ -39,14 +48,7 @@ class ContentBase
                 const users = data.data.map(User.fromRawJson);
                 pms.resolve({ "users": users, "end": data.paging.is_end, "start": data.paging.is_start, "total": data.paging.totals });
             })
-            .fail((data, status, xhr) =>
-            {
-                if (data.responseJSON)
-                    console.warn("fetchVoter fail:" + xhr.status, data.responseJSON.error.message);
-                else
-                    console.warn("fetchVoter fail:" + xhr.status);
-                pms.reject();
-            });
+            .fail(ContentBase._defErrorHandler("fetchVoter", pms));
         return pms;
     }
     /**
@@ -54,7 +56,7 @@ class ContentBase
      * @param {string} uid
      * @param {number} [time]
      */
-    static [fetchActs](header, uid, time)
+    static _fetchUserActs(header, uid, time)
     {
         const pms = $.Deferred();
         ContentBase._get(`https://www.zhihu.com/api/v4/members/${uid}/activities?limit=20&after_id=${time}&desktop=True`, undefined, header)
@@ -64,21 +66,14 @@ class ContentBase
                 const lastitem = data.data.last();
                 pms.resolve({ acts: acts, end: data.paging.is_end, lasttime: lastitem ? lastitem.created_time : undefined });
             })
-            .fail((data, status, xhr) =>
-            {
-                if (data.responseJSON)
-                    console.warn("fetchActs fail:" + xhr.status, data.responseJSON.error.message);
-                else
-                    console.warn("fetchActs fail:" + xhr.status);
-                pms.reject();
-            });
+            .fail(ContentBase._defErrorHandler("fetchActs", pms));
         return pms;
     }
     /**
      * @param {string | number} qid
      * @param {number} offset
      */
-    static [fetchAnss](qid, offset)
+    static _fetchAnswers(qid, offset)
     {
         const pms = $.Deferred();
         ContentBase._get(`https://www.zhihu.com/api/v4/questions/${qid}/answers?include=data[*].is_normal,admin_closed_comment,reward_info,is_collapsed,annotation_action,annotation_detail,collapse_reason,is_sticky,collapsed_by,suggest_edit,comment_count,can_comment,content,editable_content,voteup_count,reshipment_settings,comment_permission,created_time,updated_time,review_info,question,excerpt,relationship.is_authorized,is_author,voting,is_thanked,is_nothelp,upvoted_followees;data[*].mark_infos[*].url;data[*].author.voteup_count,answer_count,articles_count,follower_count,badge[?(type=best_answerer)].topics&offset=${offset}&limit=30&sort_by=default`)
@@ -86,14 +81,22 @@ class ContentBase
             {
                 pms.resolve({ data: data.data, end: data.paging.is_end });
             })
-            .fail((data, status, xhr) =>
+            .fail(ContentBase._defErrorHandler("fetchAnss", pms));
+        return pms;
+    }
+    /**
+     * @param {string | number} aid
+     * @param {number} offset
+     */
+    static _fetchComments(aid, offset)
+    {
+        const pms = $.Deferred();
+        ContentBase._get(`https://www.zhihu.com/api/v4/answers/${aid}/comments?include=data[*].author,collapsed,reply_to_author,disliked,content,voting,vote_count,is_parent_author,is_author&order=normal&limit=20&offset=${offset}&status=open`)
+            .done((data, status, xhr) =>
             {
-                if (data.responseJSON)
-                    console.warn("fetchActs fail:" + xhr.status, data.responseJSON.error.message);
-                else
-                    console.warn("fetchActs fail:" + xhr.status);
-                pms.reject();
-            });
+                pms.resolve({ data: data.data, end: data.paging.is_end, total: data.paging.totals });
+            })
+            .fail(ContentBase._defErrorHandler("fetchComment", pms));
         return pms;
     }
 
@@ -161,7 +164,7 @@ class ContentBase
     static async fetchTheVoters(obj, id, limit, config, onProgress)
     {
         let errcnt = 0;
-        const first = await ContentBase[fetchVoters](obj, id, 0);
+        const first = await ContentBase._fetchAnsVoters(obj, id, 0);
         /**@type {User[]}*/
         let ret = config === "old+" ? [] : first.users;
         let oldtotal = first.total, demand = Math.min(oldtotal, limit)
@@ -177,7 +180,7 @@ class ContentBase
         {
             try
             {
-                const part = await ContentBase[fetchVoters](obj, id, offset);
+                const part = await ContentBase._fetchAnsVoters(obj, id, offset);
                 const newtotal = part.total;
                 const newusrs = part.users.filter(u => !usrset.has(u.id));
                 newusrs.forEach(u => usrset.add(u.id));
@@ -218,7 +221,7 @@ class ContentBase
         {
             try
             {
-                const part = await ContentBase[fetchActs](tokenhead, uid, time);
+                const part = await ContentBase._fetchUserActs(tokenhead, uid, time);
                 if (!part.lasttime)
                     break;
                 ret.add(part.acts);
@@ -246,7 +249,31 @@ class ContentBase
         {
             try
             {
-                const part = await ContentBase[fetchAnss](qid, offset);
+                const part = await ContentBase._fetchAnswers(qid, offset);
+                whole.push(...part.data);
+                isEnd = part.end;
+                offset += part.data.length;
+            }
+            catch (e)
+            {
+                if (++errcnt > 5)
+                    break;
+                else
+                    continue;
+            }
+        }
+        return whole;
+    }
+
+    static async fetchComments(aid, limit)
+    {
+        const whole = [];
+        let isEnd = false;
+        for (let offset = 0; offset < limit && !isEnd;)
+        {
+            try
+            {
+                const part = await ContentBase._fetchComments(aid, offset);
                 whole.push(...part.data);
                 isEnd = part.end;
                 offset += part.data.length;

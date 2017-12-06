@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace DBExportor.Pods
 {
-    public enum SpamType : byte { member, answer, article, question, badans, badart }
+    public enum SpamType : byte { member, answer, article, question, badans, badart, badusr }
     public struct Spam
     {
         public string id { get => id_; set => id_ = string.Intern(value); }

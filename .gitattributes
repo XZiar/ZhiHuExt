@@ -61,3 +61,10 @@
 #*.PDF   diff=astextplain
 #*.rtf   diff=astextplain
 #*.RTF   diff=astextplain
+
+
+###############################################################################
+# linguist hack
+###############################################################################
+ZhiHuExt/3rd/* linguist-vendored
+License/* linguist-vendored

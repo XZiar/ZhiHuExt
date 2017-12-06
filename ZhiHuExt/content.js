@@ -517,8 +517,10 @@ $("body").on("click", "button.Modal-closeButton", function ()
     console.log("init " + curAnsArts.length + " answer/article");
     addAASpamBtns(curAnsArts);
 }
-async function AllinDropper(ev)
+
+async function TrashDropper(ev)
 {
+    const mapper = { answer: "badans", article: "badart", member: "badusr" };
     ev.preventDefault();
     /**@type {string}*/
     const txt = ev.dataTransfer.getData("text");
@@ -526,19 +528,28 @@ async function AllinDropper(ev)
     if (txt.includes("http"))
     {
         const mth1 = txt.match(/zhihu.com\/question\/\d*\/answer\/(\d*)/i);
+        const mth2 = txt.match(/zhuanlan.zhihu.com\/p\/(\d*)/i);
+        const mth3 = txt.match(/www.zhihu.com\/people\/([^\/]+)/i);
         if (mth1)
             report = { id: Number(mth1[1]), type: "badans" };
-        else
-        {
-            const mth2 = txt.match(/zhuanlan.zhihu.com\/p\/{\d*}/i);
-            if (mth2)
-                report = { id: Number(mth2[1]), type: "badart" };
-        }
+        else if (mth2)
+            report = { id: Number(mth2[1]), type: "badart" };
+        else if (mth3)
+            report = { id: mth3[1], type: "badusr" };
     }
-    else if (txt.startsWith("{"))
+    else if (txt.startsWith("{") && txt.endsWith("}"))
     {
         const dat = JSON.parse(txt);
-        report = { id: Number(dat.id), type: dat.type === "answer" ? "badans" : "badart" };
+        report = { id: Number(dat.id), type: mapper[dat.type] };
+    }
+    else if (txt.startsWith("#comment"))
+    {
+        const aid = Number(txt.substr(8));
+        const cms = await ContentBase.fetchComments(aid, 1000);
+        const users = cms.map(cm => User.fromRawJson(cm.author.member));
+        console.log(users);
+        ContentBase._report("users", users);
+        report = users.map(usr => ({ id: usr.id, type: "badusr" })).filter(x => x.id);
     }
     if (report)
     {
@@ -551,30 +562,42 @@ async function AllinDropper(ev)
 }
 {
     const fbtns = document.body.querySelector(".CornerButtons");
-    const svg = createSVG(24, 24, "0 0 100 91",
-        "M53.29 80.035l7.32.002 2.41 8.24 13.128-8.24h15.477v-67.98H53.29v67.978zm7.79-60.598h22.756v53.22h-8.73l-8.718 5.473-1.587-5.46-3.72-.012v-53.22zM46.818 43.162h-16.35c.545-8.467.687-16.12.687-22.955h15.987s.615-7.05-2.68-6.97H16.807c1.09-4.1 2.46-8.332 4.1-12.708 0 0-7.523 0-10.085 6.74-1.06 2.78-4.128 13.48-9.592 24.41 1.84-.2 7.927-.37 11.512-6.94.66-1.84.785-2.08 1.605-4.54h9.02c0 3.28-.374 20.9-.526 22.95H6.51c-3.67 0-4.863 7.38-4.863 7.38H22.14C20.765 66.11 13.385 79.24 0 89.62c6.403 1.828 12.784-.29 15.937-3.094 0 0 7.182-6.53 11.12-21.64L43.92 85.18s2.473-8.402-.388-12.496c-2.37-2.788-8.768-10.33-11.496-13.064l-4.57 3.627c1.363-4.368 2.183-8.61 2.46-12.71H49.19s-.027-7.38-2.372-7.38zm128.752-.502c6.51-8.013"
-    );
-    svg.addClasses("ZiExt--Main");
-    svg.setAttribute("fill", "#ff7000");
-    svg.title = "知乎疯牛病";
-    const btn = createButton(["CornerButton", "Button--plain"]);
-    btn.dataset.tooltip = "知乎疯牛病";
-    btn.dataset.tooltipPosition = "left";
-    btn.appendChild(svg);
-    const btndiv = document.createElement("div");
-    btndiv.id = "MarkBtn";
-    btndiv.addClass("CornerAnimayedFlex");
-    btndiv.appendChild(btn);
-    btndiv.ondragover = ev => ev.preventDefault();
-    btndiv.ondrop = AllinDropper;
-    btndiv.draggable = true;
-    btndiv.ondragstart = (ev) =>
+    const svgZH = createSVG(24, 24, "0 0 100 91",
+        "M53.29 80.035l7.32.002 2.41 8.24 13.128-8.24h15.477v-67.98H53.29v67.978zm7.79-60.598h22.756v53.22h-8.73l-8.718 5.473-1.587-5.46-3.72-.012v-53.22zM46.818 43.162h-16.35c.545-8.467.687-16.12.687-22.955h15.987s.615-7.05-2.68-6.97H16.807c1.09-4.1 2.46-8.332 4.1-12.708 0 0-7.523 0-10.085 6.74-1.06 2.78-4.128 13.48-9.592 24.41 1.84-.2 7.927-.37 11.512-6.94.66-1.84.785-2.08 1.605-4.54h9.02c0 3.28-.374 20.9-.526 22.95H6.51c-3.67 0-4.863 7.38-4.863 7.38H22.14C20.765 66.11 13.385 79.24 0 89.62c6.403 1.828 12.784-.29 15.937-3.094 0 0 7.182-6.53 11.12-21.64L43.92 85.18s2.473-8.402-.388-12.496c-2.37-2.788-8.768-10.33-11.496-13.064l-4.57 3.627c1.363-4.368 2.183-8.61 2.46-12.71H49.19s-.027-7.38-2.372-7.38zm128.752-.502c6.51-8.013",
+        { fill: "#ff7000" });
+    const btn1 = createButton(["CornerButton", "Button--plain"]);
+    btn1.dataset.tooltip = "知乎疯牛病";
+    btn1.dataset.tooltipPosition = "left";
+    btn1.appendChild(svgZH);
+    const btndiv1 = document.createElement("div");
+    btndiv1.id = "MarkBtn";
+    btndiv1.addClass("CornerAnimayedFlex");
+    btndiv1.appendChild(btn1);
+    btndiv1.draggable = true;
+    btndiv1.ondragstart = (ev) =>
     {
         ev.dataTransfer.setData("text", "MarkBtn");
     }
 
+    const svgTrash = createSVG(28, 28, "0 0 512 512",
+        "M341,128V99c0-19.1-14.5-35-34.5-35H205.4C185.5,64,171,79.9,171,99v29H80v32h9.2c0,0,5.4,0.6,8.2,3.4c2.8,2.8,3.9,9,3.9,9  l19,241.7c1.5,29.4,1.5,33.9,36,33.9h199.4c34.5,0,34.5-4.4,36-33.8l19-241.6c0,0,1.1-6.3,3.9-9.1c2.8-2.8,8.2-3.4,8.2-3.4h9.2v-32  h-91V128z M192,99c0-9.6,7.8-15,17.7-15h91.7c9.9,0,18.6,5.5,18.6,15v29H192V99z M183.5,384l-10.3-192h20.3L204,384H183.5z   M267.1,384h-22V192h22V384z M328.7,384h-20.4l10.5-192h20.3L328.7,384z",
+        { fill: "#000" });
+    const btn2 = createButton(["CornerButton", "Button--plain"]);
+    btn2.dataset.tooltip = "记录广告";
+    btn2.dataset.tooltipPosition = "left";
+    btn2.appendChild(svgTrash);
+    const btndiv2 = document.createElement("div");
+    btndiv2.id = "TrashBtn";
+    btndiv2.addClass("CornerAnimayedFlex");
+    btndiv2.appendChild(btn2);
+    btndiv2.ondragover = ev => ev.preventDefault();
+    btndiv2.ondrop = TrashDropper;
+
     if (fbtns)
-        fbtns.prepend(btndiv);
+    {
+        fbtns.prepend(btndiv1);
+        fbtns.prepend(btndiv2);
+    }
 }
 
 bodyObserver.observe(document.body, { "childList": true, "subtree": true });

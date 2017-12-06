@@ -29,18 +29,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ZhiHuExt", "ZhiHuExt", "{93
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Dependecy", "Dependecy", "{E476A3D7-D0E1-40EA-990A-D165CFDB83D7}"
 	ProjectSection(SolutionItems) = preProject
-		Dependency\dexie.js = Dependency\dexie.js
-		ZhiHuExt\dexie.min.js = ZhiHuExt\dexie.min.js
-		ZhiHuExt\dexie.min.js.map = ZhiHuExt\dexie.min.js.map
-		Dependency\jquery-3.2.1.js = Dependency\jquery-3.2.1.js
-		ZhiHuExt\jquery-3.2.1.min.js = ZhiHuExt\jquery-3.2.1.min.js
-		ZhiHuExt\jquery-3.2.1.min.map = ZhiHuExt\jquery-3.2.1.min.map
+		ZhiHuExt\3rd\js\echarts.js = ZhiHuExt\3rd\js\echarts.js
 	EndProjectSection
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "TypeDoc", "TypeDoc", "{BFFEC1DB-48AB-4FFA-B5E1-8273096F39F8}"
-	ProjectSection(SolutionItems) = preProject
-		ZhiHuExt\dexie.min.d.ts = ZhiHuExt\dexie.min.d.ts
-	EndProjectSection
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "template-json", "template-json", "{BFFEC1DB-48AB-4FFA-B5E1-8273096F39F8}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DBExportor", "DBExportor\DBExportor.csproj", "{772249B6-6F17-4997-9A6D-CE98688727C1}"
 EndProject
@@ -71,8 +63,27 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "template", "template", "{D3
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "3rd", "3rd", "{30046561-6196-4231-96CA-494F6AD31CDB}"
 	ProjectSection(SolutionItems) = preProject
+		ZhiHuExt\3rd\js\clipboard.min.js = ZhiHuExt\3rd\js\clipboard.min.js
+		ZhiHuExt\3rd\js\dexie.d.ts = ZhiHuExt\3rd\js\dexie.d.ts
+		ZhiHuExt\3rd\js\dexie.js = ZhiHuExt\3rd\js\dexie.js
+		ZhiHuExt\3rd\js\dexie.js.map = ZhiHuExt\3rd\js\dexie.js.map
+		ZhiHuExt\3rd\js\echarts.js = ZhiHuExt\3rd\js\echarts.js
+		ZhiHuExt\3rd\js\jquery-3.2.1.min.js = ZhiHuExt\3rd\js\jquery-3.2.1.min.js
+		ZhiHuExt\3rd\js\jquery-3.2.1.min.map = ZhiHuExt\3rd\js\jquery-3.2.1.min.map
 		ZhiHuExt\3rd\js\jquery.dataTables.min.js = ZhiHuExt\3rd\js\jquery.dataTables.min.js
 		ZhiHuExt\3rd\js\nouislider.min.js = ZhiHuExt\3rd\js\nouislider.min.js
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "OtherFiles", "OtherFiles", "{CF250E46-07C2-4D71-9719-75BF285BC6D0}"
+	ProjectSection(SolutionItems) = preProject
+		README.md = README.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "License", "License", "{0E601121-1D6D-4E85-A07C-5F6C0C7B46F9}"
+	ProjectSection(SolutionItems) = preProject
+		License\Dexie.license = License\Dexie.license
+		License\echarts.license = License\echarts.license
+		License\jQuery.license = License\jQuery.license
 	EndProjectSection
 EndProject
 Global
@@ -90,6 +101,7 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
+		{E476A3D7-D0E1-40EA-990A-D165CFDB83D7} = {93675B82-EC6C-4F02-80C6-4872E07264D3}
 		{E8E9AB37-4664-46E6-9213-3E924CD6B125} = {93675B82-EC6C-4F02-80C6-4872E07264D3}
 		{D348C6E8-E1A4-4D91-A246-BACD33EE99A0} = {BFFEC1DB-48AB-4FFA-B5E1-8273096F39F8}
 		{30046561-6196-4231-96CA-494F6AD31CDB} = {E476A3D7-D0E1-40EA-990A-D165CFDB83D7}

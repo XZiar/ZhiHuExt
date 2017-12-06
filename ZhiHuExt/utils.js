@@ -557,16 +557,25 @@ function createButton(extraClass, text)
  * @param {number} width
  * @param {number} height
  * @param {string} viewbox
- * @param {string[]} path
+ * @param {string[] | string} paths
+ * @param {{[x:string]:string}[]} [attrs]
  */
-function createSVG(width, height, viewbox, ...path)
+function createSVG(width, height, viewbox, paths, attrs)
 {
     const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-    const pathstrs = path.map(x => `<path d="${x}"></path>`).join("");
+    if (paths && !(paths instanceof Array))
+        paths = [paths];
+    const pathstrs = paths.map(x => `<path d="${x}"></path>`).join("");
     svg.innerHTML = pathstrs;
     svg.setAttribute("width", width);
     svg.setAttribute("height", height);
     svg.setAttribute("viewBox", viewbox)
+    if (attrs)
+    {
+        if (!(attrs instanceof Array))
+            attrs = [attrs];
+        attrs.forEach(attr => Object.entries(attr).forEach(p => svg.setAttribute(p[0], p[1])));
+    }
     return svg;
 }
 

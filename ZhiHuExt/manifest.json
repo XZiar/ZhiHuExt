@@ -48,7 +48,7 @@
       ],
       "js":
       [
-        "jquery-3.2.1.min.js",
+        "3rd/js/jquery-3.2.1.min.js",
         "pod.js",
         "utils.js",
         "ContentBase.js"
@@ -138,6 +138,5 @@
       ],
       "run_at": "document_end"
     }
-  ],
-  "content_security_policy": "script-src 'self' https://cdn.datatables.net/; object-src 'self'"
+  ]
 } 

@@ -34,7 +34,7 @@ class ZhiHuDB
     {
         thedb.spams.hook("creating", (primKey, obj, trans) =>
         {
-            if (obj.type === "member")
+            if (obj.type === "member" || obj.type === "badusr")
                 SPAM_UID.add(obj.id);
         });
         thedb.users.hook("creating", (primKey, obj, trans) =>
