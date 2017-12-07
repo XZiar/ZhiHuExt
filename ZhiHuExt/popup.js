@@ -23,9 +23,13 @@ $(document).on("click", "button#spider", () =>
 {
     chrome.runtime.sendMessage({ action: "openpage", isBackground: false, target: "AutoSpider.html" });
 });
-$(document).on("click", "button#send", () =>
+$(document).on("click", "button#export", () =>
 {
     chrome.runtime.sendMessage({ action: "openpage", isBackground: false, target: "Export.html" });
+});
+$(document).on("click", "button#timeline", () =>
+{
+    chrome.runtime.sendMessage({ action: "openpage", isBackground: false, target: "Timeline.html" });
 });
 $(document).ready(() =>
 {

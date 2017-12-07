@@ -6,7 +6,6 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ZhiHuExt", "ZhiHuExt", "{93675B82-EC6C-4F02-80C6-4872E07264D3}"
 	ProjectSection(SolutionItems) = preProject
 		ZhiHuExt\analysis.js = ZhiHuExt\analysis.js
-		ZhiHuExt\ArticlePage.js = ZhiHuExt\ArticlePage.js
 		ZhiHuExt\background.js = ZhiHuExt\background.js
 		ZhiHuExt\CommunityRep.js = ZhiHuExt\CommunityRep.js
 		ZhiHuExt\content.js = ZhiHuExt\content.js
@@ -16,21 +15,18 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ZhiHuExt", "ZhiHuExt", "{93
 		ZhiHuExt\DownloadMan.js = ZhiHuExt\DownloadMan.js
 		ZhiHuExt\icon.png = ZhiHuExt\icon.png
 		ZhiHuExt\manifest.json = ZhiHuExt\manifest.json
-		ZhiHuExt\PeoplePage.js = ZhiHuExt\PeoplePage.js
+		ZhiHuExt\PageEnhance.js = ZhiHuExt\PageEnhance.js
 		ZhiHuExt\pod.js = ZhiHuExt\pod.js
-		ZhiHuExt\QuestionPage.js = ZhiHuExt\QuestionPage.js
-		README.md = README.md
 		ZhiHuExt\RepResPage.js = ZhiHuExt\RepResPage.js
+		ZhiHuExt\Timeline.js = ZhiHuExt\Timeline.js
 		ZhiHuExt\utils.js = ZhiHuExt\utils.js
+		ZhiHuExt\ZhiHuHooker.js = ZhiHuExt\ZhiHuHooker.js
 	EndProjectSection
 	ProjectSection(FolderGlobals) = preProject
 		__JSONSchema = 
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Dependecy", "Dependecy", "{E476A3D7-D0E1-40EA-990A-D165CFDB83D7}"
-	ProjectSection(SolutionItems) = preProject
-		ZhiHuExt\3rd\js\echarts.js = ZhiHuExt\3rd\js\echarts.js
-	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "template-json", "template-json", "{BFFEC1DB-48AB-4FFA-B5E1-8273096F39F8}"
 EndProject
@@ -50,6 +46,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Pages", "Pages", "{E8E9AB37
 		ZhiHuExt\popup.js = ZhiHuExt\popup.js
 		ZhiHuExt\StatVoter.html = ZhiHuExt\StatVoter.html
 		ZhiHuExt\StatVoter.js = ZhiHuExt\StatVoter.js
+		ZhiHuExt\Timeline.html = ZhiHuExt\Timeline.html
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "template", "template", "{D348C6E8-E1A4-4D91-A246-BACD33EE99A0}"

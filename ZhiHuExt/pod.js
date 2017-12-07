@@ -57,8 +57,6 @@ class User
             else
                 user.status = "";
         }
-        //else if (theuser.isBanned)
-        //    user.status = "sban";
         return user;
     }
 }
@@ -292,11 +290,13 @@ class StandardDB
  * @property { number= } visits_count optional
  */
 /**
+ * @typedef {{reason_type: string, reason_id: number, object_token: string, reason_text: string, object_type: string}} UninterestReason
  * @typedef {{actionText: string, actor: object, createdTime: number, id: string, target: {id: number, schema: string}, type: string, verb: string}} Activity
  * @typedef {{answerCount: number, author: UserType, boundTopicIds: number[], commentCount: number, created: number, followerCount: number, createdTime: number, id: number, isFollowing: boolean, title: string, type: string, url: string}} QuestType
  * @typedef {{author: UserType, canComment: {reason: string, status: boolean}, commentCount: number, commentPermission: string, content: string, createdTime: number, excerpt: string, excerptNew: string, id: number, isCopyable: boolean, question: QuestType, thanksCount: number, type: "answer", updatedTime: number, url: string, voteupCount: number}} AnswerType
  * @typedef {{author: UserType, commentCount: number, commentPermission: string, content: string, created: number, excerpt: string, excerptNew: string, excerptTitle: string, id: number, imageUrl: string, title: string, type: "article", updated: number, url: string, voteupCount: number, voting: number}} ArticleType
  * @typedef {{avatarUrl: string, excerpt: string, followersCount: number, id: string, introduction: string, isFollowing: boolean, name: string, type: "topic", url: string}} TopicType
+ * @typedef {{count: number, target: {id: number, schema: string}, updatedTime: number, uninterestReasons: UninterestReason[], verb: string, actors: UserType[], createdTime: number, type: "feed", attachedInfo: string}} FeedType
  * @typedef {Object} Entities
  * @property {{[id:string]: Activity}} activities
  * @property {{[id:string]: AnswerType}} answers
@@ -333,9 +333,7 @@ class APIParser
                     {
                         APIParser.parseByType(output, obj.author);
                     }
-                    let title = obj.title;
-                    if (!title)
-                        title = obj.name;//.replace(/<\/?em>/g, "");
+                    const title = _any(obj.title, obj.name);//.replace(/<\/?em>/g, "");
                     const qst = new Question(obj.id, title, tpids, obj.created);
                     output.questions.push(qst);
                     if (qst.author)
@@ -400,6 +398,20 @@ class APIParser
     }
 
     /**
+     * @param {StandardDB} output
+     * @param {UninterestReason[]} reasons
+     */
+    static parseReasons(output, reasons)
+    {
+        reasons.forEach(ur =>
+        {
+            if (ur.reason_type === "topic" && ur.object_type === "topic")
+                output.topics.push(new Topic(ur.object_token, ur.reason_text));
+        });
+    }
+
+
+    /**
      * @param {Entities} data
      */
     static parseEntities(data)
@@ -420,6 +432,27 @@ class APIParser
         Object.values(data.answers).forEach(/**@param {AnswerType} ans*/(ans) => APIParser.parseByType(output, ans));
         Object.values(data.questions).forEach(/**@param {QuestType} qst*/(qst) => APIParser.parseByType(output, qst));
         Object.values(data.articles).forEach(/**@param {ArticleType} art*/(art) => APIParser.parseByType(output, art));
+        Object.values(data.feeds).forEach(/**@param {FeedType} feed*/(feed) =>
+        {
+            switch (feed.verb)
+            {
+                case "ANSWER_VOTE_UP":
+                case "MEMBER_VOTEUP_ANSWER":
+                    {
+                        const ans = feed.target.id;
+                        const actor = feed.actors[0];
+                        output.zans.push(new Zan(actor.urlToken, ans, feed.createdTime));
+                    } break;
+                case "MEMBER_VOTEUP_ARTICLE":
+                    {
+                        const art = feed.target.id;
+                        const actor = feed.actors[0];
+                        output.zanarts.push(new Zan(actor.urlToken, art, feed.createdTime));
+                    } break;
+            }
+            if (feed.uninterestReasons instanceof Array)
+                APIParser.parseReasons(output, feed.uninterestReasons);
+        });
         return output;
     }
 
@@ -436,6 +469,7 @@ class APIParser
                 case "TOPIC_FOLLOW":
                     APIParser.parseByType(output, act.target);
                     break;
+                case "QUESTION_CREATE":
                 case "QUESTION_FOLLOW":
                 case "MEMBER_FOLLOW_QUESTION":
                     APIParser.parseByType(output, act.target);
@@ -456,23 +490,19 @@ class APIParser
                     {
                         const ans = APIParser.parseByType(output, act.target);
                         const actor = act.actor || act.actors[0];
-                        output.zans.push(new Zan(actor.url_token, ans, act.created_time));
+                        output.zans.push(new Zan(_any(actor.url_token, actor.urlToken), ans, _any(act.created_time, act.createdTime)));
                     } break;
                 case "MEMBER_VOTEUP_ARTICLE":
                     {
                         const art = APIParser.parseByType(output, act.target);
                         const actor = act.actor || act.actors[0];
-                        output.zanarts.push(new Zan(actor.url_token, art, act.created_time));
+                        output.zanarts.push(new Zan(_any(actor.url_token, actor.urlToken), art, _any(act.created_time, act.createdTime)));
                     } break;
+                default:
+                    console.log("unknown verb", act.verb, act);
             }
             if (act.uninterest_reasons instanceof Array)
-            {
-                act.uninterest_reasons.forEach(/**@param {{reason_type: string, reason_id: number, object_token: string, reason_text: string, object_type: string}} ur*/(ur) =>
-                {
-                    if (ur.reason_type === "topic" && ur.object_type === "topic")
-                        output.topics.push(new Topic(ur.object_token, ur.reason_text));
-                });
-            }
+                APIParser.parseReasons(output, act.uninterest_reasons);
         });
         return output;
     }

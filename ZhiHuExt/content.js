@@ -215,15 +215,17 @@ function monitorVoter(voterPopup)
         }
         const btn2 = createButton(["Btn-AssocAns", "Button--primary"], "启发");
         const btn3 = createButton(["Btn-Similarity", "Button--primary"], "相似性");
+        const btn4 = createButton(["Btn-ShowTime", "Button--primary"], "时间图");
 
         if (CUR_ANSWER)
-            btn2.dataset.id = CUR_ANSWER, btn2.dataset.qname = "ansid";
+            btn2.dataset.id = CUR_ANSWER, btn2.dataset.qname = "ansid", btn4.dataset.id = CUR_ANSWER, btn4.dataset.qname = "ansid";
         else if (CUR_ARTICLE)
-            btn2.dataset.id = CUR_ARTICLE, btn2.dataset.qname = "artid";
+            btn2.dataset.id = CUR_ARTICLE, btn2.dataset.qname = "artid", btn4.dataset.id = CUR_ARTICLE, btn4.dataset.qname = "artid";
 
         title.appendChild(btn1);
         title.appendChild(btn2);
         title.appendChild(btn3);
+        title.appendChild(btn4);
     }
 }
 
@@ -465,6 +467,12 @@ $("body").on("click", "button.Btn-StatVoter", e =>
     const query = `${btn.dataset.qname}=${btn.dataset.id}`;
     chrome.runtime.sendMessage({ action: "openpage", isBackground: false, target: "StatVoter.html?" + query });
 });
+$("body").on("click", "button.Btn-ShowTime", e =>
+{
+    const btn = e.target;
+    const query = e.ctrlKey && btn.dataset.qname === "uid" ? `athid=${btn.dataset.id}` : `${btn.dataset.qname}=${btn.dataset.id}`;
+    chrome.runtime.sendMessage({ action: "openpage", isBackground: false, target: "Timeline.html?" + query });
+});
 $("body").on("click", "button.Btn-Similarity", e =>
 {
     const thisbtn = e.target;
@@ -563,7 +571,7 @@ async function TrashDropper(ev)
 {
     const fbtns = document.body.querySelector(".CornerButtons");
     const svgZH = createSVG(24, 24, "0 0 100 91",
-        "M53.29 80.035l7.32.002 2.41 8.24 13.128-8.24h15.477v-67.98H53.29v67.978zm7.79-60.598h22.756v53.22h-8.73l-8.718 5.473-1.587-5.46-3.72-.012v-53.22zM46.818 43.162h-16.35c.545-8.467.687-16.12.687-22.955h15.987s.615-7.05-2.68-6.97H16.807c1.09-4.1 2.46-8.332 4.1-12.708 0 0-7.523 0-10.085 6.74-1.06 2.78-4.128 13.48-9.592 24.41 1.84-.2 7.927-.37 11.512-6.94.66-1.84.785-2.08 1.605-4.54h9.02c0 3.28-.374 20.9-.526 22.95H6.51c-3.67 0-4.863 7.38-4.863 7.38H22.14C20.765 66.11 13.385 79.24 0 89.62c6.403 1.828 12.784-.29 15.937-3.094 0 0 7.182-6.53 11.12-21.64L43.92 85.18s2.473-8.402-.388-12.496c-2.37-2.788-8.768-10.33-11.496-13.064l-4.57 3.627c1.363-4.368 2.183-8.61 2.46-12.71H49.19s-.027-7.38-2.372-7.38zm128.752-.502c6.51-8.013",
+        "M53.29 80.035l7.32.002 2.41 8.24 13.128-8.24h15.477v-67.98H53.29v67.978zm7.79-60.598h22.756v53.22h-8.73l-8.718 5.473-1.587-5.46-3.72-.012v-53.22zM46.818 43.162h-16.35c.545-8.467.687-16.12.687-22.955h15.987s.615-7.05-2.68-6.97H16.807c1.09-4.1 2.46-8.332 4.1-12.708 0 0-7.523 0-10.085 6.74-1.06 2.78-4.128 13.48-9.592 24.41 1.84-.2 7.927-.37 11.512-6.94.66-1.84.785-2.08 1.605-4.54h9.02c0 3.28-.374 20.9-.526 22.95H6.51c-3.67 0-4.863 7.38-4.863 7.38H22.14C20.765 66.11 13.385 79.24 0 89.62c6.403 1.828 12.784-.29 15.937-3.094 0 0 7.182-6.53 11.12-21.64L43.92 85.18s2.473-8.402-.388-12.496c-2.37-2.788-8.768-10.33-11.496-13.064l-4.57 3.627c1.363-4.368 2.183-8.61 2.46-12.71H49.19s-.027-7.38-2.372-7.38",
         { fill: "#ff7000" });
     const btn1 = createButton(["CornerButton", "Button--plain"]);
     btn1.dataset.tooltip = "知乎疯牛病";

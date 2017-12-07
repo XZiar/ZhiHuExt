@@ -259,7 +259,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) =>
                 const fn = Analyse[request.method];
                 if (fn)
                 {
-                    fn(request.argument).then(
+                    fn(...request.argument).then(
                         ret => sendResponse(ret),
                         error => console.warn("calling analyse fail", error));
                 }

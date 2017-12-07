@@ -1,0 +1,41 @@
+﻿<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta charset="UTF-8">
+    <script src="3rd/js/jquery-3.2.1.min.js"></script>
+    <script src="pod.js"></script>
+    <script src="utils.js"></script>
+    <script src="ContentBase.js"></script>
+    <script src="AnalysePage.js"></script>
+    <script src="DownloadMan.js"></script>
+    <link rel="stylesheet" href="3rd/css/jquery.dataTables.min.css">
+    <script src="3rd/js/jquery.dataTables.min.js"></script>
+    <script src="3rd/js/echarts.js"></script>
+    <title>时间分析</title>
+    <style>
+        td:last-child {
+            font-weight: bold;
+        }
+        table.dataTable tbody td {
+            padding: 6px 10px;
+        }
+    </style>
+</head>
+<body>
+    <div>
+        <h3 style="text-align:center">
+            <button id="changeonly">切换分组</button>
+        </h3>
+        <div style="text-align:center">
+            <div id="graph" style="width: 90%; height: 400px; max-width: 1024px; max-height:640px;"></div>
+        </div>
+        <div style="text-align:center">
+            <select id="selUser" value="只看某用户">只看某用户</select>
+            <select id="selObj" value="只看某回答/文章">只看某回答/文章</select>
+            <br />
+        </div>
+    </div>
+    <script src="Timeline.js"></script>
+</body>
+</html>

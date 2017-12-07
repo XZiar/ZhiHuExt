@@ -116,7 +116,6 @@ $(document).on("click", "#copyusr", e =>
     SendMsgAsync(request);
 });
 
-new Clipboard('#copyBtn');
 
 !async function()
 {

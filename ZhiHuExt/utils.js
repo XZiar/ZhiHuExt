@@ -43,6 +43,24 @@ Array.prototype.mapToProp = function (keyName)
     }
     return ret;
 }
+Array.prototype.groupBy = function (keyName)
+{
+    const ret = new Map();
+    /**@type {Map<any,number>}*/
+    const idxmap = new Map();
+    for (let idx = 0; idx < this.length; ++idx)
+    {
+        const obj = this[idx], grp = obj[keyName];
+        let list = ret.get(grp);
+        if (list == null)
+        {
+            list = [];
+            ret.set(grp, list);
+        }
+        list.push(obj);
+    }
+    return ret;
+}
 Array.fromArrays = function (...array)
 {
     return [].concat.apply([], array);
@@ -453,6 +471,17 @@ class SimpleBag
 
 
 /**
+ * @param {...[]} objs
+ * @returns {IterableIterator<[]>}
+ */
+function* zip(...objs)
+{
+    const maxlen = Math.min(...objs.mapToProp("length"));
+    for (let i = 0; i < maxlen; ++i)
+        yield objs.mapToProp(i);
+}
+
+/**
  * @template T
  * @param {...T} arg
  */
@@ -486,6 +515,12 @@ function _getQueryString(qurl)
     }
     return ret;
 };
+function _toQueryString(obj)
+{
+    const query = Object.entries(obj).map(x => `${x[0]}=${x[1]}`).join("&");
+    return query;
+}
+
 /**
  * @param {number} ms
  */
@@ -577,6 +612,31 @@ function createSVG(width, height, viewbox, paths, attrs)
         attrs.forEach(attr => Object.entries(attr).forEach(p => svg.setAttribute(p[0], p[1])));
     }
     return svg;
+}
+/**
+ * @param {string | number | string[] | number[]} value
+ * @param {string | string[]} text
+ */
+function createOption(value, text)
+{
+    if (value instanceof Array && text instanceof Array)
+    {
+        const maxlen = Math.min(value.length, text.length);
+        const opts = [];
+        for (let i = 0; i < maxlen; ++i)
+        {
+            const opt = document.createElement("option");
+            opt.innerText = text[i], opt.value = value[i];
+            opts.push(opt);
+        }
+        return opts;
+    }
+    else
+    {
+        const opt = document.createElement("option");
+        opt.innerText = text, opt.value = value;
+        return opt;
+    }
 }
 
 async function SendMsgAsync(data)

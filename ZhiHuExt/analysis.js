@@ -122,35 +122,88 @@ class Analyse
     {
         const uids = await toPureArray(uid);
         /**@type {[Zan[],Zan[]]}*/
-        const [zans, zanarts] = await Promise.all([db.zans.where("from").anyOf(uids).toArray(), db.zanarts.where("from").anyOf(uids).toArray()]);
-        const head = "\uFEFF" + "点赞人,点赞目标,点赞时间,点赞日期,当日计秒,当日分钟\n";
-        const zandata = Analyse._zanToCSV(zans.concat(zanarts));
+        const [zananss, zanarts] = await Promise.all([db.zans.where("from").anyOf(uids).toArray(), db.zanarts.where("from").anyOf(uids).toArray()]);
         if (returnit)
-            return zandata;
+        {
+            /**@type {{[x:string]:User}}*/
+            const users = await db.getDetailMapOfIds("users", uids, "id");
+            return { zananss: zananss, zanarts: zanarts, users: users };
+        }
+        const zans = zananss.concat(zanarts);
+        const head = "\uFEFF" + "点赞人,点赞目标,点赞时间,点赞日期,当日计秒,当日分钟\n";
+        const zandata = Analyse._zanToCSV(zans);
         const csvstr = zandata.map(dat => dat.join(',')).join('\n');
         DownloadMan.exportDownload(head + csvstr, "txt", `acts#${uids}#${new Date().Format("yyMMdd-hhmm")}.csv`);
     }
-    static async outputAnswerActs(aid, returnit)
+    static async outputAActs(aid, type, returnit)
     {
         const aids = await toPureArray(aid);
-        /**@type {[Zan[], Answer[]]}*/
-        const [zans, anss] = await Promise.all([db.zans.where("to").anyOf(aids).toArray(), db.answers.where("id").anyOf(aids).toArray()]);
+        let pmss;
+        if (type === "article")
+            pmss = [db.zanarts.where("to").anyOf(aids).toArray(), db.getDetailMapOfIds("articles", aids, "id")];
+        else
+            pmss = [db.zans.where("to").anyOf(aids).toArray(), db.getDetailMapOfIds("answers", aids, "id")];
+        /**@type {[Zan[], {[x:number]:Answer|Article}]}*/
+        const [zans, objs] = await Promise.all(pmss);
+        if (returnit)
+            return { zans: zans, objs: objs };
         const head = "\uFEFF" + "点赞人,点赞目标,点赞时间,点赞日期,当日计秒,当日分钟\n";
-        const selfdata = anss.sort((a, b) => a.timeC - b.timeC).map(ans =>
+        const selfdata = Object.values(objs).sort((a, b) => a.timeC - b.timeC).map(ans =>
         {
             const [, mon, day, hour, minu, sec,] = new Date(ans.timeC * 1000).getDetailCHN();
             return [ans.author, ans.id, ans.timeC, `${mon}/${day}`, sec + minu * 60 + hour * 3600, minu + hour * 60];
         });
         const zandata = Analyse._zanToCSV(zans);
         const csvdata = zandata.concat(selfdata);
-        if (returnit)
-            return csvdata;
         const csvstr = csvdata.map(dat => dat.join(',')).join('\n');
         DownloadMan.exportDownload(head + csvstr, "txt", `acts#${aids}#${new Date().Format("yyMMdd-hhmm")}.csv`);
     }
     static async outputQuestActs(qid, returnit)
     {
-        return await Analyse.outputAnswerActs(await db.getAnsIdByQuestion(qid), returnit);
+        const qids = await toPureArray(qid);
+        const retpms = Analyse.outputAActs(await db.getAnsIdByQuestion(qids), "answer", returnit);
+        if (returnit)
+        {
+            /**@type {{[x:number]:Question[]}}*/
+            const qsts = await db.getDetailMapOfIds("questions", qids, "id");
+            const ret = await retpms;
+            return { zans: ret.zans, anss: ret.objs, qsts: qsts };
+        }
+    }
+    static async outputAuthorActs(uid, returnit)
+    {
+        const uids = await toPureArray(uid);
+        const [ansids, artids] = await Promise.all([db.getIdByAuthor(uids, "answer"), db.getIdByAuthor(uids, "article")]);
+
+        const pmss = [db.zans.where("to").anyOf(ansids).toArray(), db.getDetailMapOfIds("answers", ansids, "id"), db.zanarts.where("to").anyOf(artids).toArray(), db.getDetailMapOfIds("articles", artids, "id")];
+        /**@type {[Zan[], {[x:number]:Answer}, Zan[], {[x:number]:Article}]}*/
+        const [zananss, anss, zanarts, arts] = await Promise.all(pmss);
+        if (returnit)
+        {
+            /**@type {{[x:string]:User}}*/
+            const users = await db.getDetailMapOfIds("users", uids, "id");
+            return { zananss: zananss, zanarts: zanarts, anss: anss, arts: arts, users: users };
+        }
+        const head = "\uFEFF" + "点赞人,点赞目标,点赞时间,点赞日期,当日计秒,当日分钟\n";
+        const selfdata = Object.values(anss).concat(Object.values(arts))
+            .sort((a, b) => a.timeC - b.timeC).map(obj =>
+            {
+                    const [, mon, day, hour, minu, sec,] = new Date(obj.timeC * 1000).getDetailCHN();
+                    return [obj.author, obj.id, obj.timeC, `${mon}/${day}`, sec + minu * 60 + hour * 3600, minu + hour * 60];
+            });
+        const zans = zananss.concat(zanarts);
+        const zandata = Analyse._zanToCSV(zans);
+        const csvdata = zandata.concat(selfdata);
+        const csvstr = csvdata.map(dat => dat.join(',')).join('\n');
+        DownloadMan.exportDownload(head + csvstr, "txt", `acts#author#${uids}#${new Date().Format("yyMMdd-hhmm")}.csv`);
+
+        if (returnit)
+        {
+            /**@type {{[x:number]:Question[]}}*/
+            const qsts = await db.getDetailMapOfIds("questions", qids, "id");
+            const ret = await retpms;
+            return { zans: ret.zans, anss: ret.objs, qsts: qsts };
+        }
     }
     /**
      * @param {[string, number, number, string, number, number][]} zandata
