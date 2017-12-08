@@ -141,9 +141,10 @@ async function addSpamVoterBtns(voterNodes)
             continue;
         const uid = nameLink.getAttribute("href").split("/").pop();
         users.push(uid);
-        const dset = JSON.parse(node.children[0].dataset.zaModuleInfo);
+        const moduleNode = node.children[0];
+        const dset = JSON.parse(moduleNode.dataset.zaModuleInfo || moduleNode.dataset.zaExtraModule);
         const hashid = dset.card.content.member_hash_id;
-        if (hashid.startsWith("#") && hashid != "#-1")
+        if (hashid[0] === "#" && hashid != "#-1")
         {
             const votedate = Number(hashid.substr(1));
             const [, , , hour, minu, ,] = new Date(votedate * 1000).getDetailCHN();
@@ -198,6 +199,7 @@ function monitorVoter(voterPopup)
     if (title)
     {
         const btn1 = createButton(["Btn-CheckAllStatus", "Button--primary"], "检测全部");
+        btn1.ondragover = ev => ev.preventDefault();
         btn1.ondrop = ev =>
         {
             ev.preventDefault();
@@ -207,10 +209,10 @@ function monitorVoter(voterPopup)
             const btns = $(".Btn-CheckStatus", voterPopup).toArray();
             for (let i = 0; i < btns.length; ++i)
             {
-                if (btn.dataset.uid == ds.uid)
+                if (btns[i].dataset.id == ds.id)
                     break;
-                if (btn.style.backgroundColor == "")
-                    btn.style.backgroundColor = "rgb(0, 224, 32)";
+                if (btns[i].style.backgroundColor == "")
+                    btns[i].style.backgroundColor = "rgb(0, 224, 32)";
             }
         }
         const btn2 = createButton(["Btn-AssocAns", "Button--primary"], "启发");
@@ -236,7 +238,7 @@ function addAASpamBtns(answerNodes)
         {
             if (!node) return;
             /**@type {{type: string, token: string, upvote_num: number, comment_num: number, parent_token: string, author_member_hash_id: string}}*/
-            const ansInfo = JSON.parse(node.dataset.zaModuleInfo).card.content;
+            const ansInfo = JSON.parse(node.dataset.zaModuleInfo || node.dataset.zaExtraModule).card.content;
             let thetype;
             if (ansInfo.type === "Answer")
                 thetype = "answer";
@@ -446,7 +448,7 @@ $("body").on("click", "span.Voters", function ()
     /**
      * @type {{type: "Post"|"Answer", token: string, upvote_num: number, comment_num: number, publish_timestamp: number, author_member_hash_id: string}}
      */
-    const itemContent = JSON.parse(itemNode.dataset.zaModuleInfo).card.content;
+    const itemContent = JSON.parse(itemNode.dataset.zaModuleInfo || itemNode.dataset.zaExtraModule).card.content;
     if (itemContent.type === "Answer")
         CUR_ANSWER = itemContent.token;
     else if (itemContent.type === "Post")

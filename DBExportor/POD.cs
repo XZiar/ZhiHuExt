@@ -106,6 +106,11 @@ namespace DBExportor.Pods
         public List<Answer> answers = new List<Answer>();
         public List<Zan> zans = new List<Zan>();
         public List<Zan> zanarts = new List<Zan>();
+        public void Slim()
+        {
+            answers.ForEach(a => a.excerpt = null);
+            articles.ForEach(a => a.excerpt = null);
+        }
     }
 
     [AttributeUsage(AttributeTargets.Struct, AllowMultiple = false)]

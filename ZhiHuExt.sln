@@ -44,9 +44,12 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Pages", "Pages", "{E8E9AB37
 		ZhiHuExt\Export.js = ZhiHuExt\Export.js
 		ZhiHuExt\popup.html = ZhiHuExt\popup.html
 		ZhiHuExt\popup.js = ZhiHuExt\popup.js
+		ZhiHuExt\Relations.html = ZhiHuExt\Relations.html
+		ZhiHuExt\Relations.js = ZhiHuExt\Relations.js
 		ZhiHuExt\StatVoter.html = ZhiHuExt\StatVoter.html
 		ZhiHuExt\StatVoter.js = ZhiHuExt\StatVoter.js
 		ZhiHuExt\Timeline.html = ZhiHuExt\Timeline.html
+		ZhiHuExt\Timeline.js = ZhiHuExt\Timeline.js
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "template", "template", "{D348C6E8-E1A4-4D91-A246-BACD33EE99A0}"
@@ -60,6 +63,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "template", "template", "{D3
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "3rd", "3rd", "{30046561-6196-4231-96CA-494F6AD31CDB}"
 	ProjectSection(SolutionItems) = preProject
+		ZhiHuExt\3rd\js\3d-force-graph-1.10.1.js = ZhiHuExt\3rd\js\3d-force-graph-1.10.1.js
+		ZhiHuExt\3rd\js\3d-force-graph-1.10.1.min.js = ZhiHuExt\3rd\js\3d-force-graph-1.10.1.min.js
 		ZhiHuExt\3rd\js\clipboard.min.js = ZhiHuExt\3rd\js\clipboard.min.js
 		ZhiHuExt\3rd\js\dexie.d.ts = ZhiHuExt\3rd\js\dexie.d.ts
 		ZhiHuExt\3rd\js\dexie.js = ZhiHuExt\3rd\js\dexie.js
@@ -78,6 +83,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "OtherFiles", "OtherFiles", 
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "License", "License", "{0E601121-1D6D-4E85-A07C-5F6C0C7B46F9}"
 	ProjectSection(SolutionItems) = preProject
+		License\3d-force-graph.license = License\3d-force-graph.license
 		License\Dexie.license = License\Dexie.license
 		License\echarts.license = License\echarts.license
 		License\jQuery.license = License\jQuery.license

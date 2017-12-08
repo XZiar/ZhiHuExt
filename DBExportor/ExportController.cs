@@ -38,11 +38,8 @@ namespace DBExportor.Controllers
             if (!TryGetDB(out var obj))
                 return StatusCode(404);
             var fname = $"{Program.DBFolder}/ZhiHuExtDB-{ObjName}.json";
-            if(slim)
-            {
-                obj.answers.ForEach(a => a.excerpt = null);
-                obj.articles.ForEach(a => a.excerpt = null);
-            }
+            if (slim)
+                obj.Slim();
             using (StreamWriter file = System.IO.File.CreateText(fname))
             {
                 Serializer.Serialize(file, obj);

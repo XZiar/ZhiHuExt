@@ -1,0 +1,29 @@
+﻿<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta charset="UTF-8">
+    <script src="3rd/js/jquery-3.2.1.min.js"></script>
+    <script src="pod.js"></script>
+    <script src="utils.js"></script>
+    <script src="ContentBase.js"></script>
+    <script src="AnalysePage.js"></script>
+    <script src="DownloadMan.js"></script>
+    <script src="3rd/js/3d-force-graph-1.10.1.js"></script>
+    <title>关系分析</title>
+</head>
+<body>
+    <div>
+        <h3 style="text-align:center">
+            <span id="athcnt">0</span>个待搜索的作者，<span id="votcnt">0</span>个待搜索的点赞人<br />
+            现有<span id="nodecnt">0</span>个节点，<span id="linkcnt">0</span>条关系<br />
+            <button id="addvot">向上搜索</button><button id="addath">向下搜索</button>
+            赞数下限：<input id="minzan" type="number" value="100" />
+        </h3>
+        <div style="text-align:center">
+            <div id="graph" style="width: 90%; height: 640px; max-width: 1024px; max-height:640px;"></div>
+        </div>
+    </div>
+    <script src="Relations.js"></script>
+</body>
+</html>

@@ -301,6 +301,12 @@ class ZhiHuDB
         return recs.mapToProp("id");
     }
 
+    async getAny(table, key, val)
+    {
+        const vals = await toPureArray(val);
+        return await this.db[table].where(key).anyOf(vals).toArray();
+    }
+
     /**
      * @param {string} table
      * @param {[] | Promise<any>} id
@@ -310,7 +316,10 @@ class ZhiHuDB
     async getPropMapOfIds(table, id, prop)
     {
         const ids = await toPureArray(id);
-        const retMap = await this.db[table].where("id").anyOf(ids).toPropMap("id", prop);
+        const data = await this.db[table].where("id").anyOf(ids).toArray();
+        const retMap = {};
+        for (let i = 0; i < data.length; ++i)
+            retMap[data[i].id] = data[i][prop];
         return retMap;
     }
     /**
@@ -334,6 +343,62 @@ class ZhiHuDB
         }
         return retMap;
     }
+
+    /**
+     * @param {string | string[]} uid
+     * @param {"from" | "to"} target
+     */
+    async getZanLinks(uid, target)
+    {
+        const uids = await toPureArray(uid);
+        console.log(`here get ${uids.length} uids`);
+        const ret = [];
+        if (target === "to")
+        {
+            const pmss = [this.db.zans.where("from").anyOf(uids).primaryKeys(), this.db.zanarts.where("from").anyOf(uids).primaryKeys()];
+            /**@type {[string,number][][]}*/
+            const [zanAnss, zanArts] = await Promise.all(pmss);
+            console.log(`here get ${zanAnss.length} ans-zan, ${zanArts.length} art-zan`);
+            /**@type {{[x:number]:string}[]}*/
+            const [ansmap, artmap] = await Promise.all([db.getPropMapOfIds("answers", zanAnss.mapToProp(1), "author"), db.getPropMapOfIds("articles", zanArts.mapToProp(1), "author")]);
+            zanAnss.forEach(pair =>
+            {
+                const ath = ansmap[pair[1]];
+                if (ath)//remove 
+                    ret.push([pair[0], ath]);
+            });
+            zanArts.forEach(pair =>
+            {
+                const ath = artmap[pair[1]];
+                if (ath)//remove 
+                    ret.push([pair[0], ath]);
+            });
+        }
+        else if (target === "from")
+        {
+            /**@type {{[x:number]:string}[]}*/
+            const [ansmap, artmap] = await Promise.all([this.db.answers.where("author").anyOf(uids).toPropMap("id", "author"), this.db.articles.where("author").anyOf(uids).toPropMap("id", "author")]);
+            const pmss = [this.db.zans.where("to").anyOf(Object.keys(ansmap).map(Number)).primaryKeys(), this.db.zanarts.where("to").anyOf(Object.keys(artmap).map(Number)).primaryKeys()];
+            /**@type {[string,number][][]}*/
+            const [zanAnss, zanArts] = await Promise.all(pmss);
+            console.log(`here get ${zanAnss.length} ans-zan, ${zanArts.length} art-zan`);
+            zanAnss.forEach(pair =>
+            {
+                const ath = ansmap[pair[1]];
+                if (ath)//remove 
+                    ret.push([pair[0], ath]);
+            });
+            zanArts.forEach(pair =>
+            {
+                const ath = artmap[pair[1]];
+                if (ath)//remove 
+                    ret.push([pair[0], ath]);
+            });
+        }
+        return ret;
+    }
+
+
     /**
      * @param {number | number[] | BagArray | Promise<Any>} id
      * @param {"answer" | "article"} target

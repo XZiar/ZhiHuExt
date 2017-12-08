@@ -234,9 +234,26 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) =>
                     {
                         sendResponse(part); return;
                     }
-                    const blob = new Blob([part], { type: "application/json" });
-                    const url = URL.createObjectURL(blob);
-                    sendResponse(url);
+                    if (part === "[]")
+                        sendResponse("[]");
+                    else if (request.sending)
+                    {
+                        $.ajax(request.sending.url,
+                            {
+                                type: "POST",
+                                headers: request.sending.headers,
+                                contentType: "application/json",
+                                data: part
+                            })
+                            .done(x => sendResponse("true"))
+                            .fail(err => sendResponse("false"));
+                    }
+                    else
+                    {
+                        const blob = new Blob([part], { type: "application/json" });
+                        const url = URL.createObjectURL(blob);
+                        sendResponse(url);
+                    }
                 },
                 err => console.warn(err));
             return true;

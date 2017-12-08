@@ -1,6 +1,6 @@
 # 知乎疯牛病
 
-用于解决知乎spam信息的chrome插件（兼爬虫）
+想要解决知乎spam信息的chrome插件（兼爬虫）
 
 
 ## Dependency
@@ -9,6 +9,7 @@
  * [clipboard.js](https://clipboardjs.com/) Modern copy to clipboard [MIT License](https://zenorocha.mit-license.org/)
  * [DataTables](https://datatables.net/) Table plug-in for jQuery [MIT License](https://datatables.net/license/mit)
  * [echarts](http://echarts.baidu.com/) A powerful, interactive charting and visualization library for browser [BSD-3 License](./License/echarts.license)
+ * [3d-force-graph](https://github.com/vasturiano/3d-force-graph/) 3D force-directed graph component using ThreeJS/WebGL [MIT License](./License/3d-force-graph.license)
 
 ## License
 

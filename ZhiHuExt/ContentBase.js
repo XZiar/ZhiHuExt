@@ -188,6 +188,7 @@ class ContentBase
                 const len = 20;
                 demand += newtotal - oldtotal;
                 offset += len, left -= len - (newtotal - oldtotal);
+                oldtotal = newtotal;
                 if (onProgress)
                     onProgress(ret.length, demand);
                 isEnd = part.end;
@@ -306,9 +307,10 @@ class ContentBase
             const entities = APIParser.parseEntities(state.entities);
             let reportdata;
             let lasttime = Math.min(curtime, ...Object.keys(state.entities.activities).map(Number));
+            const limit = (user.status === "ban" || user.status === "sban") ? 0 : chkacts[0];//skip fetchActs cause it should be hadle outside with more iteration
             if (chkacts && lasttime != curtime)
             {
-                const actsret = await ContentBase.fetchUserActs(uid, chkacts[0], chkacts[1], lasttime, chkacts[2]);
+                const actsret = await ContentBase.fetchUserActs(uid, limit, chkacts[1], lasttime, chkacts[2]);
                 lasttime = actsret.lasttime;
                 reportdata = entities.add(actsret.acts);
             }

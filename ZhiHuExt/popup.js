@@ -31,6 +31,10 @@ $(document).on("click", "button#timeline", () =>
 {
     chrome.runtime.sendMessage({ action: "openpage", isBackground: false, target: "Timeline.html" });
 });
+$(document).on("click", "button#relations", () =>
+{
+    chrome.runtime.sendMessage({ action: "openpage", isBackground: false, target: "Relations.html" });
+});
 $(document).ready(() =>
 {
     //rfs();
