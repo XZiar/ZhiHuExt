@@ -36,9 +36,9 @@ class UserNode
     constructor(user)
     {
         this.id = user.id;
-        this.it = iter;
+        //this.it = iter + "";
         this.name = user.name;
-        this.val = Math.floor(Math.log(user.follower + 2));
+        this.val = Math.cbrt(user.follower + 1);
         this.zancnt = user.zancnt;
         if (user.status === "ban" || user.status === "sban")
             this.color = "red";
@@ -56,18 +56,34 @@ let nodes = [];
 /**@type {{source:string, target:string}[]}*/
 let links = [];
 
+let isCtrl = false, isShift = false;
+document.addEventListener("keydown", ev => { isCtrl = ev.ctrlKey; isShift = ev.shiftKey; });
+document.addEventListener("keyup", ev => { isCtrl = ev.ctrlKey; isShift = ev.shiftKey; });
 
 const FGraph = ForceGraph3D()(document.getElementById("graph"));
 FGraph.numDimensions(3);
 //FGraph.forceEngine('ngraph');
 FGraph.cooldownTime(40000);
-FGraph.autoColorBy("it");
+//FGraph.autoColorBy("it");
 FGraph.lineOpacity(0.1);
 FGraph.nodeRelSize(1);
 FGraph.nodeResolution(4);
 FGraph.onNodeClick(/**@param {UserNode} node*/ (node) =>
 {
-    chrome.runtime.sendMessage({ action: "openpage", target: "/Relations.html?uid=" + node.id, isBackground: true });
+    if (isShift)
+    {
+        chrome.runtime.sendMessage({ action: "openpage", target: "https://www.zhihu.com/people/" + node.id, isBackground: true });
+    }
+    else if (isCtrl)
+    {
+        const qs = _getQueryString();
+        qs.uid = node.id;
+        chrome.runtime.sendMessage({ action: "openpage", target: "/Relations.html?" + _toQueryString(qs), isBackground: true });
+    }
+    else
+    {
+        chrome.runtime.sendMessage({ action: "copy", data: node.name });
+    }
 });
 
 
@@ -172,7 +188,6 @@ $(document).on("click", "#addvot", e =>
 });
 !async function()
 {
-    /**@type {{[x: string]: string}}*/
     const qs = _getQueryString();
     if (qs.remotedb != null)
     {

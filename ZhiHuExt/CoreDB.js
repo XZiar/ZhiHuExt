@@ -271,7 +271,24 @@ class ZhiHuDB
             return this.db.tables.mapToProp("name").filter(x => x !== "rectime");
         return JSON.stringify(await this.db[table].offset(from).limit(count).toArray());
     }
-
+    /**
+     * @param {string} table
+     * @param {any} last
+     * @param {number} count
+     * @returns {Promise<object[]>}
+     */
+    async part2(table, last, count)
+    {
+        let key = undefined;
+        if (last != null)
+            key = IDBKeyRange.lowerBound(last, true);
+        const ret = this.db.backendDB().transaction(table, "readonly").objectStore(table).getAll(key, count);
+        return new Promise((resolve, reject) =>
+        {
+            ret.onsuccess = ev => resolve(ret.result);
+            ret.onerror = ev => { console.warn("partDB2 fauled!", ret.result); reject(ret.result); }
+        });
+    }
 
 
     /**

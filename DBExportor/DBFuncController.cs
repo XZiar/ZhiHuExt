@@ -2,20 +2,23 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 
 namespace DBExportor.Controllers
 {
+
     [Route("dbfunc")]
     public class DBFuncController : ControllerBase
     {
-        private readonly ILogger<ImportController> LOG;
+        private readonly ILogger<DBFuncController> LOG;
 
-        public DBFuncController(ILogger<ImportController> logger)
+        public DBFuncController(ILogger<DBFuncController> logger)
         {
             LOG = logger;
         }
@@ -25,30 +28,30 @@ namespace DBExportor.Controllers
             Console.WriteLine($"building cache for {ObjName}");
             var caches = new Dictionary<string, object>();
             {
-                Dictionary<string, int> uidcache = new Dictionary<string, int>();
+                Dictionary<uint, int> uidcache = new Dictionary<uint, int>();
                 int idx = 0;
                 foreach (var user in db.users)
                 {
-                    uidcache[user.id] = idx++;
+                    uidcache[user.id_] = idx++;
                 }
                 caches["uid-user"] = uidcache;
                 LOG.LogInformation($"user's index cache built");
             }
             {
-                caches["from-zan"] = db.zans.Zip(Enumerable.Range(0, db.zans.Count), (zan, idx) => (zan.from, idx)).ToLookup(x => x.from, x => x.idx);
+                caches["from-zan"] = db.zans.Zip(Enumerable.Range(0, db.zans.Count), (zan, idx) => (zan.from_, idx)).ToLookup(x => x.from_, x => x.idx);
                 caches["to-zan"] = db.zans.Zip(Enumerable.Range(0, db.zans.Count), (zan, idx) => (zan.to, idx)).ToLookup(x => x.to, x => x.idx);
                 LOG.LogInformation($"zanart's index cache built");
 
-                caches["from-zanart"] = db.zanarts.Zip(Enumerable.Range(0, db.zanarts.Count), (zan, idx) => (zan.from, idx)).ToLookup(x => x.from, x => x.idx);
+                caches["from-zanart"] = db.zanarts.Zip(Enumerable.Range(0, db.zanarts.Count), (zan, idx) => (zan.from_, idx)).ToLookup(x => x.from_, x => x.idx);
                 caches["to-zanart"] = db.zanarts.Zip(Enumerable.Range(0, db.zanarts.Count), (zan, idx) => (zan.to, idx)).ToLookup(x => x.to, x => x.idx);
                 LOG.LogInformation($"zanart's index cache built");
             }
             {
-                var dict1 = db.answers.ToDictionary(ans => ans.id, ans => ans.author);
+                var dict1 = db.answers.ToDictionary(ans => ans.id, ans => ans.author_);
                 caches["ans-author"] = dict1;
                 caches["author-ans"] = dict1.ToLookup(kv => kv.Value, kv => kv.Key);
                 LOG.LogInformation($"answer's index cache built");
-                var dict2 = db.articles.ToDictionary(art => art.id, art => art.author);
+                var dict2 = db.articles.ToDictionary(art => art.id, art => art.author_);
                 caches["art-author"] = dict2;
                 caches["author-art"] = dict1.ToLookup(kv => kv.Value, kv => kv.Key);
                 LOG.LogInformation($"article's index cache built");
@@ -69,9 +72,9 @@ namespace DBExportor.Controllers
             {
                 try
                 {
-                    var db = Serializer.Deserialize<StandardDB>(reader);
+                    var db = SlimSerializer.Deserialize<StandardDB>(reader);
                     LOG.LogInformation("json loaded");
-                    db.Slim();
+                    db.Slim(1);
                     GC.Collect(2, GCCollectionMode.Optimized, false, true);
                     var cache = BuildCache(db);
                     if (!NewCache(cache) || !NewDB(db)) 
@@ -79,7 +82,7 @@ namespace DBExportor.Controllers
                 }
                 catch (Exception e)
                 {
-                    LOG.LogError(e.Message);
+                    LOG.LogError(e.Message, e.StackTrace);
                     return StatusCode(500);
                 }
             }
@@ -89,8 +92,9 @@ namespace DBExportor.Controllers
 
         private User[] GetUsers(StandardDB db, Dictionary<string, object> cache, string[] uids)
         {
-            var uidcache = cache["uid-user"] as Dictionary<string, int>;
-            return uids.Select(uid => uidcache.TryGetValue(uid, out var idx) ? idx : -1).Where(x => x >= 0)
+            var uidcache = cache["uid-user"] as Dictionary<uint, int>;
+            return uids.Select(uid => UIDPool.Get(uid)).Where(uid => uid != uint.MaxValue)
+                .Select(uid => uidcache.TryGetValue(uid, out var idx) ? idx : -1).Where(x => x >= 0)
                 .Select(idx => db.users[idx]).ToArray();
         }
 
@@ -141,38 +145,58 @@ namespace DBExportor.Controllers
             Console.WriteLine($"here get {uids.Length} uids");
             if (target == "to")
             {
-                var zanfcache = cache["from-zan"] as ILookup<string, int>;
-                var zanartfcache = cache["from-zanart"] as ILookup<string, int>;
-                var ansathcache = cache["ans-author"] as Dictionary<uint, string>;
-                var artathcache = cache["art-author"] as Dictionary<uint, string>;
+                var zanfcache = cache["from-zan"] as ILookup<uint, int>;
+                var zanartfcache = cache["from-zanart"] as ILookup<uint, int>;
+                var ansathcache = cache["ans-author"] as Dictionary<uint, uint>;
+                var artathcache = cache["art-author"] as Dictionary<uint, uint>;
 
-                var zanans = uids.SelectMany(uid => zanfcache[uid].Select(idx =>
+                var zanans = uids.SelectMany(uid =>
                 {
-                    ansathcache.TryGetValue(db.zans[idx].to, out var ath);
-                    return new string[] { uid, ath };
-                })).Where(pair => pair[1] != null);
-                var zanart = uids.SelectMany(uid => zanartfcache[uid].Select(idx =>
+                    var id = UIDPool.Get(uid);
+                    if (id == uint.MaxValue)
+                        return Enumerable.Empty<string[]>();
+                    return zanfcache[id].Select(idx =>
+                    {
+                        ansathcache.TryGetValue(db.zans[idx].to, out var ath);
+                        return new string[] { uid, UIDPool.GetString(ath) };
+                    });
+                }).Where(pair => pair[1] != null);
+                var zanart = uids.SelectMany(uid =>
                 {
-                    artathcache.TryGetValue(db.zanarts[idx].to, out var ath);
-                    return new string[] { uid, ath };
-                })).Where(pair => pair[1] != null);
+                    var id = UIDPool.Get(uid);
+                    if (id == uint.MaxValue)
+                        return Enumerable.Empty<string[]>();
+                    return zanartfcache[id].Select(idx =>
+                    {
+                        artathcache.TryGetValue(db.zanarts[idx].to, out var ath);
+                        return new string[] { uid, UIDPool.GetString(ath) };
+                    });
+                }).Where(pair => pair[1] != null);
                 return zanans.Concat(zanart).ToArray();
             }
             else if (target == "from")
             {
-                var athanscache = cache["author-ans"] as ILookup<string, uint>;
-                var athartcache = cache["author-art"] as ILookup<string, uint>;
+                var athanscache = cache["author-ans"] as ILookup<uint, uint>;
+                var athartcache = cache["author-art"] as ILookup<uint, uint>;
                 var zantcache = cache["to-zan"] as ILookup<uint, int>;
                 var zanarttcache = cache["to-zanart"] as ILookup<uint, int>;
 
                 var zanans = uids.SelectMany(uid =>
-                    athanscache[uid].SelectMany(ansid => zantcache[ansid])
-                        .Select(idx => new string[] { db.zans[idx].from, uid }))
-                    .ToArray();
+                {
+                    var id = UIDPool.Get(uid);
+                    if (id == uint.MaxValue)
+                        return Enumerable.Empty<string[]>();
+                    return athanscache[id].SelectMany(ansid => zantcache[ansid])
+                        .Select(idx => new string[] { db.zans[idx].from, uid });
+                });
                 var zanart = uids.SelectMany(uid =>
-                    athartcache[uid].SelectMany(artid => zanarttcache[artid])
-                        .Select(idx => new string[] { db.zanarts[idx].from, uid }))
-                    .ToArray();
+                {
+                    var id = UIDPool.Get(uid);
+                    if (id == uint.MaxValue)
+                        return Enumerable.Empty<string[]>();
+                    return athanscache[id].SelectMany(artid => zanarttcache[artid])
+                        .Select(idx => new string[] { db.zanarts[idx].from, uid });
+                });
                 return zanans.Concat(zanart).ToArray();
             }
             else return null;

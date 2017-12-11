@@ -2,18 +2,32 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 
 namespace DBExportor.Controllers
 {
     public class ControllerBase : Controller
     {
+        public class SlimDeseriallizeResolver : DefaultContractResolver
+        {
+            protected override JsonProperty CreateProperty(MemberInfo member, MemberSerialization memberSerialization)
+            {
+                var property = base.CreateProperty(member, memberSerialization);
+                if (property.PropertyName == "excerpt" || property.PropertyName == "head")
+                    property.ShouldDeserialize = x => false;
+                return property;
+            }
+        }
+
         protected static readonly Dictionary<string, StandardDB> DBList = new Dictionary<string, StandardDB>();
         protected static readonly Dictionary<string, Dictionary<string, object>> CacheList = new Dictionary<string, Dictionary<string, object>>();
         protected static readonly JsonSerializer Serializer = new JsonSerializer();
+        protected static readonly JsonSerializer SlimSerializer = JsonSerializer.Create(new JsonSerializerSettings { ContractResolver = new SlimDeseriallizeResolver() });
 
         protected string ObjName { get => HttpContext.Request.Headers["objid"].FirstOrDefault(); }
 

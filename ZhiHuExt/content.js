@@ -178,6 +178,8 @@ async function addSpamVoterBtns(voterNodes)
 };
 const voterObserver = new MutationObserver(records =>
 {
+    if (document.body.querySelector("#ZHE_BLOCKING_VOTER"))
+        document.body.removeChild(BLOCKING_FLAG);
     const voterNodes = Array.fromArray(
         records.filter(record => (record.type == "childList" && record.target.nodeName == "DIV"))
             .map(record => $.makeArray(record.addedNodes)))
@@ -187,8 +189,6 @@ const voterObserver = new MutationObserver(records =>
 function monitorVoter(voterPopup)
 {
     voterObserver.disconnect();
-    if (document.body.querySelector("#ZHE_BLOCKING_VOTER"))
-        document.body.removeChild(BLOCKING_FLAG);
     console.log("detected voter-popup", voterPopup);
     const curVoters = $(voterPopup).find(".List-item").toArray()
         .filter(node => !node.hasChild(".Btn-ReportSpam"));

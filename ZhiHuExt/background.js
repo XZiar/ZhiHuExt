@@ -257,6 +257,24 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) =>
                 },
                 err => console.warn(err));
             return true;
+        case "partdb2":
+            db.part2(request.target, request.from, request.count)
+                .then(part =>
+                {
+                    if (part.length === 0)
+                        sendResponse([]);
+                    $.ajax(request.sending.url,
+                        {
+                            type: "POST",
+                            headers: request.sending.headers,
+                            contentType: "application/json",
+                            data: JSON.stringify(part)
+                        })
+                        .done(x => sendResponse(part.last()))
+                        .fail(err => sendResponse("false"));
+                },
+                err => console.warn(err));
+            return true;
         case "insert":
             db.insert(request.target, request.data, putBadge);
             break;

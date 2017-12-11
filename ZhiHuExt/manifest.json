@@ -11,7 +11,7 @@
     "48": "icon.png",
     "128": "icon.png"
   },
-  "minimum_chrome_version": "55",
+  "minimum_chrome_version": "58",
   "browser_action":
   {
     "default_icon": "icon.png",
