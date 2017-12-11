@@ -264,3 +264,4 @@ __pycache__/
 *.pem
 *.crx
 /ZhiHuExt.7z
+/template

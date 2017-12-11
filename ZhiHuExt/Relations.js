@@ -186,9 +186,47 @@ $(document).on("click", "#addvot", e =>
 {
     addMore(false, e.target);
 });
+$(document).on("click", "#chgdim", e =>
+{
+    if (e.ctrlKey)
+        FGraph.numDimensions(FGraph.numDimensions() == 2 ? 3 : 2);
+    else
+    {
+        const qs = _getQueryString();
+        qs.dim = (qs.dim === "2d" ? "3d" : "2d");
+        window.location.search = "?" + _toQueryString(qs);
+    }
+});
+$(document).on("click", "#export", e =>
+{
+    const time = new Date().Format("yyyyMMdd-hhmm");
+    const linkhead = "\uFEFF" + "source,target\n";
+    let linktxt = linkhead + links.map(link => `${link.source},${link.target}\n`).join();
+    DownloadMan.exportDownload(linktxt, "txt", `Relations-link-${time}.csv`);
+    const nodehead = "\uFEFF" + "id,name,val,zan\n";
+    let nodetxt = nodehead + nodes.map(node => `${node.id},${node.name},${node.val},${node.zancnt}\n`).join();
+    DownloadMan.exportDownload(nodetxt, "txt", `Relations-node-${time}.csv`);
+});
 !async function()
 {
     const qs = _getQueryString();
+    if (qs.dim === "2d")
+    {
+        FGraph.numDimensions(2);
+    }
+    if (qs.src != null)
+    {
+        const pms = fetch(qs.src);
+        $("h3").remove("#addvot");
+        $("h3").remove("#addath");
+        $("h3").remove("#minzan");
+        $("h3").remove("#export");
+        const data = await (await pms).json();
+        nodes = data.nodes;
+        links = data.links;
+        $("#nodecnt").text(nodes.length); $("#linkcnt").text(links.length);
+        FGraph.graphData({ links: links, nodes: nodes });
+    }
     if (qs.remotedb != null)
     {
         dbid = qs.remotedb;
@@ -202,6 +240,7 @@ $(document).on("click", "#addvot", e =>
         iter = 1;
         usrMap.forEach(node =>
         {
+            node.color = "blue";
             nodes.push(node);
             athWait.add(node.id), votWait.add(node.id);
         })

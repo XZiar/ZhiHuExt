@@ -89,6 +89,7 @@ function finish(addr, id, extra)
     return pms;
 }
 
+
 /**
  * @param {string[]} tables
  * @param {number} partlen
@@ -109,47 +110,11 @@ async function send(tables, partlen, addr, onProgress)
             len *= 2;
         else if (tabname === "articles" || tabname === "answers")
             len = Math.floor(len / 2);
-        while (true)
-        {
-            const ret = await directSend(tabname, offset, len, addr, timeid);
-            if (ret === "[]")
-                break;
-            if (ret === "false")
-                throw { err: "unknown err" };
-            if (onProgress)
-                onProgress(tabname, offset);
-            offset += len;
-        }
-    }
-    const shouldSlim = $("#slimExcerpt")[0].checked;
-    const extra = "slim=" + shouldSlim ? "true" : "false";
-    await finish(addr, timeid, extra);
-}
-/**
- * @param {string[]} tables
- * @param {number} partlen
- * @param {string} addr
- * @param {function(string, number):void} onProgress
- */
-async function send2(tables, partlen, addr, onProgress)
-{
-    const timeid = new Date().Format("yyyyMMdd-hhmm");
-    console.log(timeid, "addr", addr, "tables", tables, "len", partlen);
-    await begin(addr, timeid);
-    for (let i = 0; i < tables.length; ++i)
-    {
-        let offset = 0;
-        const tabname = tables[i];
-        let len = partlen;
-        if (tabname === "zans" || tabname === "zanarts")
-            len *= 2;
-        else if (tabname === "articles" || tabname === "answers")
-            len = Math.floor(len / 2);
         let last = undefined;
         while (true)
         {
             const sending = { headers: { "objid": timeid, "authval": auth }, url: addr + "/accept?table=" + tabname };
-            const ret = await SendMsgAsync({ action: "partdb2", target: tabname, from: last, count: len, sending: sending });
+            const ret = await SendMsgAsync({ action: "partdb", target: tabname, from: last, count: len, sending: sending });
             if (ret instanceof Array && ret.length === 0)
                 break;
             if (ret === "false")
@@ -245,11 +210,15 @@ $(document).on("click", "button#quickimport", e =>
     {
         const content = e.target.result;
         const report = JSON.parse(content);
-        delete report.rectime;
-        quickfix(report.questions);
-        quickfix(report.answers);
-        quickfix(report.articles);
-        quickfix(report.users);
+        const ks = Object.keys(report);
+        if (ks.length !== 1 || ks[0] !== "rectime")
+        {
+            delete report.rectime;
+            quickfix(report.questions);
+            quickfix(report.answers);
+            quickfix(report.articles);
+            quickfix(report.users);
+        }
         console.log(report);
         ContentBase._report("batch", report);
     }
@@ -268,7 +237,7 @@ $(document).on("click", "button#send", async (e) =>
         .map(chkbox => chkbox.dataset.tname);
     try
     {
-        await send2(needtables, partlen, addr, (tab, cnt) => { thisbtn.textContent = tab + "@" + cnt; });
+        await send(needtables, partlen, addr, (tab, cnt) => { thisbtn.textContent = tab + "@" + cnt; });
         thisbtn.textContent = "开始发送";
         thisbtn.style.backgroundColor = "rgb(0,224,32)";
     }

@@ -10,7 +10,7 @@ let isRunning = false;
 let rowcount = 0;
 
 /**@type {HTMLInputElement}}*/
-const aloneRec = $("#aloneRec")[0], repeat = $("#repeat")[0], wtime = $("#waittime")[0], maxact = $("#maxact")[0], limitdate = $("#limitdate")[0];
+const aloneRec = $("#aloneRec")[0], repeat = $("#repeat")[0], fromold = $("#fromold")[0], wtime = $("#waittime")[0], maxact = $("#maxact")[0], limitdate = $("#limitdate")[0];
 
 const thetable = $("#maintable").DataTable(
     {
@@ -190,6 +190,12 @@ $(document).on("click", "#go", async e =>
         const banset = isCtrl ? new Set() : (await ContentBase.checkSpam("users", objs)).banned;
         objs = objs.filter(uid => !u404s.has(uid) && !banset.has(uid));
         console.log(`here [${objs.length}] obj users`);
+
+        if (fromold.checked)
+        {
+            const info = await DBfunc("getAny", "rectime", "id", objs);
+            info.forEach(i => utimeOld.set(i.id, i.old));
+        }
 
         await monitorCycle(btn, objs);
 

@@ -129,6 +129,7 @@ namespace DBExportor.Controllers
                 {
                     var ret = GetUsers(db, cache, uids);
                     Serializer.Serialize(writer, ret);
+                    GC.Collect(2, GCCollectionMode.Optimized, false, true);
                 }
                 catch (Exception e)
                 {
@@ -233,6 +234,7 @@ namespace DBExportor.Controllers
                 {
                     var ret = GetZanLinks(db, cache, uids, target);
                     Serializer.Serialize(writer, ret);
+                    GC.Collect(2, GCCollectionMode.Optimized, false, true);
                 }
                 catch (Exception e)
                 {

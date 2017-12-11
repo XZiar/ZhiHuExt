@@ -261,24 +261,14 @@ class ZhiHuDB
     }
     /**
      * @param {string} table
-     * @param {number} from
-     * @param {number} count
-     * @returns {Promise<string> | Promise<string[]>}
-     */
-    async part(table, from, count)
-    {
-        if (table == null)
-            return this.db.tables.mapToProp("name").filter(x => x !== "rectime");
-        return JSON.stringify(await this.db[table].offset(from).limit(count).toArray());
-    }
-    /**
-     * @param {string} table
      * @param {any} last
      * @param {number} count
      * @returns {Promise<object[]>}
      */
-    async part2(table, last, count)
+    async part(table, last, count)
     {
+        if (table == null)
+            return this.db.tables.mapToProp("name").filter(x => x !== "rectime");
         let key = undefined;
         if (last != null)
             key = IDBKeyRange.lowerBound(last, true);
@@ -286,7 +276,7 @@ class ZhiHuDB
         return new Promise((resolve, reject) =>
         {
             ret.onsuccess = ev => resolve(ret.result);
-            ret.onerror = ev => { console.warn("partDB2 fauled!", ret.result); reject(ret.result); }
+            ret.onerror = ev => { console.warn("partDB failed!", ret.result); reject(ret.result); }
         });
     }
 

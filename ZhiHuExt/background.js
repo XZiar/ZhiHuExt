@@ -230,37 +230,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) =>
             db.part(request.target, request.from, request.count)
                 .then(part =>
                 {
-                    if (part instanceof Array)
+                    if (!request.sending)
                     {
                         sendResponse(part); return;
                     }
-                    if (part === "[]")
-                        sendResponse("[]");
-                    else if (request.sending)
-                    {
-                        $.ajax(request.sending.url,
-                            {
-                                type: "POST",
-                                headers: request.sending.headers,
-                                contentType: "application/json",
-                                data: part
-                            })
-                            .done(x => sendResponse("true"))
-                            .fail(err => sendResponse("false"));
-                    }
-                    else
-                    {
-                        const blob = new Blob([part], { type: "application/json" });
-                        const url = URL.createObjectURL(blob);
-                        sendResponse(url);
-                    }
-                },
-                err => console.warn(err));
-            return true;
-        case "partdb2":
-            db.part2(request.target, request.from, request.count)
-                .then(part =>
-                {
                     if (part.length === 0)
                         sendResponse([]);
                     $.ajax(request.sending.url,

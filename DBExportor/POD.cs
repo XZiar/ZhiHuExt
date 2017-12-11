@@ -56,49 +56,6 @@ namespace DBExportor.Pods
                     }
                 }
             }
-            unsafe public  int GetHashCode2(byte[] obj)
-            {
-                //tHC++; tAll++;
-                unchecked
-                {
-                    var initVal = new uint[4] { _prime0 + _prime1, _prime1, 0, uint.MaxValue - _prime0 };
-                    uint h = (uint)obj.Length;
-                    fixed (byte* src = obj)
-                    {
-                        int pos = 0, limit = obj.Length - 16;
-                        for (; pos <= limit; pos += 16)
-                        {
-                            uint* iptr = (uint*)&src[pos];
-                            for (var y = 0; y < 4; ++y)
-                            {
-                                initVal[y] = ((initVal[y] + iptr[y] * _prime1) << 13) * _prime0;
-                            }
-                        }
-                        if (h > 16)
-                            h += (initVal[0] << 1) + (initVal[1] << 7) + (initVal[2] << 12) + (initVal[3] << 18);
-                        else
-                            h += _prime4;
-                        limit = obj.Length - 4;
-                        for (; pos <= limit; pos += 4)
-                        {
-                            uint val = *(uint*)&src[pos];
-                            h = ((h + _prime2 * val) << 17) * _prime3;
-                        }
-                        for (; pos < obj.Length; ++pos)
-                        {
-                            uint val = src[pos];
-                            h = ((h + _prime4 * val) << 11) * _prime0;
-                        }
-                    }
-                    h ^= h >> 15;
-                    h *= _prime1;
-                    h ^= h >> 13;
-                    h *= _prime2;
-                    h ^= h >> 16;
-                    return (int)h;
-                }
-
-            }
         }
         private static readonly Dictionary<byte[], uint> Mapper = new Dictionary<byte[], uint>(100000, new ByteStringComparer());
         private static readonly List<byte[]> Cache = new List<byte[]>(100000);
@@ -246,6 +203,12 @@ namespace DBExportor.Pods
         private uint time_;
     }
     
+    public struct RecItem
+    {
+        public string id;
+        public uint told;
+    }
+
     public class StandardDB
     {
         public List<Spam> spams = new List<Spam>();
@@ -257,6 +220,7 @@ namespace DBExportor.Pods
         public List<Answer> answers = new List<Answer>();
         public List<Zan> zans = new List<Zan>();
         public List<Zan> zanarts = new List<Zan>();
+        public List<RecItem> rectime = new List<RecItem>();
         public void Slim(int level = 0)
         {
             switch(level)

@@ -21,21 +21,31 @@ const yAxis = ({
 
 function showOnlyAct()
 {
+    const legends = Array.from(wholeData.keys());
+    const series = Array.from(wholeData.entries()).map(entry =>
+        ({
+            name: entry[0],
+            data: entry[1],
+            type: "scatter",
+            symbolSize: 5,
+            encode: { x: 0, y: 8, tooltip: [5, 6, 10] }
+        }));
     const option = {
         title: { text: "点赞记录图-" + additionTitle },
         tooltip: { trigger: "item", formatter: dat => `${dat.data[5]}<br />${dat.data[6]}<br />${dat.data[10]}` },
         toolbox: saveOpt,
+        legend: {
+            left: "30%",
+            right: "10%",
+            type: legends.length > 5 ? "scroll" : "plain",
+            data: legends
+        },
         xAxis: {
             splitLine: { lineStyle: { type: 'dashed' } },
             name: "记录序号",
         },
         yAxis: yAxis,
-        series: [{
-            data: wholeData,
-            type: "scatter",
-            symbolSize: 5,
-            encode: { x: 0, y: 8, tooltip: [5, 6, 10] }
-        }]
+        series: series,
     };
     myChart.setOption(option);
 }
@@ -186,7 +196,7 @@ function encodeObj(objs, umapper)
         const ret = await doAnalyse("outputQuestActs", qids, true);
         zananss = ret.zans, anss = ret.anss;
         const qsts = Object.values(ret.qsts);
-        additionTitle = qsts.length == 1 ? "[问题]-" + qsts[0].id : "多个问题";
+        additionTitle = qsts.length == 1 ? "[问题]-" + qsts[0].title : "多个问题";
         groupidx = 2;
     }
     else if (qs.ansid != null)
@@ -204,7 +214,7 @@ function encodeObj(objs, umapper)
         const ret = await doAnalyse("outputAActs", aids, "article", true);
         zanarts = ret.zans, arts = ret.objs;
         const as = Object.values(arts);
-        additionTitle = as.length == 1 ? as[0].id : "多篇文章";
+        additionTitle = as.length == 1 ? as[0].title : "多篇文章";
         groupidx = 2;
     }
 
@@ -217,13 +227,14 @@ function encodeObj(objs, umapper)
         wholeData.forEach((x, idx) => x[0] = idx);
         if (qs.only === "true")
         {
-            $("#changeonly").text("切换到分组");
+            $("#changeonly").text("切换到分时");
+            wholeData = wholeData.groupBy(groupidx);
             showOnlyAct();
             return;
         }
         else
         {
-            $("#changeonly").text("切换到不分组");
+            $("#changeonly").text("切换到不分时");
             allDates = new Set(wholeData.mapToProp(9)).toArray().sort((a, b) => a - b).map(x => `${Math.floor(x / 100) % 100}/${x % 100}`);
             const wholeData2 = wholeData;
             wholeData = wholeData.groupBy(groupidx);
