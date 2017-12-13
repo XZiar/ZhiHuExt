@@ -65,7 +65,7 @@ FGraph.numDimensions(3);
 //FGraph.forceEngine('ngraph');
 FGraph.cooldownTime(40000);
 //FGraph.autoColorBy("it");
-FGraph.lineOpacity(0.1);
+FGraph.lineOpacity(0.05);
 FGraph.nodeRelSize(1);
 FGraph.nodeResolution(4);
 FGraph.onNodeClick(/**@param {UserNode} node*/ (node) =>
@@ -200,12 +200,20 @@ $(document).on("click", "#chgdim", e =>
 $(document).on("click", "#export", e =>
 {
     const time = new Date().Format("yyyyMMdd-hhmm");
-    const linkhead = "\uFEFF" + "source,target\n";
-    let linktxt = linkhead + links.map(link => `${link.source},${link.target}\n`).join();
-    DownloadMan.exportDownload(linktxt, "txt", `Relations-link-${time}.csv`);
-    const nodehead = "\uFEFF" + "id,name,val,zan\n";
-    let nodetxt = nodehead + nodes.map(node => `${node.id},${node.name},${node.val},${node.zancnt}\n`).join();
-    DownloadMan.exportDownload(nodetxt, "txt", `Relations-node-${time}.csv`);
+    if (e.ctrlKey)
+    {
+        const data = { nodes: nodes, links: links.map(link => ({ source: link.source.id, target: link.target.id })) };
+        DownloadMan.exportDownload(data, "json", `Relations-all-${time}.json`);
+    }
+    else
+    {
+        const linkhead = "\uFEFF" + "source,target\n";
+        let linktxt = linkhead + links.map(link => `${link.source.id},${link.target.id}`).join("\n");
+        DownloadMan.exportDownload(linktxt, "txt", `Relations-link-${time}.csv`);
+        const nodehead = "\uFEFF" + "id,name,val,zan\n";
+        let nodetxt = nodehead + nodes.map(node => `${node.id},${node.name},${node.val},${node.zancnt}`).join("\n");
+        DownloadMan.exportDownload(nodetxt, "txt", `Relations-node-${time}.csv`);
+    }
 });
 !async function()
 {
@@ -216,7 +224,7 @@ $(document).on("click", "#export", e =>
     }
     if (qs.src != null)
     {
-        const pms = fetch(qs.src);
+        const pms = fetch(qs.src + ".json");
         $("h3").remove("#addvot");
         $("h3").remove("#addath");
         $("h3").remove("#minzan");

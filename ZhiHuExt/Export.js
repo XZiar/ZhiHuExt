@@ -8,39 +8,6 @@ function directSend(table, offset, count, addr, id)
     return SendMsgAsync({ action: "partdb", target: table, from: offset, count: count, sending: sending });
 }
 
-/**
- * @param {string} table
- * @param {number} offset
- * @param {number} count
- * @returns {Promise<string>}
- */
-function fetchdb(table, offset, count)
-{
-    return SendMsgAsync({ action: "partdb", target: table, from: offset, count: count });
-}
-
-/**
- * @param {string} table
- * @param {string} data
- * @param {string} addr
- * @param {string} id
- * @returns {Promise<void>}
- */
-function sendpart(table, data, addr, id)
-{
-    const pms = $.Deferred();
-    $.ajax(addr + "/accept?table=" + table,
-        {
-            type: "POST",
-            headers: { "objid": id, "authval": auth },
-            contentType: "application/json",
-            data: data
-        })
-        .done(x => pms.resolve())
-        .fail(err => pms.reject(err));
-    return pms;
-}
-
 
 /**
  * @param {string} table
@@ -128,9 +95,10 @@ async function send(tables, partlen, addr, onProgress)
                 last = ret.id;
         }
     }
-    const shouldSlim = $("#slimExcerpt")[0].checked;
-    const extra = "slim=" + (shouldSlim ? "true" : "false");
-    await finish(addr, timeid, extra);
+    const extra = {};
+    extra.noexcerpt = $("#slimExcerpt")[0].checked ? "true" : "false";
+    extra.notime = $("#slimTime")[0].checked ? "true" : "false";
+    await finish(addr, timeid, _toQueryString(extra));
 }
 
 /**

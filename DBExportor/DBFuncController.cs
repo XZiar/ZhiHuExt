@@ -29,12 +29,16 @@ namespace DBExportor.Controllers
             var caches = new Dictionary<string, object>();
             {
                 Dictionary<uint, int> uidcache = new Dictionary<uint, int>();
+                HashSet<uint> banuid = new HashSet<uint>();
                 int idx = 0;
                 foreach (var user in db.users)
                 {
                     uidcache[user.id_] = idx++;
+                    if (user.status_ == UserStatus.ban || user.status_ == UserStatus.sban)
+                        banuid.Add(user.id_);
                 }
                 caches["uid-user"] = uidcache;
+                caches["banuid"] = banuid;
                 LOG.LogInformation($"user's index cache built");
             }
             {
@@ -112,9 +116,19 @@ namespace DBExportor.Controllers
                 try
                 {
                     var args = Serializer.Deserialize<string[]>(reader);
-                    if (args[0] != "users" || args[1] != "id")
+                    if (args[0] == "users" && args[1] == "id")
+                        uids = JsonConvert.DeserializeObject<string[]>(args[2]);
+                    else if(args[0] == "banzan")
+                    {
+                        var zanfcache = cache["from-zan"] as ILookup<uint, int>;
+                        var zanartfcache = cache["from-zanart"] as ILookup<uint, int>;
+                        var banuid = cache["banuid"] as HashSet<uint>;
+                        var zansum = banuid.SelectMany(uid => zanfcache[uid]).Count();
+                        var zanartsum = banuid.SelectMany(uid => zanartfcache[uid]).Count();
+                        return Ok(zansum + zanartsum);
+                    }
+                    else
                         return StatusCode(500);
-                    uids = JsonConvert.DeserializeObject<string[]>(args[2]);
                 }
                 catch (Exception e)
                 {

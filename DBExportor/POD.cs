@@ -57,8 +57,8 @@ namespace DBExportor.Pods
                 }
             }
         }
-        private static readonly Dictionary<byte[], uint> Mapper = new Dictionary<byte[], uint>(100000, new ByteStringComparer());
-        private static readonly List<byte[]> Cache = new List<byte[]>(100000);
+        private static readonly Dictionary<byte[], uint> Mapper = new Dictionary<byte[], uint>(1000000, new ByteStringComparer());
+        private static readonly List<byte[]> Cache = new List<byte[]>(1000000);
         static UIDPool()
         {
             Cache.Add(null);
@@ -139,7 +139,7 @@ namespace DBExportor.Pods
         public int zancnt;
         public int follower;
         [JsonIgnore]
-        private UserStatus status_;
+        internal UserStatus status_;
     }
 
     public struct Question

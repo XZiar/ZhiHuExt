@@ -90,7 +90,7 @@ async function monitorCycle(btn, objs)
             else if(maxact.value > 0)
             {
                 const limittime = repeat.checked ? utimeNew.get(uid) : new Date(limitdate.value).toUTCSeconds();
-                if (!repeat.checked)
+                if (fromold.checked)
                     begintime = utimeOld.get(uid);
                 else
                     utimeNew.set(uid, begintime);
@@ -101,7 +101,7 @@ async function monitorCycle(btn, objs)
                 thetable.row.add(newdata);
                 thetable.draw(false);
                 const acts = (await actspms).acts;
-                if (aloneRec)
+                if (aloneRec.checked)
                     chkreports.add(acts);
                 else
                     ContentBase._report("batch", acts);
@@ -161,8 +161,27 @@ $(document).on("click", "#chkban", async e =>
         return;
     }
     isRunning = true;
-    const objs = Array.from(uids.values()).filter(u => u.status !== "").mapToProp("id");
+    let objs;
+    if (e.ctrlKey)
+    {
+        const txt = $("#userinput")[0].value;
+        objs = JSON.parse(txt);
+        const banset = (await ContentBase.checkSpam("users", objs)).banned;
+        objs = objs.filter(uid => !u404s.has(uid) && banset.has(uid));
+        const usrs = await DBfunc("getAny", "users", "id", objs);
+        usrs.forEach(usr => uids.set(usr.id, usr));
+    }
+    else
+    {
+        objs = Array.from(uids.values()).filter(u => u.status !== "").mapToProp("id");
+    }
     console.log(`here [${objs.length}] obj users`);
+
+    if (fromold.checked)
+    {
+        const info = await DBfunc("getAny", "rectime", "id", objs);
+        info.forEach(i => utimeOld.set(i.id, i.old));
+    }
 
     await monitorCycle(btn, objs);
 
@@ -209,4 +228,10 @@ $(document).on("click", "#go", async e =>
     }
 });
 
+
+!function ()
+{
+    ContentBase.checkUserState("zhihuadmin");
+
+}()
 

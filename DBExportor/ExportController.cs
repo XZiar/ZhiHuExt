@@ -31,15 +31,20 @@ namespace DBExportor.Controllers
         }
 
         [HttpGet("finish")]
-        public IActionResult OutputDB([FromQuery]bool slim = false, [FromQuery]bool shouldKeep = false)
+        public IActionResult OutputDB([FromQuery]bool noexcerpt = false, [FromQuery]bool notime = false, [FromQuery]bool shouldKeep = false)
         {
             if (!CheckAuth())
                 return StatusCode(401);
             if (!TryGetDB(out var obj))
                 return StatusCode(404);
             var fname = $"{Program.DBFolder}/ZhiHuExtDB-{ObjName}.json";
-            if (slim)
+            if (noexcerpt)
                 obj.Slim();
+            if (notime)
+            {
+                obj.zans.ForEach(zan => zan.time = -1);
+                obj.zanarts.ForEach(zan => zan.time = -1);
+            }
             using (StreamWriter file = System.IO.File.CreateText(fname))
             {
                 Serializer.Serialize(file, obj);

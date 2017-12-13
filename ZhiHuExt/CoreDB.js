@@ -307,6 +307,17 @@ class ZhiHuDB
             recs = recs.slice(0, limit);
         return recs.mapToProp("id");
     }
+    async uncertainUser(uid)
+    {
+        const uids = await toPureArray(uid);
+        const recs = await this.db.zans.where("from").anyOf(uids).toArray();
+        const ansids = new Set(recs.mapToProp("to")).toArray();
+        const anss = await this.db.answers.where("id").anyOf(ansids).toArray();
+        const exansids = new Set(anss.filter(ans => ans.excerpt == null).mapToProp("id"));
+        const us = new Set();
+        recs.forEach(rec => { if (rec.time < 0 && !exansids.has(rec.to)) us.add(rec.from); });
+        return us.toArray();
+    }
 
     async getAny(table, key, val)
     {

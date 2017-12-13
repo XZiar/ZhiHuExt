@@ -307,7 +307,9 @@ class ContentBase
             const entities = APIParser.parseEntities(state.entities);
             let reportdata;
             let lasttime = Math.min(curtime, ...Object.keys(state.entities.activities).map(Number));
-            const limit = (user.status === "ban" || user.status === "sban") ? 0 : chkacts[0];//skip fetchActs cause it should be hadle outside with more iteration
+            //skip fetchActs cause it should be hadle outside with more iteration
+            //but if waitAll is defined, it means the demand for extra activities are clear
+            const limit = (!waitAll && (user.status === "ban" || user.status === "sban")) ? 0 : (chkacts ? chkacts[0] : 0);
             if (chkacts && lasttime != curtime)
             {
                 const actsret = await ContentBase.fetchUserActs(uid, limit, chkacts[1], lasttime, chkacts[2]);
