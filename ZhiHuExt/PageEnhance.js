@@ -114,6 +114,11 @@
             output.topics.push(...post.topics.map(t => new Topic(t.id, t.name)));
             const article = new Article(post.slug, post.title, post.author, post.likesCount, post.summary.replace(/<[^>]+>/g, ""),
                 Date.parse(post.publishedTime) / 1000, Date.parse(post.updated) / 1000);
+            if (post.content)
+            {
+                const dt = new ADetail(article.id, post.content);
+                output.details.push(dt);
+            }
             output.articles.push(article);
             post.lastestLikers.forEach(theuser =>
             {
@@ -129,6 +134,11 @@
                 output.topics.push(...p.topics.map(t => new Topic(t.id, t.name)));
                 const subart = new Article(p.slug, p.title, ath.id, p.likesCount, p.summary.replace(/<[^>]+>/g, ""),
                     Date.parse(p.publishedTime) / 1000);//no updated time
+                if (p.content)
+                {
+                    const dt = new ADetail(article.id, p.content);
+                    output.details.push(dt);
+                }
                 output.articles.push(subart);
             });
         }
@@ -220,5 +230,10 @@
         console.log("question backuped", qst);
         const time = new Date().Format("yyyyMMdd-hhmm");
         SendMsgAsync({ action: "download", data: qst, type: "json", fname: `Question-${qid}-${time}.json` });
+    }
+
+    async function saveADetail(target, id)
+    {
+        console.log("not implemented");
     }
 }()

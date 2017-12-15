@@ -57,8 +57,8 @@ namespace DBExportor.Pods
                 }
             }
         }
-        private static readonly Dictionary<byte[], uint> Mapper = new Dictionary<byte[], uint>(1000000, new ByteStringComparer());
-        private static readonly List<byte[]> Cache = new List<byte[]>(1000000);
+        private static readonly Dictionary<byte[], uint> Mapper = new Dictionary<byte[], uint>(2000000, new ByteStringComparer());
+        private static readonly List<byte[]> Cache = new List<byte[]>(2000000);
         static UIDPool()
         {
             Cache.Add(null);
@@ -116,9 +116,10 @@ namespace DBExportor.Pods
     public enum UserStatus : byte { ban, sban, empty }
     public struct User
     {
-        //public string id { get => id_; set => id_ = string.Intern(value); }
-        //private string id_;
         public string name;
+        public string hl;
+        public string loc;
+        public string des;
         public string head
         {
             get => head_ == null ? null : System.Text.Encoding.UTF8.GetString(head_);
@@ -202,7 +203,13 @@ namespace DBExportor.Pods
         [JsonIgnore]
         private uint time_;
     }
-    
+
+    public struct ADetail
+    {
+        public int id;
+        public string content;
+    }
+
     public struct RecItem
     {
         public string id;
@@ -213,14 +220,15 @@ namespace DBExportor.Pods
     {
         public List<Spam> spams = new List<Spam>();
         public List<Follow> follows = new List<Follow>();
-        public List<User> users = new List<User>();
+        public List<User> users = new List<User>(1000000);
         public List<Question> questions = new List<Question>();
         public List<Article> articles = new List<Article>();
         public List<Topic> topics = new List<Topic>();
         public List<Answer> answers = new List<Answer>();
-        public List<Zan> zans = new List<Zan>();
-        public List<Zan> zanarts = new List<Zan>();
-        public List<RecItem> rectime = new List<RecItem>();
+        public List<Zan> zans = new List<Zan>(10000000);
+        public List<Zan> zanarts = new List<Zan>(500000);
+        public List<ADetail> details = new List<ADetail>();
+        public List<RecItem> rectime = new List<RecItem>(200000);
         public void Slim(int level = 0)
         {
             switch(level)
@@ -231,18 +239,10 @@ namespace DBExportor.Pods
             case 0:
                 answers.ForEach(a => a.excerpt = null);
                 articles.ForEach(a => a.excerpt = null);
+                details.Clear();
+                rectime.Clear();
                 break;
             }
-        }
-    }
-
-    [AttributeUsage(AttributeTargets.Struct, AllowMultiple = false)]
-    public sealed class PodAttribute : Attribute
-    {
-        public readonly string[] TableNames;
-        public PodAttribute(params string[] tableName)
-        {
-            TableNames = tableName;
         }
     }
 

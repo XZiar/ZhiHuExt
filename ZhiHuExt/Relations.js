@@ -189,7 +189,11 @@ $(document).on("click", "#addvot", e =>
 $(document).on("click", "#chgdim", e =>
 {
     if (e.ctrlKey)
+    {
         FGraph.numDimensions(FGraph.numDimensions() == 2 ? 3 : 2);
+        links = links.map(link => ({ source: link.source.id, target: link.target.id }));
+        FGraph.graphData({ links: links, nodes: nodes });
+    }
     else
     {
         const qs = _getQueryString();

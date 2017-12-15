@@ -50,6 +50,19 @@ const db = new ZhiHuDB("ZhihuDB", [
         articles: "id,author,timeC",
         topics: "id",
         rectime: "id,new,old"
+    },
+    {
+        spams: "id,type",
+        users: "id,status,anscnt,follower,zancnt",
+        follows: "[from+to],from,to",
+        zans: "[from+to],from,to,time",
+        zanarts: "[from+to],from,to,time",
+        answers: "id,author,question,timeC",
+        questions: "id,timeC",
+        articles: "id,author,timeC",
+        topics: "id",
+        details: "id",
+        rectime: "id,new,old"
     }], [
     null,
     trans => trans.users.toCollection().modify(u => u.zancnt = -1),
@@ -75,7 +88,8 @@ const db = new ZhiHuDB("ZhihuDB", [
         const recs = Array.from(zantime.entries()).map(x => ({ id: x[0], new: x[1][0], old: x[1][1] }));
         console.log("[rectime] mapped");
         await trans.rectime.bulkAdd(recs);
-    }],
+    },
+    null],
     async () =>
     {
         console.log("initializing reading");

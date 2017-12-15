@@ -31,6 +31,9 @@ class User
         this.artcnt = -1;
         this.follower = -1;
         this.zancnt = -1;
+        this.loc = null;
+        this.hl = null;
+        this.des = null;
     }
 
     /**@param {UserType} theuser*/
@@ -57,6 +60,12 @@ class User
             else
                 user.status = "";
         }
+        if (theuser.locations instanceof Array && theuser.locations.length > 0)
+            user.loc = theuser.locations[0].name;
+        if (theuser.headline)
+            user.hl = theuser.headline;
+        if (theuser.description)
+            user.des = theuser.description;
         return user;
     }
 }
@@ -140,6 +149,15 @@ class Answer
     }
 }
 
+class ADetail
+{
+    constructor(id, content)
+    {
+        this.id = Number(id);
+        this.content = content;
+    }
+}
+
 class Zan
 {
     /**
@@ -178,6 +196,8 @@ class StandardDB
         this.questions = [];
         /**@type {Article[]} articles*/
         this.articles = [];
+        /**@type {ADetail[]} details*/
+        this.details = [];
     }
     /**
      * @template T
@@ -356,6 +376,11 @@ class APIParser
                     }
                     const ans = new Answer(obj.id, qid, aid, _any(obj.voteup_count, obj.voteupCount), excerpt,
                         _any(obj.created_time, obj.createdTime), _any(obj.updated_time, obj.updatedTime));
+                    if (obj.content)
+                    {
+                        const det = new ADetail(ans.id, obj.content);
+                        output.details.push(det);
+                    }
                     output.answers.push(ans);
                     return ans;
                 }
@@ -383,6 +408,11 @@ class APIParser
                             excerpt = obj.excerpt.replace(/<[^>]+>/g, "");//remove html tags
                     }
                     const art = new Article(obj.id, obj.title, ath.id, _any(obj.voteup_count, obj.voteupCount), excerpt, timeC, timeU);
+                    if (obj.content)
+                    {
+                        const det = new ADetail(-art.id, obj.content);
+                        output.details.push(det);
+                    }
                     output.articles.push(art);
                     if (obj.upvoted_followees instanceof Array)
                         obj.upvoted_followees.forEach(x => output.zanarts.push(new Zan(APIParser.parseByType(output, x), obj.id)));

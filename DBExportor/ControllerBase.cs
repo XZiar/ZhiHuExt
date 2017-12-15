@@ -18,7 +18,7 @@ namespace DBExportor.Controllers
             protected override JsonProperty CreateProperty(MemberInfo member, MemberSerialization memberSerialization)
             {
                 var property = base.CreateProperty(member, memberSerialization);
-                if (property.PropertyName == "excerpt" || property.PropertyName == "head")
+                if (property.PropertyName == "excerpt" || property.PropertyName == "head" || property.PropertyName == "details")
                     property.ShouldDeserialize = x => false;
                 return property;
             }

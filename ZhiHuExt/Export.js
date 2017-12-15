@@ -77,6 +77,8 @@ async function send(tables, partlen, addr, onProgress)
             len *= 2;
         else if (tabname === "articles" || tabname === "answers")
             len = Math.floor(len / 2);
+        else if (tabname === "details")
+            len = Math.floor(len / 20);
         let last = undefined;
         while (true)
         {

@@ -519,6 +519,30 @@ $("body").on("click", "button.Modal-closeButton", function ()
     CUR_ANSWER = null;
     CUR_ARTICLE = null;
 });
+$("body").on("dragover", ".RichContent-inner", ev =>
+{
+    const wrapper = ev.target.parentElement.parentElement;
+    if (wrapper.className.includes("AnswerItem") || wrapper.className.includes("ArticleItem"))
+        ev.preventDefault();
+});
+$("body").on("drop", ".RichContent-inner", ev =>
+{
+    /**@type {string}*/
+    const txt = ev.dataTransfer.getData("text");
+    if (txt != "MarkBtn") return;
+    const wrapper = ev.target.parentElement.parentElement;
+    let target;
+    if (wrapper.className.includes("AnswerItem"))
+        target = "answer";
+    else if (wrapper.className.includes("ArticleItem"))
+        target = "article";
+    else
+        return;
+    ev.preventDefault();
+
+    const id = JSON.parse(wrapper.dataset.zaModuleInfo || wrapper.dataset.zaExtraModule).card.content.token;
+    saveADetail(target, id);
+});
 
 
 {

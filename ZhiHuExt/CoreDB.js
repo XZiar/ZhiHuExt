@@ -126,6 +126,13 @@ class ZhiHuDB
                 ret.old = obj.old;
             return ret;
         });
+        thedb.details.hook("updating", (mods, primKey, obj, trans) =>
+        {
+            const ret = {};
+            if (!mods.content && obj.content !== "")
+                ret.content = obj.content;
+            return ret;
+        });
     }
 
     /**
