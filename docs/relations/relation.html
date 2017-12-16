@@ -1,0 +1,32 @@
+﻿<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta charset="UTF-8">
+    <script src="https://cdn.bootcss.com/jquery/3.2.1/jquery.slim.min.js"></script>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-111265698-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+
+        gtag('config', 'UA-111265698-1');
+    </script>
+    <script src="3d-force-graph.min.js"></script>
+    <title>关系分析</title>
+</head>
+<body>
+    <div>
+        <h3 style="text-align:center">
+            <span id="athcnt">0</span>个待搜索的作者，<span id="votcnt">0</span>个待搜索的点赞人<br />
+            现有<span id="nodecnt">0</span>个节点，<span id="linkcnt">0</span>条关系<br />
+            <button id="chgdim">切换维度</button>
+        </h3>
+        <div style="text-align:center">
+            <div id="graph" style="width: 90%; height: 640px; max-width: 1024px; max-height:640px;"></div>
+        </div>
+    </div>
+    <script src="relation.js"></script>
+</body>
+</html>

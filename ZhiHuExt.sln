@@ -95,8 +95,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{391867A0-E
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "relations", "relations", "{CF7846BA-7113-45B6-B8E7-BB130DC7C8D1}"
 	ProjectSection(SolutionItems) = preProject
-		docs\relations\Relations.html = docs\relations\Relations.html
-		docs\relations\Relations.js = docs\relations\Relations.js
+		docs\relations\relation.html = docs\relations\relation.html
+		docs\relations\relation.js = docs\relations\relation.js
 		docs\relations\v-20k.json = docs\relations\v-20k.json
 	EndProjectSection
 EndProject
