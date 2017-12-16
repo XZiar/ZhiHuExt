@@ -273,6 +273,7 @@ class StandardDB
         this.articles.push(...other.articles);
         this.questions.push(...other.questions);
         this.topics.push(...other.topics);
+        this.details.push(...other.details);
     }
 }
 

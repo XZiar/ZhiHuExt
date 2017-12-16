@@ -155,6 +155,10 @@ $(document).on("click", "#copyusr", e =>
     {
         voters = [await (await fetch(qs.votblob)).json()];
     }
+    else if (qs.uid != null)
+    {
+        voters = [qs.uid.split("*").map(uid => ({ key: uid, count: 1 }))];
+    }
     if (voters != null)
         StatVoters(...voters);
 }()

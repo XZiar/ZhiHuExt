@@ -206,7 +206,9 @@ $(document).on("click", "#export", e =>
     const time = new Date().Format("yyyyMMdd-hhmm");
     if (e.ctrlKey)
     {
-        const data = { nodes: nodes, links: links.map(link => ({ source: link.source.id, target: link.target.id })) };
+        const n2 = nodes.map(node => ({ id: node.id, name: node.name, color: node.color, zancnt: node.zancnt, val: node.val }));
+        const l2 = links.map(link => ({ source: link.source.id, target: link.target.id }));
+        const data = { nodes: n2, links: l2 };
         DownloadMan.exportDownload(data, "json", `Relations-all-${time}.json`);
     }
     else
@@ -229,10 +231,10 @@ $(document).on("click", "#export", e =>
     if (qs.src != null)
     {
         const pms = fetch(qs.src + ".json");
-        $("h3").remove("#addvot");
-        $("h3").remove("#addath");
-        $("h3").remove("#minzan");
-        $("h3").remove("#export");
+        $("#addvot").remove();
+        $("#addath").remove();
+        $("#zanfilt").remove();
+        $("#export").remove();
         const data = await (await pms).json();
         nodes = data.nodes;
         links = data.links;

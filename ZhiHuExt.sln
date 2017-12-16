@@ -93,6 +93,17 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{391867A0-E
 		docs\index.html = docs\index.html
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "relations", "relations", "{CF7846BA-7113-45B6-B8E7-BB130DC7C8D1}"
+	ProjectSection(SolutionItems) = preProject
+		docs\relations\3rd = docs\relations\3rd
+		docs\relations\AnalysePage.js = docs\relations\AnalysePage.js
+		docs\relations\ContentBase.js = docs\relations\ContentBase.js
+		docs\relations\pod.js = docs\relations\pod.js
+		docs\relations\Relations.html = docs\relations\Relations.html
+		docs\relations\Relations.js = docs\relations\Relations.js
+		docs\relations\utils.js = docs\relations\utils.js
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -112,6 +123,7 @@ Global
 		{E8E9AB37-4664-46E6-9213-3E924CD6B125} = {93675B82-EC6C-4F02-80C6-4872E07264D3}
 		{D348C6E8-E1A4-4D91-A246-BACD33EE99A0} = {BFFEC1DB-48AB-4FFA-B5E1-8273096F39F8}
 		{30046561-6196-4231-96CA-494F6AD31CDB} = {E476A3D7-D0E1-40EA-990A-D165CFDB83D7}
+		{CF7846BA-7113-45B6-B8E7-BB130DC7C8D1} = {391867A0-E268-44C8-864F-7A8FA9C9BFAC}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {032E8EC3-655A-4377-BA13-6692BB5DC119}
