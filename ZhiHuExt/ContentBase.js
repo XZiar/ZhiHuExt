@@ -223,7 +223,7 @@ class ContentBase
             try
             {
                 //add sleep to avoid query too frequent(when the network id too good for it)
-                const [part,] = await Promise.all([ContentBase._fetchUserActs(tokenhead, uid, time), _sleep(350)]);
+                const [part, dummy] = await Promise.all([ContentBase._fetchUserActs(tokenhead, uid, time), _sleep(350)]);
                 if (!part.lasttime)
                     break;
                 ret.add(part.acts);
