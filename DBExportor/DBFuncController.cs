@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace DBExportor.Controllers
@@ -54,6 +55,7 @@ namespace DBExportor.Controllers
                 var dict1 = db.answers.ToDictionary(ans => ans.id, ans => ans.author_);
                 caches["ans-author"] = dict1;
                 caches["author-ans"] = dict1.ToLookup(kv => kv.Value, kv => kv.Key);
+                caches["ans-qst"] = db.answers.ToDictionary(ans => ans.id, ans => ans.question);
                 LOG.LogInformation($"answer's index cache built");
                 var dict2 = db.articles.ToDictionary(art => art.id, art => art.author_);
                 caches["art-author"] = dict2;
@@ -94,9 +96,64 @@ namespace DBExportor.Controllers
             return Ok("ok");
         }
 
+        [HttpPost("special")]
+        public IActionResult SpecialGet([FromQuery]string cmd)
+        {
+            if (!TryGetDB(out var db))
+                return StatusCode(404);
+            if (!TryGetCache(out var cache))
+                return StatusCode(404);
+
+            switch(cmd)
+            {
+            case "banzancnt":
+                {
+                    var zanfcache = cache["from-zan"] as ILookup<uint, int>;
+                    var zanartfcache = cache["from-zanart"] as ILookup<uint, int>;
+                    var banuid = cache["banuid"] as HashSet<uint>;
+                    var zansum = banuid.SelectMany(uid => zanfcache[uid]).Count();
+                    var zanartsum = banuid.SelectMany(uid => zanartfcache[uid]).Count();
+                    return Content($"zanans:{zansum},zanart:{zanartsum},zanall:{zansum + zanartsum}");
+                }
+            case "banzanqst":
+                {
+                    var zanfcache = cache["from-zan"] as ILookup<uint, int>;
+                    var ansqstcache = cache["ans-qst"] as Dictionary<uint, uint>;
+                    var banuid = cache["banuid"] as HashSet<uint>;
+                    var qids = banuid.SelectMany(uid => zanfcache[uid])
+                        .Select(idx => db.zans[idx].to)
+                        .Select(ansid => ansqstcache.TryGetValue(ansid, out var qid) ? qid : int.MaxValue)
+                        .Where(qid => qid != int.MaxValue)
+                        .GroupBy(x => x)
+                        .Select(g => new { key = g.Key, count = g.Count() })
+                        .ToArray();
+                    return Content(JsonConvert.SerializeObject(qids));
+                }
+            case "banzanstat":
+                {
+                    var zanfcache = cache["from-zan"] as ILookup<uint, int>;
+                    var zanartfcache = cache["from-zanart"] as ILookup<uint, int>;
+                    var banuid = cache["banuid"] as HashSet<uint>;
+                    var zanstat = banuid.Select(uid => zanfcache[uid].Concat(zanartfcache[uid]))
+                        .Select(zans => zans.Count());
+                    return Content(JsonConvert.SerializeObject(zanstat));
+                }
+            default:
+                return StatusCode(404);
+            }
+        }
+
         private User[] GetUsers(StandardDB db, Dictionary<string, object> cache, string[] uids)
         {
+            if (uids[0] == "#ALL_USER")
+                return db.users.ToArray();
             var uidcache = cache["uid-user"] as Dictionary<uint, int>;
+            if (uids[0] == "#BAN_UID")
+            {
+                var banuid = cache["banuid"] as HashSet<uint>;
+                return banuid.Select(uid => uidcache.TryGetValue(uid, out var idx) ? idx : -1).Where(x => x >= 0)
+                .Select(idx => db.users[idx]).ToArray();
+            }
             return uids.Select(uid => UIDPool.Get(uid)).Where(uid => uid != uint.MaxValue)
                 .Select(uid => uidcache.TryGetValue(uid, out var idx) ? idx : -1).Where(x => x >= 0)
                 .Select(idx => db.users[idx]).ToArray();
@@ -118,15 +175,6 @@ namespace DBExportor.Controllers
                     var args = Serializer.Deserialize<string[]>(reader);
                     if (args[0] == "users" && args[1] == "id")
                         uids = JsonConvert.DeserializeObject<string[]>(args[2]);
-                    else if(args[0] == "banzan")
-                    {
-                        var zanfcache = cache["from-zan"] as ILookup<uint, int>;
-                        var zanartfcache = cache["from-zanart"] as ILookup<uint, int>;
-                        var banuid = cache["banuid"] as HashSet<uint>;
-                        var zansum = banuid.SelectMany(uid => zanfcache[uid]).Count();
-                        var zanartsum = banuid.SelectMany(uid => zanartfcache[uid]).Count();
-                        return Ok(zansum + zanartsum);
-                    }
                     else
                         return StatusCode(500);
                 }
@@ -142,7 +190,7 @@ namespace DBExportor.Controllers
                 try
                 {
                     var ret = GetUsers(db, cache, uids);
-                    Serializer.Serialize(writer, ret);
+                    SlimSerializer.Serialize(writer, ret);
                     GC.Collect(2, GCCollectionMode.Optimized, false, true);
                 }
                 catch (Exception e)
@@ -153,6 +201,55 @@ namespace DBExportor.Controllers
                 GC.Collect(2, GCCollectionMode.Optimized, false, true);
                 return new EmptyResult();
             }
+        }
+
+        private string SomeAssoc(StandardDB db, Dictionary<string, object> cache, string target, IEnumerable<uint> uids)
+        {
+            var zanfcache = cache["from-zan"] as ILookup<uint, int>;
+            var zans = uids.SelectMany(uid => zanfcache[uid]);
+            LOG.LogInformation($"we get {zans.Count()} zans");
+            var anss = zans.Select(idx=> db.zans[idx].to).GroupBy(x => x);
+            var sb = new StringBuilder("[");
+            foreach (var ans in anss)
+                sb.AppendFormat("{{\"key\":{0},\"count\":{1}}},", ans.Key, ans.Count());
+            sb.Remove(sb.Length - 1, 1);
+            sb.Append("]");
+            return sb.ToString();
+        }
+
+        [HttpPost("someAnalyse")]
+        public IActionResult SomeAnalyse()
+        {
+            if (!TryGetDB(out var db))
+                return StatusCode(404);
+            if (!TryGetCache(out var cache))
+                return StatusCode(404);
+
+            string target;
+            HashSet<uint> uids;
+            using (var reader = new JsonTextReader(new StreamReader(HttpContext.Request.Body)))
+            {
+                try
+                {
+                    var args = Serializer.Deserialize<string[]>(reader);
+                    target = args[0];
+                    var ids = JsonConvert.DeserializeObject<HashSet<string>>(args[1]);
+                    uids = ids.Select(uid => UIDPool.Get(uid)).Where(uid => uid != uint.MaxValue).ToHashSet();
+                    if (ids.Contains("#BAN_UID"))
+                    {
+                        var banuid = cache["banuid"] as HashSet<uint>;
+                        uids.UnionWith(banuid);
+                    }
+                }
+                catch (Exception e)
+                {
+                    LOG.LogError(e.Message);
+                    return StatusCode(500);
+                }
+            }
+            var ret = SomeAssoc(db, cache, target, uids);
+            GC.Collect(2, GCCollectionMode.Optimized, false, true);
+            return Content(ret, "text/plain; charset=utf-8");
         }
 
         private string[][] GetZanLinks(StandardDB db, Dictionary<string, object> cache, string[] uids, string target)

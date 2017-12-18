@@ -1,0 +1,35 @@
+﻿<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta charset="UTF-8">
+    <script src="3rd/js/jquery-3.2.1.min.js"></script>
+    <script src="utils.js"></script>
+    <script src="AnalysePage.js"></script>
+    <script src="DownloadMan.js"></script>
+    <script src="3rd/js/echarts.js"></script>
+    <script src="3rd/js/ecStat.js"></script>
+    <script src="3rd/js/echarts-wordcloud.js"></script>
+    <title>用户统计</title>
+</head>
+<body>
+    <div style="text-align:center">
+        统计目标：
+        <button class="chgobj" data-obj="zancnt">收获赞数</button>
+        <button class="chgobj" data-obj="acnt">作品数</button>
+        <button class="chgobj" data-obj="follower">粉丝数</button>
+        数值上限：<input id="maxthr" type="number" value="0" />
+        <button id="addrefall">添加基准</button>
+    </div>
+    <div style="text-align:center">
+        <div id="graph" style="width: 90%; height: 480px; max-width: 960px; max-height:640px;"></div>
+    </div>
+    <div style="text-align:center">
+        <button id="namecloud">文字云【名字】</button>
+    </div>
+    <div style="text-align:center">
+        <div id="graph" style="width: 90%; height: 640px; max-width: 800px; max-height:800px;"></div>
+    </div>
+    <script src="UserStat.js"></script>
+</body>
+</html>

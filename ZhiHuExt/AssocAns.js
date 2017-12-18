@@ -1,5 +1,8 @@
 "use strict"
 
+let remotedb = false;
+let dbid = "";
+
 let finalData;
 let mindate = new Date().getTime(), maxdate = -1;
 let mainTable;
@@ -193,7 +196,16 @@ $(document).on("click", "#export", e =>
     }
     else if (qs.ansblob != null)
     {
-        const anss = await (await fetch(qs.ansblob)).json()
+        const anss = await (await fetch(qs.ansblob)).json();
+        AssocByAnswers(anss);
+        return;
+    }
+    else if (qs.remotedb != null && qs.ranl != null)
+    {
+        dbid = qs.remotedb;
+        remotedb = true;
+        await RemoteDB(dbid);
+        const anss = await RemoteDB(dbid, "someAnalyse", "assocans", qs.ranl.split("*"))
         AssocByAnswers(anss);
         return;
     }

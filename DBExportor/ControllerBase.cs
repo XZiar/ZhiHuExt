@@ -15,10 +15,11 @@ namespace DBExportor.Controllers
     {
         public class SlimDeseriallizeResolver : DefaultContractResolver
         {
+            static readonly HashSet<string> SKIP_PROP = new HashSet<string>() { "excerpt", "head", "details", "loc", "loc", "hl", "des" };
             protected override JsonProperty CreateProperty(MemberInfo member, MemberSerialization memberSerialization)
             {
                 var property = base.CreateProperty(member, memberSerialization);
-                if (property.PropertyName == "excerpt" || property.PropertyName == "head" || property.PropertyName == "details")
+                if (SKIP_PROP.Contains(property.PropertyName))
                     property.ShouldDeserialize = x => false;
                 return property;
             }
@@ -27,7 +28,8 @@ namespace DBExportor.Controllers
         protected static readonly Dictionary<string, StandardDB> DBList = new Dictionary<string, StandardDB>();
         protected static readonly Dictionary<string, Dictionary<string, object>> CacheList = new Dictionary<string, Dictionary<string, object>>();
         protected static readonly JsonSerializer Serializer = new JsonSerializer();
-        protected static readonly JsonSerializer SlimSerializer = JsonSerializer.Create(new JsonSerializerSettings { ContractResolver = new SlimDeseriallizeResolver() });
+        protected static readonly JsonSerializer SlimSerializer = JsonSerializer.Create(new JsonSerializerSettings
+        { ContractResolver = new SlimDeseriallizeResolver(), NullValueHandling = NullValueHandling.Ignore });
 
         protected string ObjName { get => HttpContext.Request.Headers["objid"].FirstOrDefault(); }
 

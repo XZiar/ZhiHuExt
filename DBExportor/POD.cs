@@ -182,7 +182,7 @@ namespace DBExportor.Pods
         public string author { get => UIDPool.GetString(author_); set => author_ = UIDPool.GetOrNew(value); }
         [JsonIgnore]
         internal uint author_;
-        public int question;
+        public uint question;
         public int zancnt;
         public long timeC { get => timeC_ == uint.MaxValue ? -1L : timeC_; set => timeC_ = value == -1 ? uint.MaxValue : (uint)value; }
         [JsonIgnore]

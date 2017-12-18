@@ -250,15 +250,18 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) =>
                     }
                     if (part.length === 0)
                         sendResponse([]);
-                    $.ajax(request.sending.url,
-                        {
-                            type: "POST",
-                            headers: request.sending.headers,
-                            contentType: "application/json",
-                            data: JSON.stringify(part)
-                        })
-                        .done(x => sendResponse(part.last()))
-                        .fail(err => sendResponse("false"));
+                    else
+                    {
+                        $.ajax(request.sending.url,
+                            {
+                                type: "POST",
+                                headers: request.sending.headers,
+                                contentType: "application/json",
+                                data: JSON.stringify(part)
+                            })
+                            .done(x => sendResponse(part.last()))
+                            .fail(err => sendResponse("false"));
+                    }
                 },
                 err => console.warn(err));
             return true;

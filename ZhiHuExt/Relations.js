@@ -1,31 +1,8 @@
 "use strict"
 
-function begin()
-{
-    const pms = $.Deferred();
-    $.ajax(addr + "/begin",
-        {
-            type: "GET",
-            headers: { "objid": dbid }
-        })
-        .done(x => pms.resolve())
-        .fail(err => pms.reject(err));
-    return pms;
-}
-
-function RemoteDB(method, ...args)
-{
-    const pms = $.Deferred();
-    const data = args.map(x => typeof(x) === "string" ? x : JSON.stringify(x));
-    ContentBase._post(`${addr}/${method}`, data, { "objid": dbid })
-        .done(x => pms.resolve(JSON.parse(x)))
-        .fail(x => { console.warn(x); pms.reject(); });
-    return pms;
-}
 
 let remotedb = false;
 let dbid = "";
-let addr = "http://127.0.0.1:8913/dbfunc";
 
 let iter = 0;
 class UserNode
@@ -93,7 +70,7 @@ FGraph.onNodeClick(/**@param {UserNode} node*/ (node) =>
 async function loadNewUser(newuser)
 {
     /**@type {User[]}*/
-    const users = remotedb ? await RemoteDB("getAny", "users", "id", newuser) : await DBfunc("getAny", "users", "id", newuser);
+    const users = remotedb ? await RemoteDB(dbid, "getAny", "users", "id", newuser) : await DBfunc("getAny", "users", "id", newuser);
     users.forEach(usr => usrMap.set(usr.id, new UserNode(usr)));
 }
 
@@ -105,7 +82,7 @@ async function fetchAuthor(limzan, btn)
 {
     btn.textContent = "查询点赞";
     const votids = votWait.toArray();
-    const zanpms = remotedb ? await RemoteDB("getZanLinks", votids, "to") : DBfunc("getZanLinks", votids, "to");
+    const zanpms = remotedb ? await RemoteDB(dbid, "getZanLinks", votids, "to") : DBfunc("getZanLinks", votids, "to");
     for (const uid of votWait)
         votOk.add(uid);
     votWait.clear();
@@ -139,7 +116,7 @@ async function fetchVoter(limzan, btn)
 {
     btn.textContent = "查询点赞";
     const athids = athWait.toArray();
-    const zanpms = remotedb ? await RemoteDB("getZanLinks", athids, "from") : DBfunc("getZanLinks", athids, "from");
+    const zanpms = remotedb ? await RemoteDB(dbid, "getZanLinks", athids, "from") : DBfunc("getZanLinks", athids, "from");
     for (const uid of athWait)
         athOk.add(uid);
     athWait.clear();
@@ -245,7 +222,7 @@ $(document).on("click", "#export", e =>
     {
         dbid = qs.remotedb;
         remotedb = true;
-        await begin();
+        await RemoteDB(dbid);
     }
     if (qs.uid != null)
     {

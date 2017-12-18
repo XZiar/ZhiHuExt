@@ -97,6 +97,13 @@ String.prototype.removeSuffix = function (count)
 }
 
 Math.minmax = (num, min, max) => Math.max(Math.min(num, max), min);
+Math.mrange = (arr) =>
+{
+    let minv = arr[0], maxv = arr[0];
+    for (let i = 1; i < arr.length; ++i)
+        minv = Math.min(minv, arr[i]), maxv = Math.max(maxv, arr[i]);
+    return [minv, maxv];
+}
 
 
 const _DateForamter =

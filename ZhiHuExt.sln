@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.27130.0
+VisualStudioVersion = 15.0.27130.2010
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ZhiHuExt", "ZhiHuExt", "{93675B82-EC6C-4F02-80C6-4872E07264D3}"
 	ProjectSection(SolutionItems) = preProject
@@ -50,6 +50,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Pages", "Pages", "{E8E9AB37
 		ZhiHuExt\StatVoter.js = ZhiHuExt\StatVoter.js
 		ZhiHuExt\Timeline.html = ZhiHuExt\Timeline.html
 		ZhiHuExt\Timeline.js = ZhiHuExt\Timeline.js
+		ZhiHuExt\UserStat.html = ZhiHuExt\UserStat.html
+		ZhiHuExt\UserStat.js = ZhiHuExt\UserStat.js
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "template", "template", "{D348C6E8-E1A4-4D91-A246-BACD33EE99A0}"
@@ -68,6 +70,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "3rd", "3rd", "{30046561-619
 		ZhiHuExt\3rd\js\dexie.d.ts = ZhiHuExt\3rd\js\dexie.d.ts
 		ZhiHuExt\3rd\js\dexie.js = ZhiHuExt\3rd\js\dexie.js
 		ZhiHuExt\3rd\js\dexie.js.map = ZhiHuExt\3rd\js\dexie.js.map
+		ZhiHuExt\3rd\js\echarts-wordcloud.js = ZhiHuExt\3rd\js\echarts-wordcloud.js
 		ZhiHuExt\3rd\js\echarts.js = ZhiHuExt\3rd\js\echarts.js
 		ZhiHuExt\3rd\js\jquery-3.2.1.min.js = ZhiHuExt\3rd\js\jquery-3.2.1.min.js
 		ZhiHuExt\3rd\js\jquery-3.2.1.min.map = ZhiHuExt\3rd\js\jquery-3.2.1.min.map
