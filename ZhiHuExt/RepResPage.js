@@ -39,7 +39,7 @@
     {
         const btn = e.target;
         const uid = btn.dataset.id;
-        const user = await ContentBase.checkUserState(uid, undefined, [50], true);
+        const user = await ContentBase.checkUserState(uid, undefined, [250], true);
         if (!user)
             return;
         if (user.status === "ban" || user.status === "sban")
@@ -61,7 +61,7 @@
         for (let i = 0; i < btns.length; ++i)
         {
             thisbtn.textContent = btns[i].dataset.name;
-            await Promise.all([onChkStatus({ target: btns[i] }), _sleep(1000)]);
+            await Promise.all([onChkStatus({ target: btns[i] }), _sleep(1200)]);
         }
         thisbtn.textContent = "检测全部";
     });

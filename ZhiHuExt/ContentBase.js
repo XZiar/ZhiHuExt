@@ -245,6 +245,7 @@ class ContentBase
 
     static async fetchAnswers(qid, limit)
     {
+        let errcnt = 0;
         const whole = [];
         let isEnd = false;
         for (let offset = 0; offset < limit && !isEnd;)

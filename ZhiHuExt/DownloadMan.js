@@ -35,7 +35,7 @@ class DownloadMan
         const url = isBlob ? URL.createObjectURL(data) : data;
         if (isBlob)
             console.log("export blob data to:", url);
-        else if (!(data instanceof string))
+        else if (!typeof(data) === "string")
         {
             console.warn("unknown data type", data);
             return;

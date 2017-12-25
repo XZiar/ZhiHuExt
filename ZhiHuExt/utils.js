@@ -684,3 +684,27 @@ async function toSimpleBagArray(dat)
     const dat3 = dat2[0].hasOwnProperty("count") ? dat3 : dat3.map(x => ({ key: x, count: 1 }));
     return dat3;
 }
+
+/**
+ * @param {Promise<Response>} resppms
+ * @param {string} defcontent
+ * @returns {Promise<string>}
+ */
+async function toBase64Img(resppms, defcontent)
+{
+    const pms = $.Deferred();
+    const reader = new FileReader();
+    try
+    {
+        const resp = await resppms;
+        reader.onloadend = () => pms.resolve(reader.result);
+        reader.onerror = e => { Console.warn(e); pms.resolve(defcontent) };
+        const data = await resp.blob();
+        reader.readAsDataURL(data);
+    }
+    catch (e)
+    {
+        pms.resolve(defcontent);
+    }
+    return pms;
+}

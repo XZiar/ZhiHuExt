@@ -95,7 +95,7 @@ function showStat(newdat)
 
 function showcloud(words)
 {
-    const namedata = new SimpleBag(words == null ? allusr.mapToProp("name") : words).above(1).toArray("desc")
+    const namedata = new SimpleBag(words == null ? allusr.mapToProp("name") : words).toArray("desc")
         .map(x => ({ name: x.key, value: x.count }));
     const gap = words ? 4 : 8;
     console.log("wordcloud", namedata);
@@ -158,11 +158,20 @@ $(document).on("click", "#addrefall", async ev =>
     console.log(`here get ${refusr.length} ref users`);
     showStat();
 });
+$("#addrefall")[0].ondragover = ev => ev.preventDefault();
+$("#addrefall")[0].ondrop = async ev =>
+{
+    ev.preventDefault();
+    const ansid = Number(ev.dataTransfer.getData("text"));
+    const refuids = (await DBfunc("getVoters", ansid, "answer")).mapToProp("key");
+    refusr = await DBfunc("getAny", "users", "id", refuids);
+    console.log(`here get ${refusr.length} ref users`);
+    showStat();
+}
 $(document).on("click", "#namecloud", ev =>
 {
     showcloud();
 });
-$("#namecloud")[0].draggable = true;
 $("#namecloud")[0].ondragover = ev => ev.preventDefault();
 $("#namecloud")[0].ondrop = ev =>
 {
@@ -193,6 +202,16 @@ const myChart = echarts.init(document.getElementById("graph"), null, { renderer:
     else if (qs.usrblob != null)
     {
         uids = (await (await fetch(qs.usrblob)).json()).mapToProp("key");
+    }
+    else if (qs.ansid != null)
+    {
+        const aids = qs.ansid.split("*").map(Number);
+        uids = (await DBfunc("getVoters", aids, "answer")).mapToProp("key");
+    }
+    else if (qs.qid != null)
+    {
+        const qids = qs.qid.split("*").map(Number);
+        uids = (await DBfunc("getVoters", qids, "question")).mapToProp("key");
     }
 
     console.log(`receive ${uids.length} uids`);

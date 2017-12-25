@@ -97,7 +97,38 @@
             const shouldBlock = window.BLOCKING_VOTER ? window.BLOCKING_VOTER : (BLOCKING_FLAG ? true : false);
             if (apiparts[0] === "members")//capture [members, {id}, ...]
             {
-                return sendData(req, pms, "members", apiparts[2] || "empty");
+                if (!apiparts[2])//empty, dirty hook for locked user
+                {
+                    const resp = await pms;
+                    if (resp.ok)
+                    {
+                        try
+                        {
+                            const rettxt = await resp.text();
+                            chrome.runtime.sendMessage(extid, { url: req, api: "members", target: "empty", data: rettxt });
+                            const ret = JSON.parse(rettxt);
+                            if (ret.account_status instanceof Array)
+                                ret.account_status.forEach(status =>
+                                {
+                                    if (status.name === "lock")
+                                        status.name = "hang";
+                                });
+                            return new Promise(resolve =>
+                            {
+                                const newresp = new Response(new Blob([JSON.stringify(ret)], { type: "application/json" }),
+                                    { status: 200, statusText: "OK", headers: resp.headers });
+                                resolve(newresp);
+                            });
+                        }
+                        catch (e)
+                        {
+                            console.warn(e);
+                        }
+                    }
+                    return resp;
+                }
+                else
+                    return sendData(req, pms, "members", apiparts[2]);
             }
             else if (apiparts[0] === "answers" && apiparts[2] === "voters")
             {

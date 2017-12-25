@@ -426,14 +426,18 @@ class ZhiHuDB
 
     /**
      * @param {number | number[] | BagArray | Promise<Any>} id
-     * @param {"answer" | "article"} target
+     * @param {"answer" | "article" | "question"} target
      * @returns {Promise<BagArray>}
      */
     async getVoters(id, target)
     {
-        const ids = await toPureArray(id);
+        let ids = await toPureArray(id);
         console.log(`here [${ids.length}] ${target} ids`);
-        const table = (target === "answer" ? this.db.zans : this.db.zanarts);
+        const table = (target === "article" ? this.db.zanarts : this.db.zans);
+        if (target === "question")
+        {
+            ids = await db.answers.where("question").anyOf(ids).primaryKeys();
+        }
         /**@type {Zan[]}*/
         const zans = await table.where("to").anyOf(ids).toArray();
         console.log("get [" + zans.length + "] zans");

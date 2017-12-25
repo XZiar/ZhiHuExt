@@ -89,7 +89,7 @@ async function autoReportAll(ev)
         if (user.status === "ban" || user.status === "sban")
         {
             thisbtn.style.backgroundColor = "black";
-            const acts = (await ContentBase.fetchUserActs(uid, 36)).acts;
+            const acts = (await ContentBase.fetchUserActs(uid, 236)).acts;
             ContentBase._report("batch", acts);
         }
         else
@@ -312,6 +312,9 @@ const bodyObserver = new MutationObserver(records =>
         if (ansartNodes.length > 0)
             addAASpamBtns(ansartNodes);
     }
+    {
+        $(addNodes).find(".HitQrcode").remove();//remove download-app banner
+    }
 });
     
 
@@ -398,7 +401,7 @@ async function onChkStatus(e)
     {
         btn.style.backgroundColor = "black";
         $(btn).siblings(".Btn-ReportSpam")[0].style.backgroundColor = "black";
-        const acts = (await ContentBase.fetchUserActs(uid, 36)).acts;
+        const acts = (await ContentBase.fetchUserActs(uid, 236)).acts;
         ContentBase._report("batch", acts);
     }
     else
@@ -527,8 +530,9 @@ $("body").on("dragover", ".RichContent-inner", ev =>
 });
 $("body").on("drop", ".RichContent-inner", ev =>
 {
+    ev.preventDefault();
     /**@type {string}*/
-    const txt = ev.dataTransfer.getData("text");
+    const txt = ev.originalEvent.dataTransfer.getData("text");
     if (txt != "MarkBtn") return;
     const wrapper = ev.target.parentElement.parentElement;
     let target;
@@ -538,7 +542,6 @@ $("body").on("drop", ".RichContent-inner", ev =>
         target = "article";
     else
         return;
-    ev.preventDefault();
 
     const id = JSON.parse(wrapper.dataset.zaModuleInfo || wrapper.dataset.zaExtraModule).card.content.token;
     saveADetail(target, id);

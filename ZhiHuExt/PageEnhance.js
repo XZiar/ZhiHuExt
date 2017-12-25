@@ -153,7 +153,8 @@
         {
             const thisbtn = e.target;
             const theuid = thisbtn.dataset.id;
-            const ret = await ContentBase.fetchUserActs(theuid, e.ctrlKey ? 70 : 5, undefined, undefined,
+            const lcount = e.shiftKey ? 270 : (e.ctrlKey ? 70 : 5);
+            const ret = await ContentBase.fetchUserActs(theuid, lcount, undefined, undefined,
                 (cur, time) => thisbtn.innerText = cur + "/" + Date.fromUTCSeconds(time).Format("MMdd"));
             const acts = ret.acts.selfMerge();
             thisbtn.innerText = (acts.zans.length + acts.zanarts.length) + "赞";
@@ -214,26 +215,100 @@
         qstHead.ondrop = saveQuestion;
     }
 
-    async function saveQuestion(ev)
+}()
+
+
+async function saveQuestion(ev)
+{
+    ev.preventDefault();
+    /**@type {string}*/
+    const txt = ev.dataTransfer.getData("text");
+    if (txt != "MarkBtn") return;
+    const qid = document.location.pathname.split("/")[2];
+    if (!qid)
+        return;
+    const qsturl = `https://www.zhihu.com/api/v4/questions/${qid}?include=excerpt,content,author,answer_count,topics,comment_count,follower_count;data[*].author.voteup_count,answer_count,articles_count,follower_count,badge[?(type=best_answerer)].topics`
+    const anspms = ContentBase.fetchAnswers(qid, 100);
+    const qst = await ContentBase._get(qsturl);
+    qst.answers = await anspms;
+
+    const output = new StandardDB();
+    qst.answers.forEach(ans => APIParser.parseByType(output, ans));
+    APIParser.parseByType(output, qst);
+    output.selfMerge();
+    ContentBase._report("batch", output);
+
+    const time = new Date().Format("yyyyMMdd-hhmm");
+    const fname = `Question-${qid}-${time}.json`;
+    console.log("question fetched", qst);
+    if (!ev.ctrlKey)
     {
-        ev.preventDefault();
-        /**@type {string}*/
-        const txt = ev.dataTransfer.getData("text");
-        if (txt != "MarkBtn") return;
-        const qid = document.location.pathname.split("/")[2];
-        if (!qid)
-            return;
-        const qsturl = `https://www.zhihu.com/api/v4/questions/${qid}?include=excerpt,content,author,answer_count,topics,comment_count,follower_count;data[*].author.voteup_count,answer_count,articles_count,follower_count,badge[?(type=best_answerer)].topics`
-        const anspms = ContentBase.fetchAnswers(qid, 100);
-        const qst = await ContentBase._get(qsturl);
-        qst.answers = await anspms;
-        console.log("question backuped", qst);
-        const time = new Date().Format("yyyyMMdd-hhmm");
-        SendMsgAsync({ action: "download", data: qst, type: "json", fname: `Question-${qid}-${time}.json` });
+        return SendMsgAsync({ action: "download", data: qst, type: "json", fname: fname });
     }
 
-    async function saveADetail(target, id)
+    let imgset = new Set();
+    qst.answers.forEach(ans =>
     {
-        console.log("not implemented");
+        const mths = ans.content.match(/<img [^>]*>/g);
+        if (!mths) return;
+        mths.map(img => img.match(/data-original="([^"]*)"/i)).filter(mth => mth)
+            .forEach(mth => imgset.add(mth[1]));
+    });
+    saveWithImg(qst, imgset, fname);
+}
+
+async function saveADetail(target, id)
+{
+    if (target === "article")
+    {
+        console.warn("not implemented");
+        return;
     }
-}()
+    const ansurl = `https://www.zhihu.com/api/v4/answers/${id}?include=excerpt,content,author,comment_count,voteup_count;data[*].question.answer_count,topics,follower_count;data[*].author.voteup_count,answer_count,articles_count,follower_count,badge[?(type=best_answerer)].topics`
+    const ans = await ContentBase._get(ansurl);
+
+    const output = new StandardDB();
+    APIParser.parseByType(output, ans);
+    ContentBase._report("batch", output);
+
+    const time = new Date().Format("yyyyMMdd-hhmm");
+    const fname = `Answer-${id}-${time}.json`;
+    console.log("answer fetched", ans);
+
+    let imgset = new Set();
+    const mths = ans.content.match(/<img [^>]*>/g);
+    if (mths)
+        mths.map(img => img.match(/data-original="([^"]*)"/i)).filter(mth => mth)
+            .forEach(mth => imgset.add(mth[1]));
+
+    saveWithImg(ans, imgset, fname);
+}
+
+async function saveWithImg(base, imgset, fname)
+{
+    const imgs = imgset.toArray();
+    console.log(imgs);
+    let jsonpart = [JSON.stringify(base).slice(0, -1), ',"images":{'];//use raw string, avoid crash in JSON.stringify
+    for (let idx = 0, pidx = 1; idx < imgs.length; idx += 50)//fetch 50 images at a time, avoid timeout and 409
+    {
+        if (idx > pidx * 300)//split to multiple part, avoid too large for a string
+        {
+            jsonpart.push('');
+            pidx++;
+        }
+        await Promise.all(imgs.slice(idx, idx + 50)
+            .map(async img =>
+            {
+                const b64 = await toBase64Img(fetch(img), img);
+                const imgname = img.split("/").pop();
+                jsonpart[pidx] += `"${imgname}":"${b64}",`;
+            }));
+        console.log("finish cycle", idx);
+    }
+    jsonpart[jsonpart.length - 1] = jsonpart[jsonpart.length - 1].slice(0, -1);
+    jsonpart.push("}}");
+    const blob = new Blob(jsonpart, { type: "application/json" });
+    const dataurl = URL.createObjectURL(blob);
+    console.log("data with images backuped", base);
+    SendMsgAsync({ action: "download", data: dataurl, type: "ObjectURL", fname: fname });
+}

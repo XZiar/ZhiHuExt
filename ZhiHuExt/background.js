@@ -276,7 +276,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) =>
             chrome.tabs.create({ active: !request.isBackground, url: request.target });
             break;
         case "download":
-            DownloadMan.exportDownload(request.data, request.type, request.fname);
+            if (request.type === "ObjectURL")
+                DownloadMan.download(request.data, request.fname);
+            else
+                DownloadMan.exportDownload(request.data, request.type, request.fname);
             break;
         case "analyse":
             {

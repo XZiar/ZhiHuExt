@@ -1,11 +1,12 @@
 "use strict"
 
-/**@type {Map<string|number, [string,number,string,string,number][]> | [number,number,string,string,string][]}*/
+/**@type {Map<string|number, [string,number,string,string,number][]>}*/
 let wholeData;
 /**@type {string[]}*/
 let allDates = [];
 /**@type {string}*/
 let additionTitle;
+let stackX;
 
 const selUser = $("#selUser")[0], selObj = $("#selObj")[0];
 
@@ -19,9 +20,19 @@ const yAxis = ({
     axisLabel: { formatter: val => `${val/60}:00` }
 });
 
+function getLegend(dat)
+{
+    const legends = Array.from(dat.keys());
+    return ({
+        left: "30%",
+        right: "10%",
+        type: legends.length > 5 ? "scroll" : "plain",
+        data: legends
+    });
+}
+
 function showOnlyAct()
 {
-    const legends = Array.from(wholeData.keys());
     const series = Array.from(wholeData.entries()).map(entry =>
         ({
             name: entry[0],
@@ -34,12 +45,7 @@ function showOnlyAct()
         title: { text: "点赞记录图-" + additionTitle },
         tooltip: { trigger: "item", formatter: dat => `${dat.data[5]}<br />${dat.data[6]}<br />${dat.data[10]}` },
         toolbox: saveOpt,
-        legend: {
-            left: "30%",
-            right: "10%",
-            type: legends.length > 5 ? "scroll" : "plain",
-            data: legends
-        },
+        legend: getLegend(wholeData),
         xAxis: {
             splitLine: { lineStyle: { type: 'dashed' } },
             name: "记录序号",
@@ -50,9 +56,46 @@ function showOnlyAct()
     myChart.setOption(option);
 }
 
+function showStack()
+{
+    const series = Array.from(wholeData.entries()).map(entry =>
+        ({
+            name: entry[0],
+            data: entry[1],
+            type: "line",
+            stack: "sum",
+            areaStyle: { normal: {} }
+        }));
+    const option = {
+        title: { text: "点赞记录图-" + additionTitle },
+        tooltip: {
+            trigger: "axis", axisPointer: {
+                type: 'cross',
+                label: { backgroundColor: '#6a7985' }
+            }
+        },
+        toolbox: saveOpt,
+        legend: getLegend(wholeData),
+        xAxis: {
+            type: "category",
+            boundaryGap: false,
+            name: "时间",
+            data: stackX
+        },
+        yAxis: [{ type: "value" }],
+        series: series,
+        dataZoom: [{
+            id: "dataZoomX",
+            type: "slider",
+            xAxisIndex: [0],
+            filterMode: "empty"
+        }]
+    };
+    myChart.setOption(option);
+}
+
 function showAct()
 {
-    const legends = Array.from(wholeData.keys());
     const series = Array.from(wholeData.entries()).map(entry =>
         ({
             name: entry[0],
@@ -65,12 +108,7 @@ function showAct()
         title: { text: "点赞时间图-" + additionTitle },
         tooltip: { trigger: "item", formatter: dat => `${dat.data[5]}<br />${dat.data[6]}<br />${dat.data[10]}` },
         toolbox: saveOpt,
-        legend: {
-            left: "30%",
-            right: "10%",
-            type: legends.length > 5 ? "scroll" : "plain",
-            data: legends
-        },
+        legend: getLegend(wholeData),
         xAxis: {
             splitLine: { lineStyle: { type: 'dashed' } },
             type: "category",
@@ -223,21 +261,60 @@ function encodeObj(objs, umapper)
         const ansdat = encodeZan(zananss, usrs, anss, "answer");
         const artdat = encodeZan(zanarts, usrs, arts, "article");
         const objdat = encodeObj(Object.values(anss).concat(Object.values(arts)), usrs);
-        wholeData = ansdat.concat(artdat).concat(objdat).sort((a, b) => a[3] - b[3]);
-        wholeData.forEach((x, idx) => x[0] = idx);
-        if (qs.only === "true")
+        /**@type {[number,number,string,string,string][]}*/
+        const wholeData2 = ansdat.concat(artdat).concat(objdat).sort((a, b) => a[3] - b[3]);
+        wholeData2.forEach((x, idx) => x[0] = idx);
+        wholeData = wholeData2.groupBy(groupidx);
+        if (qs.stack === "true")
+        {
+            $("#changeonly").remove();
+            const step = Number(qs.step || 1800);
+            const wmap = {};
+            for (const k of wholeData.keys())
+            {
+                wmap[k] = 0;
+                wholeData.set(k, [0]);
+            }
+            const tmin = wholeData2[0][3], tmax = wholeData2.last()[3];
+            let t1 = tmin, t2 = tmin + step, idx = 0;
+            stackX = ["init"];
+            for (; t1 < tmax; ++idx)
+            {
+                while (t1 > t2)
+                {
+                    Array.from(Object.entries(wmap)).forEach(en =>
+                    {
+                        const va = wholeData.get(en[0]);
+                        va.push(en[1]);
+                    });
+                    const [, , , hour, minu, ,] = Date.getDetailCHN(t2);
+                    stackX.push(`${hour}:${minu}`);
+                    t2 += step;
+                }
+                const p = wholeData2[idx];
+                wmap[p[groupidx]] += 1;
+                t1 = p[3];
+            }
+            Array.from(Object.entries(wmap)).forEach(en =>
+            {
+                const va = wholeData.get(en[0]);
+                va.push(en[1]);
+            });
+            {
+                const [, , , hour, minu, ,] = Date.getDetailCHN(t2);
+                stackX.push(`${hour}:${minu}`);
+            }
+            showStack();
+        }
+        else if (qs.only === "true")
         {
             $("#changeonly").text("切换到分时");
-            wholeData = wholeData.groupBy(groupidx);
             showOnlyAct();
-            return;
         }
         else
         {
             $("#changeonly").text("切换到不分时");
-            allDates = new Set(wholeData.mapToProp(9)).toArray().sort((a, b) => a - b).map(x => `${Math.floor(x / 100) % 100}/${x % 100}`);
-            const wholeData2 = wholeData;
-            wholeData = wholeData.groupBy(groupidx);
+            allDates = new Set(wholeData2.mapToProp(9)).toArray().sort((a, b) => a - b).map(x => `${Math.floor(x / 100) % 100}/${x % 100}`);
             showAct();
 
             selUser.innerHTML = "", selObj.innerHTML = "";
