@@ -55,7 +55,7 @@ class User
         {
             if (statuss.find(x => x.name === "hang" || x.name === "lock"))
                 user.status = "ban";
-            else if (statuss.find(x => x.name === "ban" && x.expiredAt === 864000000))
+            else if (statuss.find(x => x.name === "ban" && (x.expiredAt === 864000000 || x.expiredAt > 1700000000)))
                 user.status = "sban";//shutup-ban
             else
                 user.status = "";
@@ -259,6 +259,7 @@ class StandardDB
         ret.articles = StandardDB.innerMerge("articles", this.articles);
         ret.questions = StandardDB.innerMerge("questions", this.questions);
         ret.topics = StandardDB.innerMerge("topics", this.topics);
+        ret.details = StandardDB.innerMerge("details", this.details);
         return ret;
     }
     /**

@@ -146,7 +146,11 @@ $(document).on("click", "#import", e =>
         const content = e.target.result;
         const report = JSON.parse(content);
         console.log(report);
+        const details = report.details;
+        report.details = [];
         ContentBase._report("batch", report);
+        for (let i = 0; i < details.length; i += 5000)
+            ContentBase._report("details", details.slice(i, i + 5000));
     }
     reader.readAsText(files[0]);
 });

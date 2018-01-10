@@ -4,7 +4,7 @@
 {
     if (!window.location.host.includes("zhihu.com"))
         return;
-    function FetchHook(extid)
+    function Hooker(extid)
     {
         "use strict"
         window.BLOCKING_VOTER = false;
@@ -49,13 +49,16 @@
             return resp;
         }
         /**
+         * @param {HTMLElement} blockdom
          * @param {string} api
          * @param {string} id
          * @returns {Promise<Response>}
          */
-        function blockVoter(api, id)
+        function blockVoter(blockdom, api, id)
         {
             id = typeof (window.BLOCKING_VOTER) === "number" ? window.BLOCKING_VOTER : id;
+            if (blockdom)
+                document.body.removeChild(blockdom);
             return new Promise(resolve =>
             {
                 chrome.runtime.sendMessage(extid, { api: api, target: "BLOCKING", id: Number(id), data: null }, ret =>
@@ -67,6 +70,8 @@
             });
         }
         const oldfetch = fetch;
+        if (window)
+            window.oldfetch = fetch;
         /**
          * @param {string} req
          * @param {RequestInit} [init]
@@ -87,7 +92,7 @@
                 if (apiparts[0] === "members" && !apiparts[2])//quick check for statis
                 {
                     if (newreq.includes("?include="))
-                        newreq = newreq.replace("?include=", "?include=account_status,voteup_count,answer_count,articles_count,follower_count");
+                        newreq = newreq.replace("?include=", "?include=account_status,voteup_count,answer_count,articles_count,follower_count,");
                     else
                         newreq = newreq + "?include=account_status,voteup_count,answer_count,articles_count,follower_count"
                 }
@@ -132,11 +137,11 @@
             }
             else if (apiparts[0] === "answers" && apiparts[2] === "voters")
             {
-                return shouldBlock ? blockVoter("answer", apiparts[1]) : sendData(req, pms, "answers", "voters", { id: apiparts[1] });
+                return shouldBlock ? blockVoter(BLOCKING_FLAG, "answer", apiparts[1]) : sendData(req, pms, "answers", "voters", { id: apiparts[1] });
             }
             else if (apiparts[0] === "articles" && apiparts[2] === "likers")
             {
-                return shouldBlock ? blockVoter("article", apiparts[1]) : sendData(req, pms, "articles", "voters", { id: apiparts[1] });
+                return shouldBlock ? blockVoter(BLOCKING_FLAG, "article", apiparts[1]) : sendData(req, pms, "articles", "voters", { id: apiparts[1] });
             }
             else if (apiparts[0] === "questions" && apiparts[2] === "answers")
             {
@@ -190,7 +195,7 @@
     
 
     const inj = document.createElement("script");
-    inj.innerHTML = `(${FetchHook})("${chrome.runtime.id}");`;
+    inj.innerHTML = `(${Hooker})("${chrome.runtime.id}");`;
     document.documentElement.appendChild(inj);
 }()
 

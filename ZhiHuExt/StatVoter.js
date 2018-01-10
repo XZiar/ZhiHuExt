@@ -12,7 +12,7 @@ async function StatVoters(...voters)
 {
     console.log("arrive voters", voters);
     let bag = voters.filter(v => v != null).reduce((prev, cur) => prev.union(cur), new SimpleBag());
-    if (bag.size > 20000)
+    if (bag.size > 30000)
         bag = bag.above(1);
     const uids = bag.elements();
 

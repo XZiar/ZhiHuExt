@@ -73,11 +73,14 @@
      */
     async function checkUserStatus(uid, cell)
     {
-        const user = await ContentBase.checkUserState(uid, undefined, [28]);
+        const user = await ContentBase.checkUserState(uid, undefined, [8]);
         if (!user)
             return;
         if (user.status === "ban" || user.status === "sban")
+        {
             cell.style.background = "black";
+            ContentBase.checkUserState(uid, undefined, [230]);
+        }
         else
             cell.style.background = "rgb(0,224,32)";
     }
@@ -109,7 +112,7 @@
             const [uid, cell] = objs[i];
             thisbtn.textContent = uid;
             checkUserStatus(uid, cell);
-            await _sleep(900);
+            await _sleep(900 + i * 100);
         }
         thisbtn.textContent = "检测全部";
     });

@@ -80,6 +80,9 @@ namespace DBExportor.Controllers
                 {
                     var db = SlimSerializer.Deserialize<StandardDB>(reader);
                     LOG.LogInformation("json loaded");
+                    var banusrcnt = db.users.Where(usr => usr.status_ != UserStatus.empty).Count();
+                    LOG.LogInformation($"bans:{banusrcnt}\tspams:{db.spams.Count}\tusers:{db.users.Count}\tzans:{db.zans.Count}\tzanarts:{db.zanarts.Count}");
+                    LOG.LogInformation($"questions:{db.questions.Count}\tanswers:{db.answers.Count}\tarticles:{db.articles.Count}\tdetails:{db.details.Count}");
                     db.Slim(1);
                     GC.Collect(2, GCCollectionMode.Optimized, false, true);
                     var cache = BuildCache(db);

@@ -178,8 +178,8 @@ async function addSpamVoterBtns(voterNodes)
 };
 const voterObserver = new MutationObserver(records =>
 {
-    if (document.body.querySelector("#ZHE_BLOCKING_VOTER"))
-        document.body.removeChild(BLOCKING_FLAG);
+    //if (document.body.querySelector("#ZHE_BLOCKING_VOTER"))
+        //document.body.removeChild(BLOCKING_FLAG);
     const voterNodes = Array.fromArray(
         records.filter(record => (record.type == "childList" && record.target.nodeName == "DIV"))
             .map(record => $.makeArray(record.addedNodes)))
@@ -303,6 +303,8 @@ const bodyObserver = new MutationObserver(records =>
         if ($(delNodes).find(".VoterList-content").length > 0)
         {
             console.log("here removed", delNodes);
+            if (document.body.querySelector("#ZHE_BLOCKING_VOTER"))
+                document.body.removeChild(BLOCKING_FLAG);
             CUR_ANSWER = null;
             CUR_ARTICLE = null;
         }
@@ -437,7 +439,7 @@ $("body").on("click", "button.Btn-CheckAllStatus", async function (e)
     {
         btn.textContent = btnList[idx].name;
         const event = { target: btnList[idx].btn, ctrlKey: false };
-        await Promise.all([onChkStatus(event), _sleep(800 + idx * 15)]);
+        await Promise.all([onChkStatus(event), _sleep(900 + idx * 10)]);
     }
     btn.textContent = "检测全部";
 });
@@ -524,7 +526,7 @@ $("body").on("click", "button.Modal-closeButton", function ()
 });
 $("body").on("dragover", ".RichContent-inner", ev =>
 {
-    const wrapper = ev.target.parentElement.parentElement;
+    const wrapper = ev.currentTarget.parentElement.parentElement;
     if (wrapper.className.includes("AnswerItem") || wrapper.className.includes("ArticleItem"))
         ev.preventDefault();
 });
@@ -534,7 +536,7 @@ $("body").on("drop", ".RichContent-inner", ev =>
     /**@type {string}*/
     const txt = ev.originalEvent.dataTransfer.getData("text");
     if (txt != "MarkBtn") return;
-    const wrapper = ev.target.parentElement.parentElement;
+    const wrapper = ev.currentTarget.parentElement.parentElement;
     let target;
     if (wrapper.className.includes("AnswerItem"))
         target = "answer";

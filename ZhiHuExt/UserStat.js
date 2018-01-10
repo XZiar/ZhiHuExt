@@ -181,7 +181,6 @@ $("#namecloud")[0].ondrop = ev =>
     showcloud(words);
 }
 const myChart = echarts.init(document.getElementById("graph"), null, { renderer: "canvas" });
-//const ncloudChart = echarts.init(document.getElementById("graph"), null, { renderer: "canvas" });
 
 !async function()
 {
@@ -212,6 +211,11 @@ const myChart = echarts.init(document.getElementById("graph"), null, { renderer:
     {
         const qids = qs.qid.split("*").map(Number);
         uids = (await DBfunc("getVoters", qids, "question")).mapToProp("key");
+    }
+    else if (qs.athid != null)
+    {
+        const athids = qs.athid.split("*");
+        uids = (await DBfunc("getVotersByAuthor", athids)).mapToProp("key");
     }
 
     console.log(`receive ${uids.length} uids`);
