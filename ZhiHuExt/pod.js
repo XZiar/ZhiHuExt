@@ -241,6 +241,7 @@ class StandardDB
                 break;
             case "topics":
             case "spams":
+            case "follows":
                 return items;//skip
             default:
                 for (let i = 0; i < items.length; ++i)

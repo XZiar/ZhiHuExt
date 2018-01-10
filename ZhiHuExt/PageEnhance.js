@@ -200,7 +200,7 @@
             /**@type {string}*/
             const txt = ev.originalEvent.dataTransfer.getData("text");
             if (txt != "spider" && !Number(txt)) return;
-            let cnt = Number(txt) || ev.currentTarget.innerText.split('\n')[1];
+            let cnt = Number(txt) || Number(ev.currentTarget.innerText.split('\n')[1].replace(',', ''));
             console.log("spider for follow", ev);
             const suffix = ev.currentTarget.href.split("/").pop();
             let ret = null;

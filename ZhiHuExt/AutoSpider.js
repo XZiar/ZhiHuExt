@@ -154,6 +154,25 @@ $(document).on("click", "#import", e =>
     }
     reader.readAsText(files[0]);
 });
+$(document).on("click", "#rfsold", async e =>
+{
+    const btn = e.target;
+    btn.textContent = "获取中";
+    let objs;
+    if (e.ctrlKey)
+    {
+        objs = JSON.parse(txt);
+        const banset = (await ContentBase.checkSpam("users", objs)).banned;
+        objs = objs.filter(uid => !u404s.has(uid) && banset.has(uid));
+    }
+    else
+    {
+        objs = Array.from(uids.values()).filter(u => u.status !== "").mapToProp("id");
+    }
+    const info = await DBfunc("getAny", "rectime", "id", objs);
+    info.forEach(i => utimeOld.set(i.id, i.old));
+    btn.textContent = "刷新最旧点";
+});
 $(document).on("click", "#chkban", async e =>
 {
     const btn = e.target;
@@ -181,12 +200,6 @@ $(document).on("click", "#chkban", async e =>
     }
     console.log(`here [${objs.length}] obj users`);
 
-    if (fromold.checked)
-    {
-        const info = await DBfunc("getAny", "rectime", "id", objs);
-        info.forEach(i => utimeOld.set(i.id, i.old));
-    }
-
     await monitorCycle(btn, objs);
 
     isRunning = false;
@@ -213,12 +226,6 @@ $(document).on("click", "#go", async e =>
         const banset = isCtrl ? new Set() : (await ContentBase.checkSpam("users", objs)).banned;
         objs = objs.filter(uid => !u404s.has(uid) && !banset.has(uid));
         console.log(`here [${objs.length}] obj users`);
-
-        if (fromold.checked)
-        {
-            const info = await DBfunc("getAny", "rectime", "id", objs);
-            info.forEach(i => utimeOld.set(i.id, i.old));
-        }
 
         await monitorCycle(btn, objs);
 

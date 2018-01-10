@@ -167,7 +167,10 @@ let tables;
 
 $(document).on("click", "button#quickexport", () =>
 {
-    chrome.runtime.sendMessage({ action: "export" });
+    const needtables = $(".tabchooser").toArray()
+        .filter(/**@type {HTMLInputElement}*/(chkbox) => chkbox.checked)
+        .map(chkbox => chkbox.dataset.tname);
+    chrome.runtime.sendMessage({ action: "export", target: needtables });
 });
 $(document).on("click", "button#quickimport", e =>
 {

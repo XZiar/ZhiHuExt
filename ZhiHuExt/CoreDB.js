@@ -249,17 +249,26 @@ class ZhiHuDB
         await Promise.all(tabpmss);
         return ret;
     }
-    export()
+    export(tabarray)
     {
+        const tabs = new Set(tabarray);
         const pms = $.Deferred();
         this.db.transaction("r", this.db.tables, () =>
         {
             const ret = {};
-            const tabpmss = this.db.tables.map(async table =>
-            {
-                ret[table.name] = await table.toArray();
-                console.log("export table [" + table.name + "] success");
-            });
+            const tabpmss = this.db.tables.filter(t => tabs.has(t.name))
+                .map(async table =>
+                {
+                    if (tabs.has(table.name))
+                    {
+                        ret[table.name] = await table.toArray();
+                        console.log("export table [" + table.name + "] success");
+                    }
+                    else
+                    {
+                        ret[table.name] = [];
+                    }
+                });
             Promise.all(tabpmss)
                 .then(() => pms.resolve(ret))
                 .catch(e => pms.reject(e));

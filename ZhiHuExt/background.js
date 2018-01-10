@@ -233,7 +233,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) =>
                     .then(res => sendResponse(res), err => console.warn(err));
             } return true;
         case "export":
-            db.export().then(dbjson =>
+            db.export(request.target).then(dbjson =>
             {
                 const time = new Date().Format("yyyyMMdd-hhmm");
                 const fname = "ZhiHuExtDB-" + time + ".json";
