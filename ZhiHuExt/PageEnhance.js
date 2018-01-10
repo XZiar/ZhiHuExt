@@ -186,6 +186,32 @@
             $(".ProfileHeader-contentFooter", header).append(dummydiv);
         }
         $(".ProfileButtonGroup", header).prepend(btn1, btn2, btn3, btn4, btn5);
+
+        //spider fot follow
+        btn4.draggable = true;
+        btn4.ondragstart = (ev) =>
+        {
+            ev.dataTransfer.setData("text", "spider");
+        }
+        $("body").on("dragover", "a.NumberBoard-item", ev => ev.preventDefault());
+        $("body").on("drop", "a.NumberBoard-item", async ev =>
+        {
+            ev.preventDefault();
+            /**@type {string}*/
+            const txt = ev.originalEvent.dataTransfer.getData("text");
+            if (txt != "spider" && !Number(txt)) return;
+            let cnt = Number(txt) || ev.currentTarget.innerText.split('\n')[1];
+            console.log("spider for follow", ev);
+            const suffix = ev.currentTarget.href.split("/").pop();
+            let ret = null;
+            if (suffix === "following")
+                ret = await ContentBase.fetchFollows(uid, "followees", cnt);
+            else if (suffix === "followers")
+                ret = await ContentBase.fetchFollows(uid, "followers", cnt);
+            else
+                return;
+            ContentBase._report("follow", ret);
+        });
     }
 
     function qstEnhance()

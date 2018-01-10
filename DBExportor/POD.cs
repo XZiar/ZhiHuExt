@@ -105,12 +105,12 @@ namespace DBExportor.Pods
 
     public struct Follow
     {
-        public string from { get => from_; set => from_ = string.Intern(value); }
+        public string from { get => UIDPool.GetString(from_); set => from_ = UIDPool.GetOrNew(value); }
         [JsonIgnore]
-        private string from_;
-        public string to { get => to_; set => to_ = string.Intern(value); }
+        private uint from_;
+        public string to { get => UIDPool.GetString(to_); set => to_ = UIDPool.GetOrNew(value); }
         [JsonIgnore]
-        private string to_;
+        private uint to_;
     }
 
     public enum UserStatus : byte { ban, sban, empty }

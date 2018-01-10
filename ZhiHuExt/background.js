@@ -101,7 +101,7 @@ const db = new ZhiHuDB("ZhihuDB", [
     });
 
 
-
+let FOLLOW_BAN = new Set();
 
 /**@param {number | string} tid */
 function fetchTopic(tid)
@@ -266,7 +266,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) =>
                 err => console.warn(err));
             return true;
         case "insert":
-            db.insert(request.target, request.data, putBadge);
+            if (request.target === "follow")
+                addFollow(request.data);
+            else
+                db.insert(request.target, request.data, putBadge);
             break;
         case "update":
             if (!db.update(request.target, request.data))
@@ -312,6 +315,19 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) =>
             break;
     }
 });
+
+/**@param {{users:User[],follows:Follow[]}} data*/
+function addFollow(data)
+{
+    data.users.forEach(usr =>
+    {
+        if (usr.status != "" && !BAN_UID.has(usr.id))
+            FOLLOW_BAN.add(usr.id);
+    });
+    db.insert("batch", data, putBadge);
+    console.log("follows", data.follows);
+}
+
 chrome.runtime.onMessageExternal.addListener(
     /**@param {{ url: string, api: string, target: string, data: string, extra: {} }} request*/
     (request, sender, sendResponse) =>
@@ -381,6 +397,22 @@ chrome.runtime.onMessageExternal.addListener(
                 } break;
             case "publications":
                 break;
+            case "followers":
+                {
+                    const uto = request.extra.uid;
+                    /**@type {{users:User[],follows:Follow[]}}*/
+                    const res = { users: data.data.map(User.fromRawJson), follows: [] };
+                    res.follows = res.users.map(ufrom => new Follow(ufrom, uto));
+                    addFollow(res);
+                } break;
+            case "followees":
+                {
+                    const ufrom = request.extra.uid;
+                    /**@type {{users:User[],follows:Follow[]}}*/
+                    const res = { users: data.data.map(User.fromRawJson), follows: [] };
+                    res.follows = res.users.map(uto => new Follow(ufrom, uto));
+                    addFollow(res);
+                } break;
             case "BLOCKING":
                 {
                     blocking(request.api, request.id).then(x => sendResponse(JSON.stringify(x)));

@@ -35,7 +35,7 @@ class ContentBase
      * @param {"answer" | "article"} obj
      * @param {number | string} id
      * @param {number} offset
-     * @returns {Promise<{users: User[], end:boolean, start: boolean, total: number}>}
+     * @returns {Promise<{users: User[], end: boolean, start: boolean, total: number}>}
      */
     static _fetchAnsVoters(obj, id, offset)
     {
@@ -97,6 +97,23 @@ class ContentBase
                 pms.resolve({ data: data.data, end: data.paging.is_end, total: data.paging.totals });
             })
             .fail(ContentBase._defErrorHandler("fetchComment", pms));
+        return pms;
+    }
+    /**
+     * @param {string} uid
+     * @param {"followees" | "followers"} obj
+     * @param {number} offset
+     * @returns {{data: User[], end: boolean, total: number}}
+     */
+    static _fetchFollows(uid, obj, offset)
+    {
+        const pms = $.Deferred();
+        ContentBase._get(`https://www.zhihu.com/api/v4/members/${uid}/${obj}?include=data[*].account_status,gender,voteup_count,answer_count,follower_count,is_followed,is_following,badge[?(type=best_answerer)].topics&limit=20&offset=${offset}`)
+            .done((data, status, xhr) =>
+            {
+                pms.resolve({ data: data.data.map(User.fromRawJson), end: data.paging.is_end, total: data.paging.totals });
+            })
+            .fail(ContentBase._defErrorHandler("fetchFollow", pms));
         return pms;
     }
 
@@ -203,6 +220,7 @@ class ContentBase
         }
         return ret;
     }
+
     /**
      * @param {string} uid
      * @param {number} maxloop
@@ -290,6 +308,42 @@ class ContentBase
             }
         }
         return whole;
+    }
+
+    /**
+     * @param {string} uid
+     * @param {"followees" | "followers"} obj
+     * @param {number} limit
+     */
+    static async fetchFollows(uid, obj, limit)
+    {
+        /**@type {User[]}*/
+        const whole = [];
+        let isEnd = false;
+        for (let offset = 0; offset < limit && !isEnd;)
+        {
+            try
+            {
+                const part = await ContentBase._fetchFollows(uid, obj, offset);
+                whole.push(...part.data);
+                isEnd = part.end;
+                offset += part.data.length;
+            }
+            catch (e)
+            {
+                if (++errcnt > 5)
+                    break;
+                else
+                    continue;
+            }
+        }
+        /**@type {{users:User[],follows:Follow[]}}*/
+        const res = { users: whole, follows: [] };
+        if (obj === "followers")
+            res.follows = whole.map(ufrom => new Follow(ufrom, uid));
+        else
+            res.follows = whole.map(uto => new Follow(uid, uto));
+        return res;
     }
 
     /**

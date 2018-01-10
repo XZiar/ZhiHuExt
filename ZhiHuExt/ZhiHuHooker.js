@@ -89,12 +89,17 @@
                     newreq = newreq.replace("follower_count%2C", "answer_count%2Carticles_count%2Cfollower_count%2C");//detail
                 else
                     newreq = newreq.replace("follower_count%2C", "voteup_count%2Canswer_count%2Carticles_count%2Cfollower_count%2C");//detail
-                if (apiparts[0] === "members" && !apiparts[2])//quick check for statis
+                if (apiparts[0] === "members")//quick check for statis
                 {
-                    if (newreq.includes("?include="))
-                        newreq = newreq.replace("?include=", "?include=account_status,voteup_count,answer_count,articles_count,follower_count,");
-                    else
-                        newreq = newreq + "?include=account_status,voteup_count,answer_count,articles_count,follower_count"
+                    if (!apiparts[2])
+                    {
+                        if (newreq.includes("?include="))
+                            newreq = newreq.replace("?include=", "?include=account_status,voteup_count,answer_count,articles_count,follower_count,");
+                        else
+                            newreq = newreq + "?include=account_status,voteup_count,answer_count,articles_count,follower_count"
+                    }
+                    else if (apiparts[2].startsWith("follow"))
+                        newreq = newreq.replace("answer_count", "account_status,voteup_count,answer_count,articles_count,follower_count");
                 }
             }
             const pms = oldfetch(newreq, init);
@@ -133,7 +138,7 @@
                     return resp;
                 }
                 else
-                    return sendData(req, pms, "members", apiparts[2]);
+                    return sendData(req, pms, "members", apiparts[2], { uid: apiparts[1] });
             }
             else if (apiparts[0] === "answers" && apiparts[2] === "voters")
             {

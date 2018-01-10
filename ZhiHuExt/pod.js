@@ -178,12 +178,27 @@ class Zan
     }
 }
 
+class Follow
+{
+    /**
+     * @param {User | string} from
+     * @param {User | string} to
+     */
+    constructor(from, to)
+    {
+        this.from = typeof (from) === "string" ? from : from.id;
+        this.to = typeof (to) === "string" ? to : to.id;
+    }
+}
+
 class StandardDB
 {
     constructor()
     {
         /**@type {User[]} users*/
         this.users = [];
+        /**@type {Follow[]} follows*/
+        this.follows = [];
         /**@type {Zan[]} zans*/
         this.zans = [];
         /**@type {Zan[]} zanarts*/
