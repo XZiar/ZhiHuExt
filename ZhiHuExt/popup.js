@@ -19,21 +19,10 @@ function rfs()
 }
 
 $(document).on("click", "button#rfs", rfs);
-$(document).on("click", "button#spider", () =>
+$(document).on("click", "button.openpage", e =>
 {
-    chrome.runtime.sendMessage({ action: "openpage", isBackground: false, target: "AutoSpider.html" });
-});
-$(document).on("click", "button#export", () =>
-{
-    chrome.runtime.sendMessage({ action: "openpage", isBackground: false, target: "Export.html" });
-});
-$(document).on("click", "button#timeline", () =>
-{
-    chrome.runtime.sendMessage({ action: "openpage", isBackground: false, target: "Timeline.html" });
-});
-$(document).on("click", "button#relations", () =>
-{
-    chrome.runtime.sendMessage({ action: "openpage", isBackground: false, target: "Relations.html" });
+    const dest = e.target.dataset.htmlname;
+    chrome.runtime.sendMessage({ action: "openpage", isBackground: false, target: dest+".html" });
 });
 $(document).ready(() =>
 {

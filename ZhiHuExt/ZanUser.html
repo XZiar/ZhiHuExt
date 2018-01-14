@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="3rd/css/jquery.dataTables.min.css">
     <script src="3rd/js/jquery.dataTables.min.js"></script>
     <script src="3rd/js/echarts.js"></script>
-    <title>时间分析</title>
+    <title>点赞人分析</title>
     <style>
         td:last-child {
             font-weight: bold;
@@ -25,19 +25,17 @@
 <body>
     <div>
         <h3 style="text-align:center">
-            <button id="changeonly">切换分时</button>
-            <button id="changestack">累积堆栈</button>
-            <button id="export">导出csv</button>
+            <button id="showzan">显示点赞</button>
+            <button id="showa">显示作品</button>
+            <button id="showfol">显示关注</button>
+            <button id="chgxax">依照时间</button>
         </h3>
         <div style="text-align:center">
             <div id="graph" style="width: 90%; height: 400px; max-width: 1024px; max-height:640px;"></div>
         </div>
         <div style="text-align:center">
-            <select id="selUser" value="只看某用户">只看某用户</select>
-            <select id="selObj" value="只看某回答/文章">只看某回答/文章</select>
-            <br />
         </div>
     </div>
-    <script src="Timeline.js"></script>
+    <script src="ZanUser.js"></script>
 </body>
 </html>

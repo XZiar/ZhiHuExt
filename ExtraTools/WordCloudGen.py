@@ -23,8 +23,7 @@ if mode == 1:
     import jieba
     newdat = [tk for name in dat for tk in jieba.cut(name.lower(), cut_all=False)]
 else:
-
-
+    pass
 
 with open("namestk.json", "w") as fp:
     json.dump(newdatoutput, fp)

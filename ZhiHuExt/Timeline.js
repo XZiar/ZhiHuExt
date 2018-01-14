@@ -139,7 +139,29 @@ $(document).on("click", "#changeonly", e =>
         qs.only = "false";
     else
         qs.only = "true";
+    qs.stack = false;
     window.location = "/Timeline.html?" + _toQueryString(qs);
+});
+$(document).on("click", "#changestack", e =>
+{
+    /**@type {{[x: string]: string}}*/
+    const qs = _getQueryString();
+    if (qs.stack === "true")
+        qs.stack = "false";
+    else
+        qs.stack = "true";
+    window.location = "/Timeline.html?" + _toQueryString(qs);
+});
+$(document).on("click", "#export", e =>
+{
+    const head = "\uFEFF" + "点赞人,点赞目标,点赞时间,目标类型,点赞日期,当日分钟,当日计秒\n";
+    const csvstr = Array.from(wholeData.entries())
+        .map(entries =>
+            entries[1].map(item =>
+                [item[1], item[2], item[3], item[4], item[7], item[8], item[11]].join(","))
+            .join("\n"))
+        .join("\n");
+    DownloadMan.exportDownload(head + csvstr, "txt", `acts#${additionTitle}#${new Date().Format("yyMMdd-hhmm")}.csv`);
 });
 
 const myChart = echarts.init(document.getElementById("graph"), null, { renderer: "canvas" });
@@ -150,7 +172,7 @@ const myChart = echarts.init(document.getElementById("graph"), null, { renderer:
  * @param {{[x:number]:User}} umapper
  * @param {{[x:number]:Answer|Article}} mapper
  * @param {"answer"|"article"} type
- * @returns {[number, string, string, number, string, string, string|number, string, number, number, string][]}
+ * @returns {[number, string, string, number, string, string, string|number, string, number, number, string, number][]}
  */
 function encodeZan(zans, umapper, mapper, type)
 {
@@ -169,13 +191,13 @@ function encodeZan(zans, umapper, mapper, type)
             obj = zan.to;
         let usr = umapper[zan.from];
         usr = usr ? usr.name : zan.from;
-        return [-1, zan.from, zan.to + "", zan.time, type, usr, obj, `${mon}/${day}`, minu + hour * 60, token, `${mon}/${day} ${hour}:${minu}`];
+        return [-1, zan.from, zan.to + "", zan.time, type, usr, obj, `${mon}/${day}`, minu + hour * 60, token, `${mon}/${day} ${hour}:${minu}`, sec + minu * 60 + hour * 3600];
     });
 }
 /**
  * @param {Answer[]|Article[]} objs
  * @param {{[x:number]:User}} umapper
- * @returns {[number, string, string, number, string, string, string|number, string, number, number, string][]}
+ * @returns {[number, string, string, number, string, string, string|number, string, number, number, string, number][]}
  */
 function encodeObj(objs, umapper)
 {
@@ -192,7 +214,7 @@ function encodeObj(objs, umapper)
             o2 = obj.id;
         let usr = umapper[obj.author];
         usr = usr ? usr.name : obj.author;
-        return [-1, obj.author, obj.id + "", obj.timeC, "create", usr, o2, `${mon}/${day}`, minu + hour * 60, token, `${mon}/${day} ${hour}:${minu}`];
+        return [-1, obj.author, obj.id + "", obj.timeC, "create", usr, o2, `${mon}/${day}`, minu + hour * 60, token, `${mon}/${day} ${hour}:${minu}`, sec + minu * 60 + hour * 3600];
     });
 }
 
@@ -267,7 +289,7 @@ function encodeObj(objs, umapper)
         wholeData = wholeData2.groupBy(groupidx);
         if (qs.stack === "true")
         {
-            $("#changeonly").remove();
+            $("#export").remove();
             const step = Number(qs.step || 1800);
             const wmap = {};
             for (const k of wholeData.keys())
@@ -308,12 +330,10 @@ function encodeObj(objs, umapper)
         }
         else if (qs.only === "true")
         {
-            $("#changeonly").text("切换到分时");
             showOnlyAct();
         }
         else
         {
-            $("#changeonly").text("切换到不分时");
             allDates = new Set(wholeData2.mapToProp(9)).toArray().sort((a, b) => a - b).map(x => `${Math.floor(x / 100) % 100}/${x % 100}`);
             showAct();
 
@@ -326,6 +346,9 @@ function encodeObj(objs, umapper)
             selUser.appendChild(frag1);
             selObj.appendChild(frag2);
         }
+        $("#changeonly").text(qs.only === "true" ? "切换到分时" : "切换到不分时");
+        $("#changestack").text(qs.stack === "true" ? "切换到非堆栈图" : "切换到堆栈累积图");
+
     }
 }()
 

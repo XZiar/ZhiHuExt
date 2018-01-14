@@ -2,9 +2,9 @@
   "manifest_version": 2,
   "name": "知乎疯牛病",
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAmYNx4WYJ0FifJIs5ojnD8St4/3gAbskGThOD4bVn7yPWNce9ZC5/vRIzVNBKeJ8iCfQlQJ9EZq4HUngDGesM9KvpdCKTpB38yceOOlPumx9jN30Oq6IuTwdZsDnDl62mDi+phvQ4XMuPMUvAlxqfeotdf1KxmWGWzoqlZwq+1K/atTco4c4bUPotDtzo6D80B7SBAYrug8L+/crZtfUR44T2MnaBy8GG9f+6+kwQQ3pi4ehb7bLMdyxKEZhCSN+r8SdVaz+mTMzPpEt3M0tdCFen6WWw4HH8gZk9hb7v/WkWVxsFN1pHe7LRv8/28+Cig8cKGjCfwoFBgHLdYE/FyQIDAQAB",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "author": "XZiar",
-  "description": "知乎疯牛病插件————专治广告",
+  "description": "知乎疯牛病插件————专治广告（并不能）",
   "icons":
   {
     "16": "icon.png",

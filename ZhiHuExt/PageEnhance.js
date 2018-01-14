@@ -187,6 +187,14 @@
         }
         $(".ProfileButtonGroup", header).prepend(btn1, btn2, btn3, btn4, btn5);
 
+        SendMsgAsync({ action: "chkspam", target: "users", data: [uid] }).then(x =>
+        {
+            if (x.banned.length > 0)
+                btn1.style.backgroundColor = "black";
+            else if (x.spamed.length > 0)
+                btn1.style.backgroundColor = "cornsilk";
+        })
+
         //spider fot follow
         btn4.draggable = true;
         btn4.ondragstart = (ev) =>
