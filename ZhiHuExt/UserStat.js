@@ -207,6 +207,11 @@ const myChart = echarts.init(document.getElementById("graph"), null, { renderer:
         const aids = qs.ansid.split("*").map(Number);
         uids = (await DBfunc("getVoters", aids, "answer")).mapToProp("key");
     }
+    else if (qs.artid != null)
+    {
+        const aids = qs.artid.split("*").map(Number);
+        uids = (await DBfunc("getVoters", aids, "article")).mapToProp("key");
+    }
     else if (qs.qid != null)
     {
         const qids = qs.qid.split("*").map(Number);

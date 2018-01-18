@@ -241,6 +241,21 @@ class Analyse
     /**
      * @param {number | number[]} ansid
      * @param {number | number[]} artid
+     */
+    static async filterUntimedVotersById(ansid, artid)
+    {
+        const anszans = await db.getAny("zans", "to", ansid);
+        const artzans = await db.getAny("zanarts", "to", artid);
+        const ansvot = anszans.filter(x => x.time < 0).mapToProp("from");
+        const artvot = artzans.filter(x => x.time < 0).mapToProp("from");
+        $("#copyData").val(JSON.stringify(ansvot.concat(artvot)));
+        $("#copyBtn")[0].click();
+        console.log("copied");
+    }
+
+    /**
+     * @param {number | number[]} ansid
+     * @param {number | number[]} artid
      * @param {number} mincount
      * @param {...Set<string>} filters
      */

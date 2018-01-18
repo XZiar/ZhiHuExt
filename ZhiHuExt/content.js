@@ -29,7 +29,10 @@ function reportSpam(id, type)
 let CUR_ANSWER = null;
 let CUR_ARTICLE = null;
 let LIM_FetchVoter = 20000;
-const BLOCKING_FLAG = createButton([])
+let AUTO_SPIDE_ZAN = false, NOW_SPIDE = false;// dirty hack for auto-spide, assume single-thread-safe
+/**@type {{ name: string, btn: HTMLButtonElement }}*/
+let SPIDE_LIST = [];
+const BLOCKING_FLAG = createButton([]);
 BLOCKING_FLAG.style.display = "none";
 BLOCKING_FLAG.id = "ZHE_BLOCKING_VOTER";
 
@@ -166,6 +169,7 @@ async function addSpamVoterBtns(voterNodes)
         $(".ContentItem-extra", node).prepend(btn2);
     }
     const result = await ContentBase.checkSpam("users", users);
+    const normalList = [];
     for (let idx = 0; idx < btnMap.length; ++idx)
     {
         const btn = btnMap[idx];
@@ -174,6 +178,15 @@ async function addSpamVoterBtns(voterNodes)
             btn.style.backgroundColor = "black";
         else if (result.spamed.has(id))
             btn.style.backgroundColor = "cornsilk";
+        else
+            normalList.push({ name: id, btn: btn.parentNode.children[0] });
+    }
+    if (AUTO_SPIDE_ZAN)
+    {
+        if (NOW_SPIDE)
+            SPIDE_LIST.push(...normalList)
+        else
+            $(".Btn-CheckAllStatus").click();// assume we can find this button
     }
 };
 const voterObserver = new MutationObserver(records =>
@@ -218,6 +231,21 @@ function monitorVoter(voterPopup)
         const btn2 = createButton(["Btn-AssocAns", "Button--primary"], "启发");
         const btn3 = createButton(["Btn-Similarity", "Button--primary"], "相似性");
         const btn4 = createButton(["Btn-ShowTime", "Button--primary"], "时间图");
+        const btn5 = createButton(["Btn-AutoSpide", "Button--primary"], "自动");
+        btn5.onclick = function (ev)
+        {
+            if (!AUTO_SPIDE_ZAN)
+            {
+                AUTO_SPIDE_ZAN = true;
+                btn5.style.backgroundColor = "rgb(0, 224, 32)";
+                btn1.click();
+            }
+            else
+            {
+                AUTO_SPIDE_ZAN = false;
+                btn5.style.backgroundColor = "";
+            }
+        }; 
 
         if (CUR_ANSWER)
             btn2.dataset.id = CUR_ANSWER, btn2.dataset.qname = "ansid", btn4.dataset.id = CUR_ANSWER, btn4.dataset.qname = "ansid";
@@ -228,6 +256,7 @@ function monitorVoter(voterPopup)
         title.appendChild(btn2);
         title.appendChild(btn3);
         title.appendChild(btn4);
+        title.appendChild(btn5);
     }
 }
 
@@ -416,10 +445,12 @@ async function onChkStatus(e)
 $("body").on("click", "button.Btn-CheckStatus", onChkStatus);
 $("body").on("click", "button.Btn-CheckAllStatus", async function (e)
 {
+    if (NOW_SPIDE)
+        return;
     const btn = $(this)[0];
     const isCtrl = e.ctrlKey, isShift = e.shiftKey;
     const voterList = btn.parentNode.parentNode.parentNode;
-    const btnList = [];
+    SPIDE_LIST = [];
     $(voterList).find(".ContentItem").each((idx, item) =>
     {
         const extraArea = item.querySelector(".ContentItem-extra");
@@ -432,15 +463,23 @@ $("body").on("click", "button.Btn-CheckAllStatus", async function (e)
             return;
         if (!isCtrl && btnSpam.style.backgroundColor != "")
             return;
-        btnList.push({ name: btnChk.dataset.id, btn: btnChk });
+        SPIDE_LIST.push({ name: btnChk.dataset.id, btn: btnChk });
     });
-    console.log("detect " + btnList.length + " user");
-    for (let idx = 0; idx < btnList.length; ++idx)
+    console.log("detect " + SPIDE_LIST.length + " user");
+    try
     {
-        btn.textContent = btnList[idx].name;
-        const event = { target: btnList[idx].btn, ctrlKey: false };
-        await Promise.all([onChkStatus(event), _sleep(900 + idx * 10)]);
+        NOW_SPIDE = true;
+        for (let idx = 0; idx < SPIDE_LIST.length; ++idx)
+        {
+            btn.textContent = SPIDE_LIST[idx].name;
+            const event = { target: SPIDE_LIST[idx].btn, ctrlKey: false };
+            await Promise.all([onChkStatus(event), _sleep(1000 + idx * 9)]);
+        }
     }
+    finally
+    {
+        NOW_SPIDE = false;
+    } 
     btn.textContent = "检测全部";
 });
 $("body").on("click", "span.Voters", function ()
@@ -523,6 +562,8 @@ $("body").on("click", "button.Modal-closeButton", function ()
 {
     CUR_ANSWER = null;
     CUR_ARTICLE = null;
+    AUTO_SPIDE_ZAN = false;
+    SPIDE_LIST = [];
 });
 $("body").on("dragover", ".RichContent-inner", ev =>
 {
@@ -555,6 +596,24 @@ $("body").on("drop", ".RichContent-inner", ev =>
     const curAnsArts = $(".AnswerItem, .ArticleItem").toArray();
     console.log("init " + curAnsArts.length + " answer/article");
     addAASpamBtns(curAnsArts);
+}
+
+async function ZhiBtnDropper(ev)
+{
+    ev.preventDefault();
+    /**@type {string}*/
+    const txt = ev.dataTransfer.getData("text");
+    if (!txt.startsWith("{") || !txt.endsWith("}"))
+        return;
+    const dat = JSON.parse(txt);
+    if (dat.type !== "answer" && dat.type !== "article")
+        return;
+    let args = []
+    if (dat.type == "answer")
+        args = [Number(dat.id), []];
+    else
+        args = [[], Number(dat.id)];
+    await SendMsgAsync({ action: "analyse", method: "filterUntimedVotersById", argument: args });
 }
 
 async function TrashDropper(ev)
@@ -617,6 +676,8 @@ async function TrashDropper(ev)
     {
         ev.dataTransfer.setData("text", "MarkBtn");
     }
+    btndiv1.ondragover = ev => ev.preventDefault();
+    btndiv1.ondrop = ZhiBtnDropper;
 
     const svgTrash = createSVG(28, 28, "0 0 512 512",
         "M341,128V99c0-19.1-14.5-35-34.5-35H205.4C185.5,64,171,79.9,171,99v29H80v32h9.2c0,0,5.4,0.6,8.2,3.4c2.8,2.8,3.9,9,3.9,9  l19,241.7c1.5,29.4,1.5,33.9,36,33.9h199.4c34.5,0,34.5-4.4,36-33.8l19-241.6c0,0,1.1-6.3,3.9-9.1c2.8-2.8,8.2-3.4,8.2-3.4h9.2v-32  h-91V128z M192,99c0-9.6,7.8-15,17.7-15h91.7c9.9,0,18.6,5.5,18.6,15v29H192V99z M183.5,384l-10.3-192h20.3L204,384H183.5z   M267.1,384h-22V192h22V384z M328.7,384h-20.4l10.5-192h20.3L328.7,384z",
