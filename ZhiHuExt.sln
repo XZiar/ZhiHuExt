@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.27130.2020
+VisualStudioVersion = 15.0.27130.2027
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ZhiHuExt", "ZhiHuExt", "{93675B82-EC6C-4F02-80C6-4872E07264D3}"
 	ProjectSection(SolutionItems) = preProject
@@ -82,6 +82,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "3rd", "3rd", "{30046561-619
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "OtherFiles", "OtherFiles", "{CF250E46-07C2-4D71-9719-75BF285BC6D0}"
 	ProjectSection(SolutionItems) = preProject
+		ChangeLog.md = ChangeLog.md
 		README.md = README.md
 	EndProjectSection
 EndProject

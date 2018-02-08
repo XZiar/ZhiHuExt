@@ -69,7 +69,8 @@ function showStack()
     const option = {
         title: { text: "点赞记录图-" + additionTitle },
         tooltip: {
-            trigger: "axis", axisPointer: {
+            trigger: "axis",
+            axisPointer: {
                 type: 'cross',
                 label: { backgroundColor: '#6a7985' }
             }
@@ -80,7 +81,8 @@ function showStack()
             type: "category",
             boundaryGap: false,
             name: "时间",
-            data: stackX
+            data: stackX,
+            axisLabel: { formatter: dat => { return dat.split(" ")[1]; } }
         },
         yAxis: [{ type: "value" }],
         series: series,
@@ -164,8 +166,18 @@ $(document).on("click", "#export", e =>
     DownloadMan.exportDownload(head + csvstr, "txt", `acts#${additionTitle}#${new Date().Format("yyMMdd-hhmm")}.csv`);
 });
 
+let isCtrl = false, isShift = false;
+document.addEventListener("keydown", ev => { isCtrl = ev.ctrlKey; isShift = ev.shiftKey; });
+document.addEventListener("keyup", ev => { isCtrl = ev.ctrlKey; isShift = ev.shiftKey; });
 const myChart = echarts.init(document.getElementById("graph"), null, { renderer: "canvas" });
-
+myChart.on("click", params =>
+{
+    if (!isCtrl)
+        return;
+    if (params.componentType !== "series")
+        return;
+    chrome.runtime.sendMessage({ action: "openpage", target: "https://www.zhihu.com/people/" + params.data[1], isBackground: true });
+});
 
 /**
  * @param {Zan[]} zans
@@ -299,7 +311,10 @@ function encodeObj(objs, umapper)
             }
             const tmin = wholeData2[0][3], tmax = wholeData2.last()[3];
             let t1 = tmin, t2 = tmin + step, idx = 0;
-            stackX = ["init"];
+            {
+                const [, mon, day, hour, minu, ,] = Date.getDetailCHN(t1);
+                stackX = [`${mon}/${day} ${hour}:${minu}`];
+            }
             for (; t1 < tmax; ++idx)
             {
                 while (t1 > t2)
@@ -309,8 +324,8 @@ function encodeObj(objs, umapper)
                         const va = wholeData.get(en[0]);
                         va.push(en[1]);
                     });
-                    const [, , , hour, minu, ,] = Date.getDetailCHN(t2);
-                    stackX.push(`${hour}:${minu}`);
+                    const [, mon, day, hour, minu, ,] = Date.getDetailCHN(t2);
+                    stackX.push(`${mon}/${day} ${hour}:${minu}`);
                     t2 += step;
                 }
                 const p = wholeData2[idx];
@@ -323,8 +338,8 @@ function encodeObj(objs, umapper)
                 va.push(en[1]);
             });
             {
-                const [, , , hour, minu, ,] = Date.getDetailCHN(t2);
-                stackX.push(`${hour}:${minu}`);
+                const [, mon, day, hour, minu, ,] = Date.getDetailCHN(t2);
+                stackX.push(`${mon}/${day} ${hour}:${minu}`);
             }
             showStack();
         }

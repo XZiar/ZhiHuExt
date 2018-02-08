@@ -1,21 +1,20 @@
 ﻿<!DOCTYPE html>
 <html>
 <head>
-	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<meta charset="UTF-8">
-	<script src="3rd/js/jquery-3.2.1.min.js"></script>
-	<script src="popup.js"></script>
-	<style>
-	table
-	{
-		table-layout: fixed;
-	}
-	td 
-	{
-	    white-space: nowrap;
-	    overflow: hidden;
-	    text-overflow: ellipsis;
-	}
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta charset="UTF-8">
+    <script src="3rd/js/jquery-3.2.1.min.js"></script>
+    <style>
+    table
+    {
+        table-layout: fixed;
+    }
+    td 
+    {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
 </style>
 </head>
 <body>
@@ -28,10 +27,12 @@
     <button class="openpage" data-htmlname="AssocAns">联想回答</button>
     <button class="openpage" data-htmlname="ZanUser">点赞人分析</button>
     <button class="openpage" data-htmlname="Relations">力导图</button>
+    <br /><hr />
+    <button id="rfs">统计</button>当前版本<span id="curver"></span>    最新版本<span id="newver"></span><button id="upd" style="display:none">升级</button>
     <br />
-    <button id="rfs">统计</button>
     <table width="300">
         <tbody id="stat"></tbody>
     </table>
+    <script src="popup.js"></script>
 </body>
 </html>

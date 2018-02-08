@@ -93,8 +93,18 @@ $(document).on("click", "#chgxax", e =>
     showAct();
 });
 
+let isCtrl = false, isShift = false;
+document.addEventListener("keydown", ev => { isCtrl = ev.ctrlKey; isShift = ev.shiftKey; });
+document.addEventListener("keyup", ev => { isCtrl = ev.ctrlKey; isShift = ev.shiftKey; });
 const myChart = echarts.init(document.getElementById("graph"), null, { renderer: "canvas" });
-
+myChart.on("click", params =>
+{
+    if (!isCtrl)
+        return;
+    if (params.componentType !== "series")
+        return;
+    chrome.runtime.sendMessage({ action: "openpage", target: "https://www.zhihu.com/people/" + params.data[1], isBackground: true });
+});
 
 /**
  * @param {Zan[]} zans

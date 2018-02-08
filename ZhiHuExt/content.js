@@ -314,6 +314,16 @@ function addQuickCheckBtns(feedbackNodes)
         });
 }
 
+function onCloseVoterPopup()
+{
+    if (document.body.querySelector("#ZHE_BLOCKING_VOTER"))
+        document.body.removeChild(BLOCKING_FLAG);
+    CUR_ANSWER = null;
+    CUR_ARTICLE = null;
+    AUTO_SPIDE_ZAN = false;
+    SPIDE_LIST = [];
+}
+
 const bodyObserver = new MutationObserver(records =>
 {
     //console.log("detect add body comp", records);
@@ -325,17 +335,14 @@ const bodyObserver = new MutationObserver(records =>
         .map(record => $.makeArray(record.removedNodes)
             .filter(node => node instanceof HTMLDivElement)
         ));
-    {
+    {//check voter-popup
         const voterPopup = $(addNodes).find(".VoterList-content").toArray();
         if (voterPopup.length > 0)
             monitorVoter(voterPopup);
         if ($(delNodes).find(".VoterList-content").length > 0)
         {
             console.log("here removed", delNodes);
-            if (document.body.querySelector("#ZHE_BLOCKING_VOTER"))
-                document.body.removeChild(BLOCKING_FLAG);
-            CUR_ANSWER = null;
-            CUR_ARTICLE = null;
+            onCloseVoterPopup();
         }
     }
     {
@@ -558,13 +565,7 @@ $("body").on("click", "button.Btn-Similarity", e =>
         thisbtn.style.fontWeight = "bold";
     });
 });
-$("body").on("click", "button.Modal-closeButton", function ()
-{
-    CUR_ANSWER = null;
-    CUR_ARTICLE = null;
-    AUTO_SPIDE_ZAN = false;
-    SPIDE_LIST = [];
-});
+$("body").on("click", "button.Modal-closeButton", onCloseVoterPopup);
 $("body").on("dragover", ".RichContent-inner", ev =>
 {
     const wrapper = ev.currentTarget.parentElement.parentElement;
