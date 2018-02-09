@@ -391,7 +391,14 @@ chrome.runtime.onMessageExternal.addListener(
             case "recommendations":
                 {
                     const res = new StandardDB();
-                    Object.values(data.data).forEach(act => APIParser.parseByType(res, act));
+                    if (request.api === "articles")
+                    {
+                        data.data.forEach(item => APIParser.parseByType(res, item.article));
+                    }
+                    else
+                    {
+                        Object.values(data.data).forEach(act => APIParser.parseByType(res, act));
+                    }
                     db.insert("batch", res, putBadge);
                     console.log("recommends", res);
                 } break;

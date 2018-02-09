@@ -22,7 +22,6 @@
         return;
 
     console.log(pageType + " page");
-    const eleid = pageType === "article" ? "preloadedState" : "data";
     function rootFinder(records)
     {
         for (let i = 0; i < records.length; ++i)
@@ -36,9 +35,9 @@
                 const node = nodes[j];
                 if (!(node instanceof Element))
                     continue;
-                if (node.id === eleid)
+                if (node.id === "data")
                     return node;
-                const obj = node.querySelector("#" + eleid);
+                const obj = node.querySelector("#data");
                 if (obj)
                     return obj;
             }
@@ -51,7 +50,16 @@
             return;
         const obj = rootFinder(records);
         if (!obj)
-            return;
+        {
+            const oldobj = document.querySelector("#preloadedState");
+            if (pageType === "article" && oldobj)
+            {
+                obs.disconnect();
+                processArticleOld(obj);
+            }
+            else
+                return;
+        }
         obs.disconnect();
         onObjFound(obj);
     });
@@ -60,11 +68,6 @@
    
     function onObjFound(obj)
     {
-        if (pageType === "article")
-        {
-            processArticle(obj);
-            return;
-        }
         const state = JSON.parse(obj.dataset.state);
         console.log(state);
         const entities = APIParser.parseEntities(state.entities);
@@ -84,7 +87,7 @@
         }
     }
 
-    function processArticle(obj)
+    function processArticleOld(obj)
     {
         let txt = obj.innerText;
         {

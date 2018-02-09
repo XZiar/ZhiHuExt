@@ -148,6 +148,10 @@
             {
                 return shouldBlock ? blockVoter(BLOCKING_FLAG, "article", apiparts[1]) : sendData(req, pms, "articles", "voters", { id: apiparts[1] });
             }
+            else if (apiparts[0] === "articles" && apiparts[2] === "recommendation")
+            {
+                return sendData(req, pms, "articles", "recommendations");
+            }
             else if (apiparts[0] === "questions" && apiparts[2] === "answers")
             {
                 return sendData(req, pms, "questions", "answers", { id: apiparts[1] });
