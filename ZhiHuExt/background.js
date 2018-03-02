@@ -265,6 +265,40 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) =>
                 },
                 err => console.warn(err));
             return true;
+        case "importdb":
+            $.ajax(request.sending.url,
+                {
+                    type: "GET",
+                    headers: request.sending.headers
+                })
+                .done(x =>
+                {
+                    if (x === "[]")
+                        sendResponse("empty");
+                    else
+                    {
+                        const partobj = JSON.parse(x);
+                        const needQFix = new Set(["questions", "answers", "articles", "users"]);
+                        if (needQFix.has(request.target))
+                        {
+                            for (let idx = 0, len = partobj.length; idx < len; ++idx)
+                            {
+                                const obj = partobj[idx];
+                                if (obj.topics != null && obj.topics.length === 0)
+                                    obj.topics = null;
+                                if (obj.excerpt === "")
+                                    obj.excerpt = null;
+                                if (obj.status === "")
+                                    obj.status = null;
+
+                            }
+                        }
+                        db.insert(request.target, partobj, putBadge);
+                        sendResponse("true");
+                    }
+                })
+                .fail(err => sendResponse("false"));
+            return true;
         case "insert":
             if (request.target === "follow")
                 addFollow(request.data);

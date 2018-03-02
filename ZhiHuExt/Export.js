@@ -2,34 +2,6 @@
 
 const auth = "fwAAASLR" + "171115a";
 
-function directSend(table, offset, count, addr, id)
-{
-    const sending = { headers: { "objid": id, "authval": auth }, url: addr + "/accept?table=" + table }
-    return SendMsgAsync({ action: "partdb", target: table, from: offset, count: count, sending: sending });
-}
-
-
-/**
- * @param {string} table
- * @param {string} addr
- * @param {string} id
- * @param {number} offset
- * @param {number} count
- * @returns {Promise<string>}
- */
-function receivepart(table, addr, id, offset, count)
-{
-    const pms = $.Deferred();
-    $.ajax(`${addr}/accept?table=${table}&from=${offset}&limit=${count}`,
-        {
-            type: "GET",
-            headers: { "objid": id, "authval": auth },
-        })
-        .done(x => pms.resolve(x))
-        .fail(err => pms.reject(err));
-    return pms;
-}
-
 function begin(addr, id)
 {
     const pms = $.Deferred();
@@ -133,25 +105,32 @@ async function receive(tables, timeid, partlen, addr, onProgress)
     for (let i = 0; i < tables.length; ++i)
     {
         let offset = 0;
+        const tabname = tables[i];
+        let len = partlen;
+        if (tabname === "zans" || tabname === "zanarts")
+            len *= 2;
+        else if (tabname === "articles" || tabname === "answers")
+            len = Math.floor(len / 2);
+        else if (tabname === "details")
+            len = Math.floor(len / 50);
         while (true)
         {
-            const pms = receivepart(tables[i], addr, timeid, offset, partlen);
-            if (onProgress)
-                onProgress(tables[i], offset);
-            const part = await pms;
-            if (part === "[]")
+            const sending = { headers: { "objid": timeid, "authval": auth }, url: `${addr}/accept?table=${tabname}&from=${offset}&limit=${len}` };
+            const ret = await SendMsgAsync({ action: "importdb", target: tabname, sending: sending });
+            if (ret === "empty")
                 break;
-            const partobj = JSON.parse(part);
-            quickfix(partobj);
-            console.log(partobj);
-
-            chrome.runtime.sendMessage({ action: "insert", target: tables[i], data: partobj });
-
-            offset += partlen;
+            if (ret === "false")
+                throw { err: "unknown err" };
+            if (onProgress)
+                onProgress(tabname, offset);
+            offset += len;
+            
+            await new Promise(resolve => setTimeout(resolve, 10000));//wait at least 10seconds to reduce db pressure
         }
     }
     await finish(addr, timeid);
 }
+
 
 let tables;
 !async function()
@@ -208,6 +187,7 @@ $(document).on("click", "button#send", async (e) =>
     const needtables = $(".tabchooser").toArray()
         .filter(/**@type {HTMLInputElement}*/(chkbox) => chkbox.checked)
         .map(chkbox => chkbox.dataset.tname);
+    thisbtn.style.backgroundColor = "";
     try
     {
         await send(needtables, partlen, addr, (tab, cnt) => { thisbtn.textContent = tab + "@" + cnt; });
@@ -233,6 +213,7 @@ $(document).on("click", "button#receive", async (e) =>
     const needtables = $(".tabchooser").toArray()
         .filter(/**@type {HTMLInputElement}*/(chkbox) => chkbox.checked)
         .map(chkbox => chkbox.dataset.tname);
+    thisbtn.style.backgroundColor = "";
     try
     {
         await receive(needtables, suffix, partlen, addr, (tab, cnt) => { thisbtn.textContent = tab + "@" + cnt; });
