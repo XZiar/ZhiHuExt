@@ -5,12 +5,13 @@ const uids = new Map();
 /**@type {Map<string, number>}}*/
 const utimeOld = new Map(), utimeNew = new Map();
 const u404s = new Set();
-const chkreports = new StandardDB();
+let chkreports = new StandardDB();
 let isRunning = false;
 let rowcount = 0;
 
 /**@type {HTMLInputElement}}*/
-const aloneRec = $("#aloneRec")[0], repeat = $("#repeat")[0], fromold = $("#fromold")[0], wtime = $("#waittime")[0], maxact = $("#maxact")[0], limitdate = $("#limitdate")[0];
+const aloneRec = $("#aloneRec")[0], autoLoop = $("#autoLoop")[0], wtime = $("#waittime")[0], maxact = $("#maxact")[0], limitdate = $("#limitdate")[0];
+let repeatMode = "no";
 
 const thetable = $("#maintable").DataTable(
     {
@@ -87,10 +88,10 @@ async function monitorCycle(btn, objs)
                 else
                     await fastChk(uid, begintime, true);
             }
-            else if(maxact.value > 0)
+            else if (maxact.value > 0 || autoLoop.checked)
             {
-                const limittime = repeat.checked ? utimeNew.get(uid) : new Date(limitdate.value).toUTCSeconds();
-                if (fromold.checked)
+                const limittime = repeatMode == "new" ? utimeNew.get(uid) : new Date(limitdate.value).toUTCSeconds();
+                if (repeatMode == "old")
                     begintime = utimeOld.get(uid);
                 else
                     utimeNew.set(uid, begintime);
@@ -100,19 +101,25 @@ async function monitorCycle(btn, objs)
                 Object.assign(newdata, user);
                 thetable.row.add(newdata);
                 thetable.draw(false);
-                const acts = (await actspms).acts;
+                const acts = await actspms;
+                utimeOld.set(uid, acts.lasttime);
                 if (aloneRec.checked)
-                    chkreports.add(acts);
+                    chkreports.add(acts.acts);
                 else
-                    ContentBase._report("batch", acts);
+                    ContentBase._report("batch", acts.acts);
             }
             await sleeper;
         }
-        if (!repeat.checked)
+        if (!autoLoop.checked)
             return;
     }
 }
 
+
+$(document).on("click", "input[name=repeat]:radio", e =>
+{
+    repeatMode = e.target.value;
+});
 $(document).on("click", "#show404", e =>
 {
     $("#out404")[0].value = JSON.stringify(u404s.toArray());
@@ -124,6 +131,10 @@ $(document).on("click", "#del404", e =>
 $(document).on("click", "#refresh", e =>
 {
     thetable.draw(false);
+});
+$(document).on("click", "#clean", e =>
+{
+    chkreports = new StandardDB();
 });
 $(document).on("click", "#export", e =>
 {
@@ -154,13 +165,14 @@ $(document).on("click", "#import", e =>
     }
     reader.readAsText(files[0]);
 });
-$(document).on("click", "#rfsold", async e =>
+$(document).on("click", "#rfsold,#rfsnew", async e =>
 {
     const btn = e.target;
     btn.textContent = "获取中";
     let objs;
     if (e.ctrlKey)
     {
+        const txt = $("#userinput")[0].value;
         objs = JSON.parse(txt);
         const banset = (await ContentBase.checkSpam("users", objs)).banned;
         objs = objs.filter(uid => !u404s.has(uid) && banset.has(uid));
@@ -170,13 +182,21 @@ $(document).on("click", "#rfsold", async e =>
         objs = Array.from(uids.values()).filter(u => u.status !== "").mapToProp("id");
     }
     const info = await DBfunc("getAny", "rectime", "id", objs);
-    info.forEach(i => utimeOld.set(i.id, i.old));
-    btn.textContent = "刷新最旧点";
+    if (btn.id == "rfsold")
+    {
+        info.forEach(i => utimeOld.set(i.id, i.old));
+        btn.textContent = "刷新最旧点";
+    }
+    else
+    {
+        info.forEach(i => utimeNew.set(i.id, i.new));
+        btn.textContent = "刷新最新点";
+    }
 });
 $(document).on("click", "#chkban", async e =>
 {
     const btn = e.target;
-    repeat.checked = false;
+    autoLoop.checked = false;
     if (isRunning)
     {
         isRunning = false;
@@ -221,7 +241,7 @@ $(document).on("click", "#go", async e =>
     {
         const txt = $("#userinput")[0].value;
         let objs = JSON.parse(txt);
-        if (!repeat.checked)
+        if (repeatMode == "no")
             objs = objs.filter(uid => !uids.has(uid));
         const banset = isCtrl ? new Set() : (await ContentBase.checkSpam("users", objs)).banned;
         objs = objs.filter(uid => !u404s.has(uid) && !banset.has(uid));

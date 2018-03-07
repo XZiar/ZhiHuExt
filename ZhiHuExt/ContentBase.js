@@ -258,6 +258,7 @@ class ContentBase
                     continue;
             }
         }
+        console.log("fetchUserActs finished, lasttime:", time);
         return { acts: ret, lasttime: time };
     }
 

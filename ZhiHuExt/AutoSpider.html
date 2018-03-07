@@ -38,20 +38,26 @@
             </thead>
         </table>
         <div>
-            请求间隔<input type="number" id="waittime" value="1500" />
-            单独记录数据<input type="checkbox" id="aloneRec" />
-            无限循环<input type="checkbox" id="repeat" />
+            请求间隔<input type="number" id="waittime" value="1500" step="50" min="0" style="width: 7em" />
+            最早限制时间<input type="date" id="limitdate" value="2016-10-01" style="width: 10em" />
+            动态深度<input type="number" id="maxact" value="0" min="0" style="width: 5em" />
             <button id="refresh">刷新</button>
             <button id="show404">失败项</button>
             <button id="del404">清理失败项</button>
             <button id="go">开始</button>
             <button id="chkban">复查封禁</button>
             <br />
-            最早限制时间<input id="limitdate" type="date" value="2015-01-01">
-            最大动态次数<input type="number" id="maxact" value="0" />
-            最旧点向后<input type="checkbox" id="fromold" />
+            重复爬取
+            <input type="radio" name="repeat" value="no" id="norepeat" checked /><label for="norepeat">不允许</label>
+            <input type="radio" name="repeat" value="yes" id="canrepeat" /><label for="canrepeat">简单允许</label>
+            <input type="radio" name="repeat" value="old" id="fromold" /><label for="fromold">最旧点向后</label>
+            <input type="radio" name="repeat" value="new" id="fromnew" /><label for="fromnew">最新点向前</label>
             <button id="rfsold">刷新最旧点</button>
+            <button id="rfsnew">刷新最新点</button>
+            持续循环<input type="checkbox" id="autoLoop" />
             <br />
+            单独记录数据<input type="checkbox" id="aloneRec" />
+            <button id="clean">清理</button>
             <button id="export">导出</button>
             <button id="import">导入</button> <input type="file" id="infile" />
         </div>
