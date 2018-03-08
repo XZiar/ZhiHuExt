@@ -191,6 +191,21 @@ class Follow
     }
 }
 
+class FollowQuestion
+{
+    /**
+     * @param {User | string} from
+     * @param {Question | number | string} to
+     * @param {number} [time]
+     */
+    constructor(from, to, time)
+    {
+        this.from = typeof (from) === "string" ? from : from.id;
+        this.to = (to instanceof Question) ? to.id : Number(to);
+        this.time = time == null ? -1 : time;
+    }
+}
+
 class StandardDB
 {
     constructor()
@@ -199,6 +214,8 @@ class StandardDB
         this.users = [];
         /**@type {Follow[]} follows*/
         this.follows = [];
+        /**@type {FollowQuestion[]} followqsts*/
+        this.followqsts = [];
         /**@type {Zan[]} zans*/
         this.zans = [];
         /**@type {Zan[]} zanarts*/
@@ -242,6 +259,7 @@ class StandardDB
             case "topics":
             case "spams":
             case "follows":
+            case "followqsts":
                 return items;//skip
             default:
                 for (let i = 0; i < items.length; ++i)
@@ -276,6 +294,8 @@ class StandardDB
         ret.questions = StandardDB.innerMerge("questions", this.questions);
         ret.topics = StandardDB.innerMerge("topics", this.topics);
         ret.details = StandardDB.innerMerge("details", this.details);
+        ret.follows = StandardDB.innerMerge("follows", this.follows);
+        ret.followqsts = StandardDB.innerMerge("followqsts", this.followqsts);
         return ret;
     }
     /**
@@ -291,6 +311,8 @@ class StandardDB
         this.questions.push(...other.questions);
         this.topics.push(...other.topics);
         this.details.push(...other.details);
+        this.follows.push(...other.follows);
+        this.followqsts.push(...other.followqsts);
     }
 }
 
@@ -517,9 +539,13 @@ class APIParser
                 case "TOPIC_FOLLOW":
                     APIParser.parseByType(output, act.target);
                     break;
-                case "QUESTION_CREATE":
                 case "QUESTION_FOLLOW":
                 case "MEMBER_FOLLOW_QUESTION":
+                    {
+                        const actor = act.actor || act.actors[0];
+                        output.followqsts.push(new FollowQuestion(_any(actor.url_token, actor.urlToken), act.target.id, _any(act.created_time, act.createdTime)));
+                    }
+                case "QUESTION_CREATE":
                     APIParser.parseByType(output, act.target);
                     break;
                 case "ANSWER_CREATE":

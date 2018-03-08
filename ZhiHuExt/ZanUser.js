@@ -5,9 +5,8 @@ let wholeData;
 /**@type {string[]}*/
 let allDates = [];
 /**@type {string}*/
-let additionTitle;
+let additionTitle, baseTitle = "点赞", objname = "点赞";
 let yidx = 11, xidx = 0;
-let objname = "点赞";
 
 const selUser = $("#selUser")[0], selObj = $("#selObj")[0];
 
@@ -49,7 +48,7 @@ function showAct()
             axisLabel: { formatter: val => `${Math.floor(val / 60)}:${Math.floor(val % 60)}` }
         }
     const option = {
-        title: { text: "点赞人"+objname+"趋势图-" + additionTitle },
+        title: { text: baseTitle+"人"+objname+"趋势图-" + additionTitle },
         tooltip: { trigger: "item", formatter: dat => `${dat.data[5]}<br />${dat.data[6]}<br />${dat.data[10]}` },
         toolbox: saveOpt,
         legend: getLegend(wholeData),
@@ -109,8 +108,8 @@ myChart.on("click", params =>
 /**
  * @param {Zan[]} zans
  * @param {{[x:number]:User}} umapper
- * @param {{[x:number]:Answer|Article}} mapper
- * @param {"answer"|"article"} type
+ * @param {{[x:number]:Answer|Article|Question}} mapper
+ * @param {"answer"|"article"|"question"} type
  * @returns {[number, string, string, number, string, string, string|number, string, number, number, string, number, number, number][]}
  */
 function encodeZan(zans, umapper, mapper, type)
@@ -123,8 +122,10 @@ function encodeZan(zans, umapper, mapper, type)
         if (!obj)
             obj = zan.to;
         else if (type === "answer")
-            obj = obj.id;
+            obj = `${obj.author}[${obj.id}]`;
         else if (type === "article")
+            obj = obj.title;
+        else if (type === "question")
             obj = obj.title;
         else
             obj = zan.to;
@@ -155,7 +156,7 @@ function encodeObj(objs, umapper)
         let usr = umapper[obj.author];
         if (!usr)
             usr = { name: obj.author, zancnt: 0, anscnt: 0, artcnt: 0, follower: 0 };
-        return [-1, obj.author, obj.id + "", obj.timeC, "create", usr.name, o2, `${mon}/${day}`, minu + hour * 60, token, `${mon}/${day} ${hour}:${minu}`, usr.zancnt, usr.anscnt + usr.artcnt, usr.follower];
+        return [-1, obj.author + "[作者]", obj.id + "", obj.timeC, "create", usr.name, o2, `${mon}/${day}`, minu + hour * 60, token, `${mon}/${day} ${hour}:${minu}`, usr.zancnt, usr.anscnt + usr.artcnt, usr.follower];
     });
 }
 
@@ -165,10 +166,14 @@ function encodeObj(objs, umapper)
     const qs = _getQueryString();
     /**@type {Zan[]}*/
     let zananss = [], zanarts = [];
+    /**@type {FollowQuestion[]}*/
+    let folqsts = [];
     /**@type {{[x:number]:Answer}}*/
     let anss = {};
     /**@type {{[x:number]:Article}}*/
     let arts = {};
+    /**@type {{[x:number]:Question}}*/
+    let qsts = {};
     /**@type {{[x:number]:User}}*/
     let usrs = {};
     let groupidx = -1;
@@ -196,8 +201,9 @@ function encodeObj(objs, umapper)
         const qids = qs.qid.split("*").map(Number);
         const ret = await doAnalyse("outputQuestActs", qids, true);
         zananss = ret.zans, anss = ret.anss;
-        const qsts = Object.values(ret.qsts);
-        additionTitle = qsts.length == 1 ? "[问题]-" + qsts[0].title : "多个问题";
+        qsts = ret.qsts;
+        const qstvals = Object.values(qsts);
+        additionTitle = qstvals.length == 1 ? "[问题]-" + qstvals[0].title : "多个问题";
         groupidx = 2;
     }
     else if (qs.ansid != null)
@@ -218,15 +224,29 @@ function encodeObj(objs, umapper)
         additionTitle = as.length == 1 ? as[0].title : "多篇文章";
         groupidx = 2;
     }
-
-    if (zananss.length > 0 || zanarts.length > 0)
+    else if (qs.qfid != null)
     {
-        const unames = zananss.concat(zanarts).mapToProp("from");
+        const qids = qs.qfid.split("*").map(Number);
+        const pmss = [DBfunc("getAny", "followqsts", "to", qids), DBfunc("getDetailMapOfIds", "questions", qids, "id")];
+        /**@type {[FollowQuestion[], {[x:number]: Question}]}*/
+        const ret = await Promise.all(pmss);
+
+        folqsts = ret[0]; qsts = ret[1];
+        baseTitle = "关注";
+        const qstvals = Object.values(qsts);
+        additionTitle = qstvals.length == 1 ? "[问题]-" + qstvals[0].title : "多个问题";
+        groupidx = 2;
+    }
+
+    if (zananss.length + zanarts.length + folqsts.length > 0)
+    {
+        const unames = zananss.concat(zanarts).concat(folqsts).mapToProp("from");
         usrs = await DBfunc("getDetailMapOfIds", "users", unames, "id", "head", "hl");
         const ansdat = encodeZan(zananss, usrs, anss, "answer");
         const artdat = encodeZan(zanarts, usrs, arts, "article");
+        const qstdat = encodeZan(folqsts, usrs, qsts, "question");
         const objdat = encodeObj(Object.values(anss).concat(Object.values(arts)), usrs);
-        const wholeData2 = ansdat.concat(artdat).concat(objdat).sort((a, b) => a[3] - b[3]);
+        const wholeData2 = ansdat.concat(artdat).concat(qstdat).concat(objdat).sort((a, b) => a[3] - b[3]);
         wholeData2.forEach((x, idx) => x[0] = idx);
         wholeData = wholeData2.groupBy(groupidx);
         Array.from(wholeData.entries()).forEach(entry =>

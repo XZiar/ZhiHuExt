@@ -28,6 +28,7 @@ function reportSpam(id, type)
 
 let CUR_ANSWER = null;
 let CUR_ARTICLE = null;
+let CUR_QUESTION = null;
 let LIM_FetchVoter = 20000;
 let AUTO_SPIDE_ZAN = false, NOW_SPIDE = false;// dirty hack for auto-spide, assume single-thread-safe
 /**@type {{ name: string, btn: HTMLButtonElement }}*/
@@ -251,6 +252,8 @@ function monitorVoter(voterPopup)
             btn2.dataset.id = CUR_ANSWER, btn2.dataset.qname = "ansid", btn4.dataset.id = CUR_ANSWER, btn4.dataset.qname = "ansid";
         else if (CUR_ARTICLE)
             btn2.dataset.id = CUR_ARTICLE, btn2.dataset.qname = "artid", btn4.dataset.id = CUR_ARTICLE, btn4.dataset.qname = "artid";
+        else if (CUR_QUESTION)
+            btn2.dataset.id = CUR_QUESTION, btn2.dataset.qname = "qfid", btn4.dataset.id = CUR_QUESTION, btn4.dataset.qname = "qfid";
 
         title.appendChild(btn1);
         title.appendChild(btn2);
@@ -320,6 +323,7 @@ function onCloseVoterPopup()
         document.body.removeChild(BLOCKING_FLAG);
     CUR_ANSWER = null;
     CUR_ARTICLE = null;
+    CUR_QUESTION = null;
     AUTO_SPIDE_ZAN = false;
     SPIDE_LIST = [];
 }
@@ -504,6 +508,17 @@ $("body").on("click", "span.Voters", function ()
         CUR_ANSWER = itemContent.token;
     else if (itemContent.type === "Post")
         CUR_ARTICLE = itemContent.token;
+});
+$("body").on("click", "button.NumberBoard-item", e =>
+{
+    const btn = e.target;
+    const headerNode = $(btn).parents("div.QuestionHeader")[0];
+    const itemName = $(btn).parents("button.NumberBoard-item").find("div.NumberBoard-itemName").text();
+    if (headerNode && itemName === "关注者")
+    {
+        const headerContent = JSON.parse(headerNode.dataset.zaModuleInfo || headerNode.dataset.zaExtraModule).card.content;
+        CUR_QUESTION = headerContent.token;
+    }
 });
 $("body").on("click", "button.Btn-AssocAns", e =>
 {

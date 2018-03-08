@@ -63,6 +63,20 @@ const db = new ZhiHuDB("ZhihuDB", [
         topics: "id",
         details: "id",
         rectime: "id,new,old"
+    },
+    {
+        spams: "id,type",
+        users: "id,status,anscnt,follower,zancnt",
+        follows: "[from+to],from,to",
+        followqsts: "[from+to],from,to,time",
+        zans: "[from+to],from,to,time",
+        zanarts: "[from+to],from,to,time",
+        answers: "id,author,question,timeC",
+        questions: "id,timeC",
+        articles: "id,author,timeC",
+        topics: "id",
+        details: "id",
+        rectime: "id,new,old"
     }], [
     null,
     trans => trans.users.toCollection().modify(u => u.zancnt = -1),
@@ -89,6 +103,7 @@ const db = new ZhiHuDB("ZhihuDB", [
         console.log("[rectime] mapped");
         await trans.rectime.bulkAdd(recs);
     },
+    null,
     null],
     async () =>
     {
@@ -438,6 +453,14 @@ chrome.runtime.onMessageExternal.addListener(
                 } break;
             case "publications":
                 break;
+            case "qstfollows":
+                {
+                    const uqst = request.extra.qid;
+                    /**@type {{users:User[],followqsts:FollowQuestion[]}}*/
+                    const res = { users: data.data.map(User.fromRawJson), follows: [] };
+                    res.followqsts = res.users.map(ufrom => new FollowQuestion(ufrom, uqst));
+                    db.insert("batch", res, putBadge);
+                } break;
             case "followers":
                 {
                     const uto = request.extra.uid;

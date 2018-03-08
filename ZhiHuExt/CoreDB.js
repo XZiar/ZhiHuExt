@@ -64,6 +64,11 @@ class ZhiHuDB
             }
             return ret;
         });
+        thedb.followqsts.hook("updating", (mods, primKey, obj, trans) =>
+        {
+            if (mods.time === -1)
+                return { time: obj.time };//skip empty time
+        });
         thedb.zans.hook("updating", (mods, primKey, obj, trans) =>
         {
             if (mods.time === -1)
@@ -172,22 +177,22 @@ class ZhiHuDB
             Object.entries(data).forEach(([key, val]) => sum += this.insert(key, val));
             if (notify)
                 notify(sum);
-            if (data.zans && data.zanarts)
+            if (data.zans && data.zanarts && data.followqsts)
             {
                 /**@type {Map<string,number[]>} */
-                const zantime = new Map();
+                const acttime = new Map();
                 const curtime = new Date().toUTCSeconds();
-                data.zans.concat(data.zanarts).forEach(zan =>
+                data.zans.concat(data.zanarts).concat(data.followqsts).forEach(act =>
                 {
-                    const oldtime = zantime.get(zan.from);
+                    const oldtime = acttime.get(act.from);
                     if (!oldtime)
-                        zantime.set(zan.from, [zan.time, zan.time]);
-                    else if (zan.time > oldtime[0])
-                        zantime.set(zan.from, [zan.time, oldtime[1]]);
-                    else if (zan.time < oldtime[1])
-                        zantime.set(zan.from, [oldtime[0], zan.time]);
+                        acttime.set(act.from, [act.time, act.time]);
+                    else if (act.time > oldtime[0])
+                        acttime.set(act.from, [act.time, oldtime[1]]);
+                    else if (act.time < oldtime[1])
+                        acttime.set(act.from, [oldtime[0], act.time]);
                 });
-                const recs = Array.from(zantime.entries()).map(x => ({ id: x[0], new: x[1][0], old: x[1][1] }));
+                const recs = Array.from(acttime.entries()).map(x => ({ id: x[0], new: x[1][0], old: x[1][1] }));
                 this.db.rectime.bulkPut(recs);
             }
             return sum;

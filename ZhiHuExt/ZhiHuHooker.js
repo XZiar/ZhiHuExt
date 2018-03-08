@@ -156,6 +156,10 @@
             {
                 return sendData(req, pms, "questions", "answers", { id: apiparts[1] });
             }
+            else if (apiparts[0] === "questions" && apiparts[2] === "followers")
+            {
+                return sendData(req, pms, "questions", "qstfollows", { qid: apiparts[1] });
+            }
             else if (apiparts[0] === "explore" && apiparts[1] === "recommendations")
             {
                 return sendData(req, pms, "explore", "recommendations");
