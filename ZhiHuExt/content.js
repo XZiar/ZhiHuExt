@@ -520,6 +520,15 @@ $("body").on("click", "button.NumberBoard-item", e =>
         CUR_QUESTION = headerContent.token;
     }
 });
+$("body").on("mousedown", "button.NumberBoard-item", e =>
+{
+    const btn = e.target;
+    if (e.shiftKey && e.ctrlKey)
+    {
+        document.body.appendChild(BLOCKING_FLAG);
+    }
+    //e.preventDefault();
+});
 $("body").on("click", "button.Btn-AssocAns", e =>
 {
     const btn = e.target;

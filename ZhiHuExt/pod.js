@@ -162,7 +162,7 @@ class Zan
 {
     /**
      * @param {User | string} user
-     * @param {string | number | Answer | Article} target
+     * @param {string | number | Answer | Article | Question} target
      * @param {number} [time]
      */
     constructor(user, target, time)
@@ -171,6 +171,8 @@ class Zan
         if (target instanceof Answer)
             this.to = target.id;
         else if (target instanceof Article)
+            this.to = target.id;
+        else if (target instanceof Question)
             this.to = target.id;
         else
             this.to = Number(target);
@@ -191,21 +193,6 @@ class Follow
     }
 }
 
-class FollowQuestion
-{
-    /**
-     * @param {User | string} from
-     * @param {Question | number | string} to
-     * @param {number} [time]
-     */
-    constructor(from, to, time)
-    {
-        this.from = typeof (from) === "string" ? from : from.id;
-        this.to = (to instanceof Question) ? to.id : Number(to);
-        this.time = time == null ? -1 : time;
-    }
-}
-
 class StandardDB
 {
     constructor()
@@ -214,7 +201,7 @@ class StandardDB
         this.users = [];
         /**@type {Follow[]} follows*/
         this.follows = [];
-        /**@type {FollowQuestion[]} followqsts*/
+        /**@type {Zan[]} followqsts*/
         this.followqsts = [];
         /**@type {Zan[]} zans*/
         this.zans = [];
@@ -543,7 +530,7 @@ class APIParser
                 case "MEMBER_FOLLOW_QUESTION":
                     {
                         const actor = act.actor || act.actors[0];
-                        output.followqsts.push(new FollowQuestion(_any(actor.url_token, actor.urlToken), act.target.id, _any(act.created_time, act.createdTime)));
+                        output.followqsts.push(new Zan(_any(actor.url_token, actor.urlToken), act.target.id, _any(act.created_time, act.createdTime)));
                     }
                 case "QUESTION_CREATE":
                     APIParser.parseByType(output, act.target);

@@ -40,7 +40,7 @@ function verToStr(ver)
 
 (async function()
 {
-    const curver = 10004;
+    const curver = 10005;
     $("#curver").text(verToStr(curver));
     try
     {

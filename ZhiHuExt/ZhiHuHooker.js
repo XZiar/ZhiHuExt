@@ -158,7 +158,7 @@
             }
             else if (apiparts[0] === "questions" && apiparts[2] === "followers")
             {
-                return sendData(req, pms, "questions", "qstfollows", { qid: apiparts[1] });
+                return shouldBlock ? blockVoter(BLOCKING_FLAG, "questions", apiparts[1]) : sendData(req, pms, "questions", "qstfollows", { qid: apiparts[1] });
             }
             else if (apiparts[0] === "explore" && apiparts[1] === "recommendations")
             {

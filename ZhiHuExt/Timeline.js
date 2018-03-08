@@ -237,9 +237,7 @@ function encodeObj(objs, umapper)
     /**@type {{[x: string]: string}}*/
     const qs = _getQueryString();
     /**@type {Zan[]}*/
-    let zananss = [], zanarts = [];
-    /**@type {FollowQuestion[]}*/
-    let folqsts = [];
+    let zananss = [], zanarts = [], folqsts = [];
     /**@type {{[x:number]:Answer}}*/
     let anss = {};
     /**@type {{[x:number]:Article}}*/
@@ -300,7 +298,7 @@ function encodeObj(objs, umapper)
     {
         const qids = qs.qfid.split("*").map(Number);
         const pmss = [DBfunc("getAny", "followqsts", "to", qids), DBfunc("getDetailMapOfIds", "questions", qids, "id")];
-        /**@type {[FollowQuestion[], {[x:number]: Question}]}*/
+        /**@type {[Zan[], {[x:number]: Question}]}*/
         const ret = await Promise.all(pmss);
 
         folqsts = ret[0]; qsts = ret[1];

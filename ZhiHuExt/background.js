@@ -165,8 +165,9 @@ async function checkUserSimilarity(target, id)
  */
 async function blocking(api, id)
 {
+    const objdb = (api === "answer" ? db.zans : (api === "article" ? db.zanarts : db.followqsts));
     /**@type {Zan[]}*/
-    const zans = await (api === "answer" ? db.zans : db.zanarts).where("to").equals(id).toArray();
+    const zans = await objdb.where("to").equals(id).toArray();
     /**@type {{[x:string]: User}}*/
     const voters = await db.getDetailMapOfIds("users", zans.mapToProp("from"), "id");
     const retdata = zans.sort((x, y) => y.time - x.time)
@@ -456,9 +457,9 @@ chrome.runtime.onMessageExternal.addListener(
             case "qstfollows":
                 {
                     const uqst = request.extra.qid;
-                    /**@type {{users:User[],followqsts:FollowQuestion[]}}*/
+                    /**@type {{users:User[],followqsts:Zan[]}}*/
                     const res = { users: data.data.map(User.fromRawJson), follows: [] };
-                    res.followqsts = res.users.map(ufrom => new FollowQuestion(ufrom, uqst));
+                    res.followqsts = res.users.map(ufrom => new Zan(ufrom, uqst));
                     db.insert("batch", res, putBadge);
                 } break;
             case "followers":
