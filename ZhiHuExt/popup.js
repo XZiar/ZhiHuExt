@@ -37,30 +37,14 @@ function verToStr(ver)
 {
     return `v${Math.floor(ver / 10000)}.${Math.floor((ver % 10000) / 10)}.${ver % 10}`;
 }
-
-(async function()
+chrome.runtime.sendMessage({ action: "chkver" }, resp =>
 {
-    const curver = 10005;
-    $("#curver").text(verToStr(curver));
-    try
+    $("#curver").text(verToStr(resp.curver));
+    $("#newver").text(verToStr(resp.newver));
+    if (curver < newver)
     {
-        const resp = await fetch("https://api.github.com/repos/XZiar/ZhiHuExt/releases");
-        const releases = await resp.json()
-        console.log(releases);
-        releases.forEach(release => release.pubTime = new Date(release.published_at));
-        releases.sort((a, b) => a.time < b.time);
-        const verstr = releases[0].tag_name.substring(1).split(".").map(Number);
-        const newver = verstr[0] * 10000 + verstr[1] * 100 + verstr[2];
-        console.log(newver);
-        $("#newver").text(verToStr(newver));
-        if (curver < newver)
-        {
-            $("#newver")[0].style.color = "red";
-            $("#upd").show();
-        }
+        $("#newver")[0].style.color = "red";
+        $("#upd").show();
     }
-    catch (e)
-    {
-        console.warn(e);
-    }
-})();
+});
+

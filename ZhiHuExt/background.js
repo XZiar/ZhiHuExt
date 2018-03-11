@@ -14,7 +14,32 @@ function clearBadge()
 {
     chrome.browserAction.setBadgeText({ text: "" });
 }
-
+/**@param {string} str */
+function strToVer(str)
+{
+    const verstr = str.replace(/[^0-9.]/g, "").split(".").map(Number);
+    return verstr[0] * 10000 + verstr[1] * 100 + verstr[2];
+}
+async function getVersion()
+{
+    const curver = strToVer(chrome.runtime.getManifest().version);
+    try
+    {
+        const resp = await fetch("https://api.github.com/repos/XZiar/ZhiHuExt/releases");
+        const releases = await resp.json()
+        console.log("releases", releases);
+        releases.forEach(release => release.pubTime = new Date(release.published_at));
+        releases.sort((a, b) => a.pubTime < b.pubTime);
+        const newver = strToVer(releases[0].tag_name);
+        console.log("latest release version", newver);
+        return { curver: curver, newver: newver };
+    }
+    catch (e)
+    {
+        console.warn(e);
+        return { curver: curver, newver: 0 };
+    }
+}
 
 const db = new ZhiHuDB("ZhihuDB", [
     {
@@ -227,6 +252,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) =>
                 console.log("statics result:", result);
                 sendResponse(result);
             });
+            return true;
+        case "chkver":
+            getVersion().then(result => sendResponse(result));
             return true;
         case "chkspam":
             {
@@ -487,9 +515,29 @@ chrome.runtime.onMessageExternal.addListener(
         }
     });
 
-$(document).ready(function ()
+(async function ()
 {
-    new Clipboard('#copyBtn');
-});
+    $(document).ready(() =>
+    {
+        new Clipboard('#copyBtn');
+    });
+    const verinfo = await getVersion();
+    if (verinfo.curver < verinfo.newver)
+    {
+        chrome.notifications.create("UpdInfo",
+            {
+                type: "basic",
+                title: "【知乎疯牛病】更新提示",
+                message: `插件似乎发布新版本了，快去看看作者又加了什么华而不实的功能吧？！`,
+                iconUrl: "icon.png"
+            });
+    }
+})();
+
+chrome.notifications.onButtonClicked.addListener(notificationId =>
+{
+    if (notificationId === "UpdInfo")
+        chrome.tabs.create({ active: true, url: "https://www.github.com/XZiar/ZhiHuExt/releases" });
+}); 
 
 

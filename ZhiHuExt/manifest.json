@@ -25,7 +25,8 @@
     "*://127.0.0.1:*/",
     "tabs",
     "storage",
-    "downloads"
+    "downloads",
+    "notifications"
   ],
   "externally_connectable":
   {

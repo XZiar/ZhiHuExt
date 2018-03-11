@@ -165,6 +165,27 @@ class ZhiHuDB
     }
 
     /**
+     * @param {Zan[]} data
+     * @param {Map<string,number[]>} acttime
+     */
+    static formActTime(data, acttime)
+    {
+        if (!data)
+            return;
+        for (let idx = 0; idx < data.length; ++idx)
+        {
+            const act = data[idx];
+            const oldtime = acttime.get(act.from);
+            if (!oldtime)
+                acttime.set(act.from, [act.time, act.time]);
+            else if (act.time > oldtime[0])
+                acttime.set(act.from, [act.time, oldtime[1]]);
+            else if (act.time < oldtime[1])
+                acttime.set(act.from, [oldtime[0], act.time]);
+        }
+    }
+
+    /**
      * @param {string} target
      * @param {object[] | object | StandardDB} data
      * @param {function(number):void} [notify]
@@ -177,22 +198,18 @@ class ZhiHuDB
             Object.entries(data).forEach(([key, val]) => sum += this.insert(key, val));
             if (notify)
                 notify(sum);
-            if (data.zans && data.zanarts && data.followqsts)
+            /**@type {Map<string,number[]>} */
+            const acttime = new Map();
+            ZhiHuDB.formActTime(data.zans, acttime);
+            ZhiHuDB.formActTime(data.zanarts, acttime);
+            ZhiHuDB.formActTime(data.followqsts, acttime);
+            if (acttime.size > 0)
             {
-                /**@type {Map<string,number[]>} */
-                const acttime = new Map();
-                const curtime = new Date().toUTCSeconds();
-                data.zans.concat(data.zanarts).concat(data.followqsts).forEach(act =>
+                const recs = [];
+                for (const entry of acttime)
                 {
-                    const oldtime = acttime.get(act.from);
-                    if (!oldtime)
-                        acttime.set(act.from, [act.time, act.time]);
-                    else if (act.time > oldtime[0])
-                        acttime.set(act.from, [act.time, oldtime[1]]);
-                    else if (act.time < oldtime[1])
-                        acttime.set(act.from, [oldtime[0], act.time]);
-                });
-                const recs = Array.from(acttime.entries()).map(x => ({ id: x[0], new: x[1][0], old: x[1][1] }));
+                    recs.push({ id: entry[0], new: entry[1][0], old: entry[1][1]});
+                };
                 this.db.rectime.bulkPut(recs);
             }
             return sum;

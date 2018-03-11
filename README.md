@@ -56,7 +56,6 @@
 
  * 本地数据库过大时，导入导出页面的`快速导入`/`快速导出`功能将不可靠（容易导致插件崩溃），需要用[自带工具](./DBExportor/)进行导出。
    工具基于Asp.net core 2.0，请自行准备编译环境。
-   大数据库的导入未经测试，风险请自行承担。
 
 ## Dependency
  * [Dexie.js](http://dexie.org/) A Minimalistic Wrapper for IndexedDB [Apache License 2.0](./License/Dexie.license)
