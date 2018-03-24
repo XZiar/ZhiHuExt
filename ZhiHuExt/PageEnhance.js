@@ -8,7 +8,7 @@
     const url = window.location.href;
     const mth1 = url.match(/zhihu.com\/question\/(\d*)/i);
     const mth2 = url.match(/zhuanlan.zhihu.com\/p\/(\d*)/i);
-    const mth3 = url.match(/www.zhihu.com\/(?:org|people)\/([^\/]+)/i);
+    const mth3 = url.match(/www.zhihu.com\/(?:org|people)\/([^\/\?]+)/i);
     const mth4 = url.match(/zhihu.com\/?$/i);
     if (mth1)
         pageType = "question", qid = Number(mth1[1]);
@@ -296,29 +296,24 @@ async function saveQuestion(ev)
 
 async function saveADetail(target, id)
 {
-    if (target === "article")
-    {
-        console.warn("not implemented");
-        return;
-    }
-    const ansurl = `https://www.zhihu.com/api/v4/answers/${id}?include=excerpt,content,author,comment_count,voteup_count;data[*].question.answer_count,topics,follower_count;data[*].author.voteup_count,answer_count,articles_count,follower_count,badge[?(type=best_answerer)].topics`
-    const ans = await ContentBase._get(ansurl);
+    const adeturl = `https://www.zhihu.com/api/v4/${target}s/${id}?include=excerpt,content,author,comment_count,voteup_count;data[*].question.answer_count,topics,follower_count;data[*].author.voteup_count,answer_count,articles_count,follower_count,badge[?(type=best_answerer)].topics`
+    const adet = await ContentBase._get(adeturl);
 
     const output = new StandardDB();
-    APIParser.parseByType(output, ans);
+    APIParser.parseByType(output, adet);
     ContentBase._report("batch", output);
 
     const time = new Date().Format("yyyyMMdd-hhmm");
-    const fname = `Answer-${id}-${time}.json`;
-    console.log("answer fetched", ans);
+    const fname = `${target}-${id}-${time}.json`;
+    console.log(`${target} fetched`, adet);
 
     let imgset = new Set();
-    const mths = ans.content.match(/<img [^>]*>/g);
+    const mths = adet.content.match(/<img [^>]*>/g);
     if (mths)
         mths.map(img => img.match(/data-original="([^"]*)"/i)).filter(mth => mth)
             .forEach(mth => imgset.add(mth[1]));
 
-    saveWithImg(ans, imgset, fname);
+    saveWithImg(adet, imgset, fname);
 }
 
 async function saveWithImg(base, imgset, fname)

@@ -32,17 +32,27 @@ const usrMap = new Map();
 let nodes = [];
 /**@type {{source:string, target:string}[]}*/
 let links = [];
+/**@type {SimpleBag<string>}*/
+let linkBag = new SimpleBag();
 
 let isCtrl = false, isShift = false;
 document.addEventListener("keydown", ev => { isCtrl = ev.ctrlKey; isShift = ev.shiftKey; });
 document.addEventListener("keyup", ev => { isCtrl = ev.ctrlKey; isShift = ev.shiftKey; });
 
 const FGraph = ForceGraph3D()(document.getElementById("graph"));
+FGraph.backgroundColor("#1f1f1f");
+FGraph.enableNodeDrag(false);
 FGraph.numDimensions(3);
 //FGraph.forceEngine('ngraph');
 FGraph.cooldownTime(40000);
-//FGraph.autoColorBy("it");
-FGraph.lineOpacity(0.05);
+//FGraph.nodeAutoColorBy("it");
+//FGraph.linkColor("#000010");
+FGraph.linkResolution(3);
+FGraph.linkOpacity(0.06);
+FGraph.linkWidth(/**@param {{source:string, target:string}} d*/d =>
+    {
+        return Math.log1p(linkBag.count(d.source+'*'+d.target)) / 10;
+    });
 FGraph.nodeRelSize(1);
 FGraph.nodeResolution(4);
 FGraph.onNodeClick(/**@param {UserNode} node*/ (node) =>
@@ -104,7 +114,10 @@ async function fetchAuthor(limzan, btn)
         const dest = pair[1];
         const node = usrMap.get(dest);
         if (node && node.zancnt >= limzan)
+        {
             links.push({ source: pair[0], target: dest });
+            linkBag.add(pair[0]+'*'+dest);
+        }
     });
 }
 
@@ -138,7 +151,10 @@ async function fetchVoter(limzan, btn)
         const src = pair[0];
         const node = usrMap.get(src);
         if (node && node.zancnt >= limzan)
+        {
             links.push({ source: src, target: pair[1] });
+            linkBag.add(src+'*'+pair[1]);
+        }
     });
 }
 

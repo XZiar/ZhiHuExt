@@ -63,7 +63,7 @@ async function send(tables, partlen, addr, onProgress)
             if (onProgress)
                 onProgress(tabname, offset);
             offset += len;
-            if (tabname === "zans" || tabname === "zanarts" || tabname === "follows")
+            if (tabname === "zans" || tabname === "zanarts" || tabname === "follows" || tabname === "followqsts")
                 last = [ret.from, ret.to];
             else
                 last = ret.id;

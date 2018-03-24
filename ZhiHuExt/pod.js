@@ -151,9 +151,18 @@ class Answer
 
 class ADetail
 {
-    constructor(id, content)
+    /**
+     * @param {string | number | Answer | Article} target
+     * @param {string} content
+     */
+    constructor(target, content)
     {
-        this.id = Number(id);
+        if (target instanceof Answer)
+            this.id = target.id;
+        else if (target instanceof Article)
+            this.id = -target.id;
+        else
+            this.id = Number(target);
         this.content = content;
     }
 }
@@ -174,6 +183,26 @@ class Zan
             this.to = target.id;
         else if (target instanceof Question)
             this.to = target.id;
+        else
+            this.to = Number(target);
+        this.time = time == null ? -1 : time;
+    }
+}
+
+class Collect
+{
+    /**
+     * @param {User | string} user
+     * @param {string | number | Answer | Article} target
+     * @param {number} [time]
+     */
+    constructor(user, target, time)
+    {
+        this.from = typeof (user) === "string" ? user : user.id;
+        if (target instanceof Answer)
+            this.to = target.id;
+        else if (target instanceof Article)
+            this.to = -target.id;
         else
             this.to = Number(target);
         this.time = time == null ? -1 : time;
@@ -469,6 +498,7 @@ class APIParser
 
 
     /**
+     * parse page's embedded json, entities.
      * @param {Entities} data
      */
     static parseEntities(data)
@@ -483,6 +513,8 @@ class APIParser
                 output.zans.push(new Zan(act.actor.urlToken, act.target.id, act.createdTime));
             else if (act.verb === "MEMBER_VOTEUP_ARTICLE")
                 output.zanarts.push(new Zan(act.actor.urlToken, act.target.id, act.createdTime));
+            else if (act.verb === "QUESTION_FOLLOW")
+                output.followqsts.push(new Zan(act.actor.urlToken, act.target.id, act.createdTime));
         }
 
         Object.values(data.users).forEach(/**@param {UserType} usr*/(usr) => APIParser.parseByType(output, usr));
@@ -506,6 +538,13 @@ class APIParser
                         const actor = feed.actors[0];
                         output.zanarts.push(new Zan(actor.urlToken, art, feed.createdTime));
                     } break;
+                case "MEMBER_FOLLOW_QUESTION":
+                case "QUESTION_FOLLOW":
+                    {
+                        const qst = feed.target.id;
+                        const actor = feed.actors[0];
+                        output.followqsts.push(new Zan(actor.urlToken, qst, feed.createdTime));
+                    } break;
             }
             if (feed.uninterestReasons instanceof Array)
                 APIParser.parseReasons(output, feed.uninterestReasons);
@@ -514,6 +553,7 @@ class APIParser
     }
 
     /**
+     * parse user-act/homepage-feed API's json, activites.
      * @param {Activity[]} acts
      */
     static parsePureActivities(acts)
@@ -542,6 +582,7 @@ class APIParser
                     break;
                 case "MEMBER_COLLECT_ANSWER":
                 case "MEMBER_COLLECT_ARTICLE":
+
                 case "TOPIC_ACKNOWLEDGED_ANSWER":
                 case "TOPIC_ACKNOWLEDGED_ARTICLE":
                     APIParser.parseByType(output, act.target);

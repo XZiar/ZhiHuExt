@@ -225,8 +225,9 @@ namespace DBExportor.Pods
         public List<Article> articles = new List<Article>();
         public List<Topic> topics = new List<Topic>();
         public List<Answer> answers = new List<Answer>();
-        public List<Zan> zans = new List<Zan>(16000000);
-        public List<Zan> zanarts = new List<Zan>(1000000);
+        public List<Zan> zans = new List<Zan>(20000000);
+        public List<Zan> zanarts = new List<Zan>(3000000);
+        public List<Zan> followqsts = new List<Zan>(100000);
         public List<ADetail> details = new List<ADetail>();
         public List<RecItem> rectime = new List<RecItem>();
         public void Slim(int level = 0)
