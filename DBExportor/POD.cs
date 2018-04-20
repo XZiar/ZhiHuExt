@@ -220,15 +220,15 @@ namespace DBExportor.Pods
     {
         public List<Spam> spams = new List<Spam>();
         public List<Follow> follows = new List<Follow>();
-        public List<User> users = new List<User>(3000000);
+        public List<User> users = new List<User>(4500000);
         public List<Question> questions = new List<Question>();
         public List<Article> articles = new List<Article>();
         public List<Topic> topics = new List<Topic>();
-        public List<Answer> answers = new List<Answer>();
-        public List<Zan> zans = new List<Zan>(20000000);
-        public List<Zan> zanarts = new List<Zan>(3000000);
+        public List<Answer> answers = new List<Answer>(2000000);
+        public List<Zan> zans = new List<Zan>(23000000);
+        public List<Zan> zanarts = new List<Zan>(2000000);
         public List<Zan> followqsts = new List<Zan>(100000);
-        public List<ADetail> details = new List<ADetail>();
+        public List<ADetail> details = new List<ADetail>(1500000);
         public List<RecItem> rectime = new List<RecItem>();
         public void Slim(int level = 0)
         {

@@ -66,7 +66,7 @@ async function StatVoters(...voters)
 /**
  * @param {User} objuser
  * @param {HTMLAnchorElement} anchor
- * @param {number} deep
+ * @param {boolean} deep
  */
 async function chkUser(objuser, anchor, deep)
 {
@@ -75,7 +75,10 @@ async function chkUser(objuser, anchor, deep)
         return;
     finalUserMap[user.id] = user;
     if (user.status === "ban" || user.status === "sban")
+    {
         anchor.style.background = "red";
+        await ContentBase.checkUserState(objuser.id, undefined, [250], true);//extra check
+    }
 }
 
 $(document).on("click", "#chkAllStatus", async e =>

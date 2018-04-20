@@ -100,12 +100,12 @@ class ContentBase
         return pms;
     }
     /**
-     * @param {string} uid
      * @param {"followees" | "followers"} obj
+     * @param {string} uid
      * @param {number} offset
      * @returns {{data: User[], end: boolean, total: number}}
      */
-    static _fetchFollows(uid, obj, offset)
+    static _fetchFollows(obj, uid, offset)
     {
         const pms = $.Deferred();
         ContentBase._get(`https://www.zhihu.com/api/v4/members/${uid}/${obj}?include=data[*].account_status,gender,voteup_count,answer_count,follower_count,is_followed,is_following,badge[?(type=best_answerer)].topics&limit=20&offset=${offset}`)
@@ -212,10 +212,10 @@ class ContentBase
             }
             catch (e)
             {
-                if (++errcnt > 5)
-                    break;
-                else
+                if (++errcnt <= 5)
                     continue;
+                console.warn("too many error occur when fetch voters, early return.", obj, id, limit, config);
+                break;
             }
         }
         return ret;
@@ -278,10 +278,10 @@ class ContentBase
             }
             catch (e)
             {
-                if (++errcnt > 5)
-                    break;
-                else
+                if (++errcnt <= 5)
                     continue;
+                console.warn("too many error occur when fetch answers, early return.", qid, limit);
+                break;
             }
         }
         return whole;
@@ -289,6 +289,7 @@ class ContentBase
 
     static async fetchComments(aid, limit)
     {
+        let errcnt = 0;
         const whole = [];
         let isEnd = false;
         for (let offset = 0; offset < limit && !isEnd;)
@@ -302,22 +303,23 @@ class ContentBase
             }
             catch (e)
             {
-                if (++errcnt > 5)
-                    break;
-                else
+                if (++errcnt <= 5)
                     continue;
+                console.warn("too many error occur when fetch comments, early return.", aid, limit);
+                break;
             }
         }
         return whole;
     }
 
     /**
-     * @param {string} uid
      * @param {"followees" | "followers"} obj
+     * @param {string} uid
      * @param {number} limit
      */
-    static async fetchFollows(uid, obj, limit)
+    static async fetchFollows(obj, uid, limit)
     {
+        let errcnt = 0;
         /**@type {User[]}*/
         const whole = [];
         let isEnd = false;
@@ -325,17 +327,17 @@ class ContentBase
         {
             try
             {
-                const part = await ContentBase._fetchFollows(uid, obj, offset);
+                const part = await ContentBase._fetchFollows(obj, uid, offset);
                 whole.push(...part.data);
                 isEnd = part.end;
                 offset += part.data.length;
             }
             catch (e)
             {
-                if (++errcnt > 5)
-                    break;
-                else
+                if (++errcnt <= 5)
                     continue;
+                console.warn("too many error occur when fetch follows, early return.", obj, uid, limit);
+                break;
             }
         }
         /**@type {{users:User[],follows:Follow[]}}*/

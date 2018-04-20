@@ -118,12 +118,12 @@ function initSlider(data)
     data.filter(x => x.date > 0).forEach(x => { mindate = Math.min(mindate, x.date); maxdate = Math.max(maxdate, x.date); });
     rangetext.textContent = toDate(mindate) + "  ~  " + toDate(maxdate);
     const dateRange = { "min": [mindate], "max": [maxdate] };
-    if (mindate < maxdate - 3600 * 24 * 365)
+    if (mindate < maxdate - 3600 * 24 * 365) // a-year before
         dateRange["5%"] = [maxdate - 3600 * 24 * 365];
-    if (mindate < maxdate - 3600 * 24 * 180)
+    if (mindate < maxdate - 3600 * 24 * 180) // 3-month before
         dateRange["30%"] = [maxdate - 3600 * 24 * 180];
-    if (mindate < maxdate - 3600 * 24 * 30)
-        dateRange["60%"] = [maxdate - 3600 * 24 * 180];
+    if (mindate < maxdate - 3600 * 24 * 30) // a-month before
+        dateRange["60%"] = [maxdate - 3600 * 24 * 30];
     noUiSlider.create(sliderHandle,
         {
             start: [0, maxdate],

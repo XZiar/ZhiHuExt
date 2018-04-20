@@ -216,9 +216,9 @@
             const suffix = ev.currentTarget.href.split("/").pop();
             let ret = null;
             if (suffix === "following")
-                ret = await ContentBase.fetchFollows(uid, "followees", cnt);
+                ret = await ContentBase.fetchFollows("followees", uid, cnt);
             else if (suffix === "followers")
-                ret = await ContentBase.fetchFollows(uid, "followers", cnt);
+                ret = await ContentBase.fetchFollows("followers", uid, cnt);
             else
                 return;
             ContentBase._report("follow", ret);

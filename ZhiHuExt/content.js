@@ -263,6 +263,10 @@ function monitorVoter(voterPopup)
     }
 }
 
+/**
+ * Add "Analyse" and "ReportSpam" buttons for each ".List-item"
+ * @param {HTMLDivElement[]} answerNodes
+ */
 function addAASpamBtns(answerNodes)
 {
     answerNodes.filter(node => !node.hasChild(".Btn-ReportSpam"))
@@ -270,32 +274,45 @@ function addAASpamBtns(answerNodes)
         {
             if (!node) return;
             /**@type {{type: string, token: string, upvote_num: number, comment_num: number, parent_token: string, author_member_hash_id: string}}*/
-            const ansInfo = JSON.parse(node.dataset.zaModuleInfo || node.dataset.zaExtraModule).card.content;
-            let thetype;
-            if (ansInfo.type === "Answer")
-                thetype = "answer";
-            else if (ansInfo.type === "Post")
-                thetype = "article";
+            let ansInfo;
+            try
+            {
+                const oldInfo = node.dataset.zaModuleInfo || node.dataset.zaExtraModule;
+                if (oldInfo)
+                    ansInfo = JSON.parse(oldInfo).card.content;
+                else
+                    ansInfo = JSON.parse(node.dataset.zop);
+            }
+            catch (e)
+            {
+                console.warn("in paring for AASpamBtn, Zhihu may have update API", node.dataset);
+                return;
+            }
+            let atype;
+            if (ansInfo.type === "Answer" || ansInfo.type === "answer")
+                atype = "answer";
+            else if (ansInfo.type === "Post" || ansInfo.type === "article")
+                atype = "article";
             else
                 return;
 
-            const ansid = ansInfo.token;
-            const ansArea = node.querySelector(".AuthorInfo");
-            if (!ansArea)
+            const aid = ansInfo.token || ansInfo.itemId;
+            const aArea = node.querySelector(".AuthorInfo");
+            if (!aArea)
                 return;
             {
                 const btn = createButton(["Btn-CheckSpam", "Button--primary"], "分析");
-                btn.dataset.id = ansid;
-                btn.dataset.type = thetype;
+                btn.dataset.id = aid;
+                btn.dataset.type = atype;
                 setDraggable(btn);
-                ansArea.appendChild(btn);
+                aArea.appendChild(btn);
             }
             {
                 const btn = createButton(["Btn-ReportSpam", "Button--primary"], "广告");
-                btn.dataset.id = ansid;
-                btn.dataset.type = thetype;
+                btn.dataset.id = aid;
+                btn.dataset.type = atype;
                 setDraggable(btn);
-                ansArea.appendChild(btn);
+                aArea.appendChild(btn);
             }
         });
 }

@@ -60,7 +60,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "template", "template", "{D3
 	ProjectSection(SolutionItems) = preProject
 		template\answers-api.json = template\answers-api.json
 		template\article-page.json = template\article-page.json
+		template\articles-api.json = template\articles-api.json
+		template\home-page.json = template\home-page.json
 		template\people-page.json = template\people-page.json
+		template\question-answers-api.json = template\question-answers-api.json
 		template\question-page.json = template\question-page.json
 		template\voters-api.json = template\voters-api.json
 	EndProjectSection
