@@ -20,6 +20,10 @@ function strToVer(str)
     const verstr = str.replace(/[^0-9.]/g, "").split(".").map(Number);
     return verstr[0] * 10000 + verstr[1] * 100 + verstr[2];
 }
+function verToStr(ver)
+{
+    return `v${Math.floor(ver / 10000)}.${Math.floor((ver % 10000) / 10)}.${ver % 10}`;
+}
 async function getVersion()
 {
     const curver = strToVer(chrome.runtime.getManifest().version);
@@ -530,7 +534,7 @@ chrome.runtime.onMessageExternal.addListener(
         chrome.notifications.create("UpdInfo",
             {
                 type: "basic",
-                title: "【知乎疯牛病】更新提示",
+                title: `【知乎疯牛病】更新提示[${verToStr(verinfo.newver)}]`,
                 message: `插件似乎发布新版本了，快去看看作者又加了什么华而不实的功能吧？！`,
                 iconUrl: "icon.png"
             });

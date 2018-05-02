@@ -41,7 +41,7 @@ chrome.runtime.sendMessage({ action: "chkver" }, resp =>
 {
     $("#curver").text(verToStr(resp.curver));
     $("#newver").text(verToStr(resp.newver));
-    if (curver < newver)
+    if (resp.curver < resp.newver)
     {
         $("#newver")[0].style.color = "red";
         $("#upd").show();
