@@ -1,31 +1,6 @@
 "use strict"
 
 
-function reportSpam(id, type)
-{
-    const payload = { "resource_id": id, "type": type, "reason_type": "spam", "source": "web" };
-    //req.setRequestHeader("Referer", "https://www.zhihu.com/people/" + id + "/activities");
-    const pms = $.Deferred();
-    ContentBase._post("https://www.zhihu.com/api/v4/reports", payload)
-        .done((data, status, xhr) =>
-        {
-            if (xhr.status === 204 || xhr.status === 200)
-            {
-                pms.resolve();
-                ContentBase._report("spams", { id: id, type: type });
-            }
-        })
-        .fail((data, status, xhr) =>
-        {
-            if (data.responseJSON)
-                pms.reject({ code: data.responseJSON.error.code, error: data.responseJSON.error.message });
-            else
-                pms.reject({ code: xhr.status, error: "unknown error" });
-        })
-    return pms;
-}
-
-
 let CUR_ANSWER = null;
 let CUR_ARTICLE = null;
 let CUR_QUESTION = null;
@@ -33,9 +8,9 @@ let LIM_FetchVoter = 20000;
 let AUTO_SPIDE_ZAN = false, NOW_SPIDE = false;// dirty hack for auto-spide, assume single-thread-safe
 /**@type {{ name: string, btn: HTMLButtonElement }}*/
 let SPIDE_LIST = [];
-const BLOCKING_FLAG = createButton([]);
-BLOCKING_FLAG.style.display = "none";
-BLOCKING_FLAG.id = "ZHE_BLOCKING_VOTER";
+// const BLOCKING_FLAG = createButton([]);
+// BLOCKING_FLAG.style.display = "none";
+// BLOCKING_FLAG.id = "ZHE_BLOCKING_VOTER";
 
 function setLimVoter(count)
 {
@@ -66,7 +41,7 @@ async function autoReportAll(ev)
         }
         else if (mth3)
         {
-            reportSpam(mth3[1], "member");
+            ContentBase.reportSpam(mth3[1], "member");
         }
     }
     else if (txt.startsWith("{"))
@@ -101,7 +76,7 @@ async function autoReportAll(ev)
             try
             {
                 thisbtn.style.backgroundColor = "rgb(0,224,32)";
-                await reportSpam(uid, "member");
+                await ContentBase.reportSpam(uid, "member");
                 cnt++;
             }
             catch (e)
@@ -192,8 +167,6 @@ async function addSpamVoterBtns(voterNodes)
 };
 const voterObserver = new MutationObserver(records =>
 {
-    //if (document.body.querySelector("#ZHE_BLOCKING_VOTER"))
-        //document.body.removeChild(BLOCKING_FLAG);
     const voterNodes = Array.fromArray(
         records.filter(record => (record.type == "childList" && record.target.nodeName == "DIV"))
             .map(record => $.makeArray(record.addedNodes)))
@@ -336,8 +309,12 @@ function addQuickCheckBtns(feedbackNodes)
 
 function onCloseVoterPopup()
 {
-    if (document.body.querySelector("#ZHE_BLOCKING_VOTER"))
-        document.body.removeChild(BLOCKING_FLAG);
+    if (ContentBase.CUR_HOOKER)
+    {
+        ContentBase.CUR_HOOKER.dataset.blockingVoters = false;
+    }
+    // if (document.body.querySelector("#ZHE_BLOCKING_VOTER"))
+    //     document.body.removeChild(BLOCKING_FLAG);
     CUR_ANSWER = null;
     CUR_ARTICLE = null;
     CUR_QUESTION = null;
@@ -380,7 +357,7 @@ const bodyObserver = new MutationObserver(records =>
 $("body").on("click", "button.Btn-ReportSpam", function ()
 {
     const btn = $(this)[0];
-    reportSpam(btn.dataset.id, btn.dataset.type)
+    ContentBase.reportSpam(btn.dataset.id, btn.dataset.type)
         .done(() => btn.style.backgroundColor = "rgb(0,224,32)")
         .fail((e) =>
         {
@@ -404,7 +381,11 @@ $("body").on("click", "button.Btn-CheckSpam", async function (e)
     {
         if (e.ctrlKey)
         {
-            document.body.appendChild(BLOCKING_FLAG);
+            if (ContentBase.CUR_HOOKER)
+            {
+                ContentBase.CUR_HOOKER.dataset.blockingVoters = true;
+            }
+            //document.body.appendChild(BLOCKING_FLAG);
             const showbtn = btn.parentNode.parentNode.querySelector(".Voters").querySelector("button");
             showbtn.click();
             return;
@@ -542,7 +523,11 @@ $("body").on("mousedown", "button.NumberBoard-item", e =>
     const btn = e.target;
     if (e.shiftKey && e.ctrlKey)
     {
-        document.body.appendChild(BLOCKING_FLAG);
+        if (ContentBase.CUR_HOOKER)
+        {
+            ContentBase.CUR_HOOKER.dataset.blockingVoters = true;
+        }
+        //document.body.appendChild(BLOCKING_FLAG);
     }
     //e.preventDefault();
 });

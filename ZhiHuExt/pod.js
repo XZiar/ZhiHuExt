@@ -18,6 +18,20 @@ class UserToken
         return { authorization: auth, "X-UDID": this.xUDID, "X-API-VERSION": "3.0.40" }
     }
 }
+class UserToken2
+{
+    /**
+     * @param {string} token
+     */
+    constructor(token)
+    {
+        this.xUDID = token;
+    }
+    toHeader()
+    {
+        return { "X-UDID": this.xUDID, "X-API-VERSION": "3.0.40" }
+    }
+}
 
 class User
 {

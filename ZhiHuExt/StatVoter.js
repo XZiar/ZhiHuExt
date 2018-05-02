@@ -4,6 +4,31 @@
 let finalUserMap;
 /**@type {SimpleBag}*/
 let finalBag;
+let CUR_ANSWER, CUR_
+
+function reportSpam(id, type)
+{
+    const payload = { "resource_id": id, "type": type, "reason_type": "spam", "source": "web" };
+    //req.setRequestHeader("Referer", "https://www.zhihu.com/people/" + id + "/activities");
+    const pms = $.Deferred();
+    ContentBase._post("https://www.zhihu.com/api/v4/reports", payload)
+        .done((data, status, xhr) =>
+        {
+            if (xhr.status === 204 || xhr.status === 200)
+            {
+                pms.resolve();
+                ContentBase._report("spams", { id: id, type: type });
+            }
+        })
+        .fail((data, status, xhr) =>
+        {
+            if (data.responseJSON)
+                pms.reject({ code: data.responseJSON.error.code, error: data.responseJSON.error.message });
+            else
+                pms.reject({ code: xhr.status, error: "unknown error" });
+        })
+    return pms;
+}
 
 /**
  * @param {...BagArray} voters
@@ -37,14 +62,15 @@ async function StatVoters(...voters)
         {
             paging: true,
             deferRender: true,
-            lengthMenu: [[20, 50, 100, -1], [20, 50, 100, "All"]],
+            lengthMenu: [[20, 100, 200, -1], [20, 100, 200, "All"]],
             data: data,
             order: [[6, "desc"], [5, "desc"], [1, "asc"]],
             columns:
             [
                 {
                     data: "usr",
-                    render: displayRender(dat => `<a class="bgopen usr" data-id="${dat.id}" href="https://www.zhihu.com/people/${dat.id}">${dat.name}</a>`)
+                    render: displayRender(dat => `<a class="bgopen usr" data-id="${dat.id}" href="https://www.zhihu.com/people/${dat.id}">${dat.name}</a>
+                    <button class="Btn-ReportSpam" data-id="${dat.id}" data-type="member">广告</button>`)
                 },
                 {
                     data: "status",
@@ -118,7 +144,47 @@ $(document).on("click", "#copyusr", e =>
     const request = { action: "copy", data: JSON.stringify(finalBag.elements()) };
     SendMsgAsync(request);
 });
-
+$("body").on("click", "button.Btn-ReportSpam", e =>
+{
+    const btn = e.target;
+    reportSpam(btn.dataset.id, btn.dataset.type)
+        .done(() => btn.style.backgroundColor = "rgb(0,224,32)")
+        .fail((e) =>
+        {
+            console.warn("report fail:" + e.code, e.error);
+            if (e.code === 103001)//repeat
+                btn.style.backgroundColor = "rgb(224,224,32)";
+            else if (e.code === 4039)//need verify
+                btn.style.backgroundColor = "rgb(32,64,192)";
+            else
+                btn.style.backgroundColor = "rgb(224,0,32)";
+        });
+});
+$("body").on("click", "button.Btn-Similarity", e =>
+{
+    const thisbtn = e.target;
+    const msg = { action: "chksim", target: "user", data: null };
+    /**@type {HTMLButtonElement[]}*/
+    const btns = $("#maintable").find("button.Btn-ReportSpam").toArray();
+    console.log("detect " + btns.length + " user");
+    chrome.runtime.sendMessage(msg, /**@param {[string, [number, number, number]][]} result*/(result) =>
+    {
+        console.log(result);
+        const simmap = new Map(result.data);
+        let maxcnt = 0;
+        btns.forEach(btn =>
+        {
+            const counts = simmap.get(btn.dataset.id);
+            btn.textContent = `${counts[0]}(${counts[1]})/${counts[2]}`;
+            btn.style.fontSize = "smaller";
+            btn.style.fontWeight = "bold";
+            maxcnt = Math.max(maxcnt, counts[0]);
+        });
+        thisbtn.textContent = `${maxcnt}(${result.limit})`;
+        thisbtn.style.fontSize = "smaller";
+        thisbtn.style.fontWeight = "bold";
+    });
+});
 
 !async function()
 {

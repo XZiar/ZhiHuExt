@@ -3,8 +3,10 @@
 let _CUR_USER;
 let _CUR_ANSWER;
 let _CUR_QUESTION;
-/**@type {UserToken}*/
+/**@type {UserToken|UserToken2}*/
 let _CUR_TOKEN;
+/**@type {HTMLScriptElement}*/
+let _CUR_HOOKER;
 let _Base_Lim_Date = new Date(2017, 1, 1).toUTCSeconds();
 class ContentBase
 {
@@ -16,6 +18,7 @@ class ContentBase
     static set CUR_QUESTION(qst) { _CUR_QUESTION = qst; }
     static get CUR_TOKEN() { return _CUR_TOKEN; }
     static set CUR_TOKEN(token) { _CUR_TOKEN = token; }
+    static get CUR_HOOKER() { return _CUR_HOOKER; }
     static get BASE_LIM_DATE() { return _Base_Lim_Date; }
     static set BASE_LIM_DATE(time) { time = _Base_Lim_Date; }
 
@@ -164,6 +167,30 @@ class ContentBase
             return;
         chrome.runtime.sendMessage({ action: "update", target: target, data: { key: key, obj: objs, updator: updator } });
     }
+    static reportSpam(id, type)
+    {
+        const payload = { "resource_id": id, "type": type, "reason_type": "spam", "source": "web" };
+        const pms = $.Deferred();
+        ContentBase._post("https://www.zhihu.com/api/v4/reports", payload)
+            .done((data, status, xhr) =>
+            {
+                if (xhr.status === 204 || xhr.status === 200)
+                {
+                    pms.resolve();
+                    ContentBase._report("spams", { id: id, type: type });
+                }
+            })
+            .fail((data, status, xhr) =>
+            {
+                if (data.responseJSON)
+                    pms.reject({ code: data.responseJSON.error.code, error: data.responseJSON.error.message });
+                else
+                    pms.reject({ code: xhr.status, error: "unknown error" });
+            })
+        return pms;
+    }
+
+
     /**@param {string} rawhtml*/
     static keepOnlyDataDiv(rawhtml)
     {
@@ -233,7 +260,7 @@ class ContentBase
         let errcnt = 0;
         let time = begintime || new Date().toUTCSeconds(); 
         limittime = limittime || ContentBase.BASE_LIM_DATE;
-        const tokenhead = ContentBase.CUR_TOKEN.toHeader();
+        const tokenhead = ContentBase.CUR_TOKEN ? ContentBase.CUR_TOKEN.toHeader() : {};
         const ret = new StandardDB();
         let isEnd = false;
         for (let i = 0; i < maxloop && time > limittime && !isEnd; ++i)
@@ -398,7 +425,8 @@ class ContentBase
                     return;
                 }
                 const state = JSON.parse(dataElement.dataset.state);
-                ContentBase.CUR_TOKEN = new UserToken(state.token);
+                if(state.token)
+                    ContentBase.CUR_TOKEN = new UserToken(state.token);
                 const theuser = state.entities.users[uid];
                 if (!theuser)
                 {
@@ -434,4 +462,48 @@ class ContentBase
     }
 }
 
+/**@param e {CustomEvent}*/
+function hookerHandler(e)
+{
+    switch (e.detail.type)
+    {
+        case "udid":
+            {
+                const oldId = ContentBase.CUR_TOKEN && ContentBase.CUR_TOKEN.xUDID;
+                if (e.detail.udid != oldId)
+                {
+                    ContentBase.CUR_TOKEN = new UserToken2(e.detail.udid);
+                    console.log("UDID changed:", oldId, e.detail.udid, e);
+                }    
+            } break;
+    }
+}
+
+{
+    const obs = new MutationObserver(records =>
+    {
+        for (let i = 0; i < records.length; ++i)
+        {
+            const record = records[i];
+            if (record.type != "childList")
+                continue;
+            const nodes = record.addedNodes;
+            for (let j = 0; j < nodes.length; ++j)
+            {
+                const node = nodes[j];
+                if (!(node instanceof HTMLScriptElement))
+                    continue;
+                if (node.id === "ZHIHU_HOOKER")
+                {
+                    obs.disconnect();
+                    _CUR_HOOKER = node;
+                    node.addEventListener("ZHHookerNotify", hookerHandler);
+                    console.log("[ZHIHU_Hook] inked!");
+                    return;
+                }
+            }
+        }
+    });
+    obs.observe(document, { "childList": true, "subtree": true });
+}
 

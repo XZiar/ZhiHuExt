@@ -173,13 +173,16 @@ function checkSpamUser(waitUsers, keepNormal)
 }
 
 /**
- * @param {"answer" | "article"} target
- * @param {number | string} id
+ * @param {"answer" | "article" | "user"} target
+ * @param {number | string | string[]} id
  */
 async function checkUserSimilarity(target, id)
 {
-    const theid = Number(id);
-    const voters = db.getVoters(theid, target);
+    let voters;
+    if (target === "user")
+        voters = id;
+    else
+        voters = db.getVoters(Number(id), target);
     const result = await Analyse.findUserSimilarityInVote(voters);
     return result;
 }
@@ -534,7 +537,7 @@ chrome.runtime.onMessageExternal.addListener(
     }
 })();
 
-chrome.notifications.onButtonClicked.addListener(notificationId =>
+chrome.notifications.onClicked.addListener(notificationId =>
 {
     if (notificationId === "UpdInfo")
         chrome.tabs.create({ active: true, url: "https://www.github.com/XZiar/ZhiHuExt/releases" });

@@ -8,7 +8,12 @@
     {
         "use strict"
         window.BLOCKING_VOTER = false;
-        /**@description parse query string to key-value object
+        /**@type {HTMLScriptElement}*/
+        const selfDom = document.querySelector("#ZHIHU_HOOKER");
+        /**@type {string}*/
+        let udid;
+        /**
+         * @description parse query string to key-value object
          * @param {string} qurl URL's query string
          * @returns {{[x:string]: string}} key-value object
          */
@@ -49,16 +54,16 @@
             return resp;
         }
         /**
-         * @param {HTMLElement} blockdom
          * @param {string} api
          * @param {string} id
          * @returns {Promise<Response>}
          */
-        function blockVoter(blockdom, api, id)
+        function blockVoter(api, id)
         {
             id = typeof (window.BLOCKING_VOTER) === "number" ? window.BLOCKING_VOTER : id;
-            if (blockdom)
-                document.body.removeChild(blockdom);
+            if (selfDom)
+                selfDom.dataset.blockingVoters = false;    
+            //document.body.removeChild(blockdom);
             return new Promise(resolve =>
             {
                 chrome.runtime.sendMessage(extid, { api: api, target: "BLOCKING", id: Number(id), data: null }, ret =>
@@ -79,6 +84,10 @@
          */
         async function newfetch(req, init)
         {
+            if (init && init.headers && init.headers.hasOwnProperty("X-UDID") && selfDom)
+            {
+                selfDom.dispatchEvent(new CustomEvent("ZHHookerNotify", {detail: {udid: init.headers["X-UDID"], type: "udid"}}));
+            }
             if (!req.includes("www.zhihu.com/api/v"))
                 return oldfetch(req, init);
             const apiparts = req.substring(req.indexOf("/api/v") + 8, req.indexOf("?")).split("/");
@@ -103,8 +112,9 @@
                 }
             }
             const pms = oldfetch(newreq, init);
-            const BLOCKING_FLAG = document.querySelector("#ZHE_BLOCKING_VOTER");
-            const shouldBlock = window.BLOCKING_VOTER ? window.BLOCKING_VOTER : (BLOCKING_FLAG ? true : false);
+            // const BLOCKING_FLAG = document.querySelector("#ZHE_BLOCKING_VOTER");
+            // const shouldBlock = window.BLOCKING_VOTER ? window.BLOCKING_VOTER : (BLOCKING_FLAG ? true : false);
+            const shouldBlock = window.BLOCKING_VOTER ? window.BLOCKING_VOTER : (selfDom && selfDom.dataset.blockingVoters ? true : false);
             if (apiparts[0] === "members")//capture [members, {id}, ...]
             {
                 if (!apiparts[2])//empty, dirty hook for locked user
@@ -142,11 +152,11 @@
             }
             else if (apiparts[0] === "answers" && apiparts[2] === "voters")
             {
-                return shouldBlock ? blockVoter(BLOCKING_FLAG, "answer", apiparts[1]) : sendData(req, pms, "answers", "voters", { id: apiparts[1] });
+                return shouldBlock ? blockVoter("answer", apiparts[1]) : sendData(req, pms, "answers", "voters", { id: apiparts[1] });
             }
             else if (apiparts[0] === "articles" && apiparts[2] === "likers")
             {
-                return shouldBlock ? blockVoter(BLOCKING_FLAG, "article", apiparts[1]) : sendData(req, pms, "articles", "voters", { id: apiparts[1] });
+                return shouldBlock ? blockVoter("article", apiparts[1]) : sendData(req, pms, "articles", "voters", { id: apiparts[1] });
             }
             else if (apiparts[0] === "articles" && apiparts[2] === "recommendation")
             {
@@ -158,7 +168,7 @@
             }
             else if (apiparts[0] === "questions" && apiparts[2] === "followers")
             {
-                return shouldBlock ? blockVoter(BLOCKING_FLAG, "questions", apiparts[1]) : sendData(req, pms, "questions", "qstfollows", { qid: apiparts[1] });
+                return shouldBlock ? blockVoter("questions", apiparts[1]) : sendData(req, pms, "questions", "qstfollows", { qid: apiparts[1] });
             }
             else if (apiparts[0] === "explore" && apiparts[1] === "recommendations")
             {
@@ -208,6 +218,7 @@
     
 
     const inj = document.createElement("script");
+    inj.id = "ZHIHU_HOOKER";
     inj.innerHTML = `(${Hooker})("${chrome.runtime.id}");`;
     document.documentElement.appendChild(inj);
 }()

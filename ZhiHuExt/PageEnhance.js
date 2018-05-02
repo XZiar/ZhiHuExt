@@ -72,7 +72,8 @@
         console.log(state);
         const entities = APIParser.parseEntities(state.entities);
         ContentBase._report("batch", entities);
-        ContentBase.CUR_TOKEN = new UserToken(state.token);
+        if (state.token)
+            ContentBase.CUR_TOKEN = new UserToken(state.token);
         console.log(entities);
         if (pageType === "people")
         {

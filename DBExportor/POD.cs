@@ -57,8 +57,8 @@ namespace DBExportor.Pods
                 }
             }
         }
-        private static readonly Dictionary<byte[], uint> Mapper = new Dictionary<byte[], uint>(3000000, new ByteStringComparer());
-        private static readonly List<byte[]> Cache = new List<byte[]>(3000000);
+        private static readonly Dictionary<byte[], uint> Mapper = new Dictionary<byte[], uint>(5000000, new ByteStringComparer());
+        private static readonly List<byte[]> Cache = new List<byte[]>(5000000);
         static UIDPool()
         {
             Cache.Add(null);
