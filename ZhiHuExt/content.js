@@ -1,16 +1,31 @@
 "use strict"
 
+// for common injects
 
-let CUR_ANSWER = null;
-let CUR_ARTICLE = null;
-let CUR_QUESTION = null;
+/**@type {string}*/
+let CUR_VOTER_TYPE;
+let CUR_VOTER_ID;
 let LIM_FetchVoter = 20000;
 let AUTO_SPIDE_ZAN = false, NOW_SPIDE = false;// dirty hack for auto-spide, assume single-thread-safe
 /**@type {{ name: string, btn: HTMLButtonElement }}*/
 let SPIDE_LIST = [];
-// const BLOCKING_FLAG = createButton([]);
-// BLOCKING_FLAG.style.display = "none";
-// BLOCKING_FLAG.id = "ZHE_BLOCKING_VOTER";
+
+/**
+ * @param {HTMLElement} node
+ * @param {"banned" | "spamed" | "normal"} status
+ */
+function setStatusColor(node, status)
+{
+    switch (status)
+    {
+        case "ban":
+            node.style.backgroundColor = node instanceof HTMLDivElement ? "#a0a0a0" : "black";
+            break;
+        case "spam":
+            node.style.backgroundColor = "cornsilk";
+            break;
+    }
+}
 
 function setLimVoter(count)
 {
@@ -151,9 +166,9 @@ async function addSpamVoterBtns(voterNodes)
         const btn = btnMap[idx];
         const id = btn.dataset.id;
         if (result.banned.has(id))
-            btn.style.backgroundColor = "black";
+            setStatusColor(btn, "ban");
         else if (result.spamed.has(id))
-            btn.style.backgroundColor = "cornsilk";
+            setStatusColor(btn, "spam");
         else
             normalList.push({ name: id, btn: btn.parentNode.children[0] });
     }
@@ -221,12 +236,19 @@ function monitorVoter(voterPopup)
             }
         }; 
 
-        if (CUR_ANSWER)
-            btn2.dataset.id = CUR_ANSWER, btn2.dataset.qname = "ansid", btn4.dataset.id = CUR_ANSWER, btn4.dataset.qname = "ansid";
-        else if (CUR_ARTICLE)
-            btn2.dataset.id = CUR_ARTICLE, btn2.dataset.qname = "artid", btn4.dataset.id = CUR_ARTICLE, btn4.dataset.qname = "artid";
-        else if (CUR_QUESTION)
-            btn2.dataset.id = CUR_QUESTION, btn2.dataset.qname = "qfid", btn4.dataset.id = CUR_QUESTION, btn4.dataset.qname = "qfid";
+        btn2.dataset.id = CUR_VOTER_ID, btn4.dataset.id = CUR_VOTER_ID;
+        switch (CUR_VOTER_TYPE)
+        {
+        case "answer":
+            btn2.dataset.qname = "ansid", btn4.dataset.qname = "ansid";
+            break;
+        case "article":
+            btn2.dataset.qname = "artid", btn4.dataset.qname = "artid";
+            break;
+        case "question":
+            btn2.dataset.qname = "qfid", btn4.dataset.qname = "qfid";
+            break;
+        }
 
         title.appendChild(btn1);
         title.appendChild(btn2);
@@ -237,30 +259,40 @@ function monitorVoter(voterPopup)
 }
 
 /**
+ * @param {HTMLDivElement} node
+ * @return {{type: string, token: string, upvote_num: number, comment_num: number, parent_token: string, author_member_hash_id: string}}
+ */
+function getAAInfo(node)
+{
+    try
+    {
+        const oldInfo = node.dataset.zaModuleInfo || node.dataset.zaExtraModule;
+        if (oldInfo)
+            return JSON.parse(oldInfo).card.content;
+        else
+            return JSON.parse(node.dataset.zop);
+    }
+    catch (e)
+    {
+        console.warn("in paring for AASpamBtn, Zhihu may have update API", node.dataset);
+        return null;
+    }
+}
+
+/**
  * Add "Analyse" and "ReportSpam" buttons for each ".List-item"
  * @param {HTMLDivElement[]} answerNodes
  */
-function addAASpamBtns(answerNodes)
+async function addAASpamBtns(answerNodes)
 {
+    /**@type {Map<string, HTMLDivElement>}*/
+    const athMap = new Map();
     answerNodes.filter(node => !node.hasChild(".Btn-ReportSpam"))
         .forEach(node =>
         {
             if (!node) return;
-            /**@type {{type: string, token: string, upvote_num: number, comment_num: number, parent_token: string, author_member_hash_id: string}}*/
-            let ansInfo;
-            try
-            {
-                const oldInfo = node.dataset.zaModuleInfo || node.dataset.zaExtraModule;
-                if (oldInfo)
-                    ansInfo = JSON.parse(oldInfo).card.content;
-                else
-                    ansInfo = JSON.parse(node.dataset.zop);
-            }
-            catch (e)
-            {
-                console.warn("in paring for AASpamBtn, Zhihu may have update API", node.dataset);
-                return;
-            }
+            const ansInfo = getAAInfo(node);
+            if (!ansInfo) return;
             let atype;
             if (ansInfo.type === "Answer" || ansInfo.type === "answer")
                 atype = "answer";
@@ -287,7 +319,16 @@ function addAASpamBtns(answerNodes)
                 setDraggable(btn);
                 aArea.appendChild(btn);
             }
+            const urlMeta = aArea.querySelector("meta[itemprop=url]").content || "";
+            const athMth = urlMeta.match(/www.zhihu.com\/people\/([^\/]*)/i);
+            if (athMth && athMth[1])
+                athMap.set(athMth[1], aArea.querySelector("div.AuthorInfo-head"));
         });
+    const result = await ContentBase.checkSpam("users", Array.from(athMap.keys()));
+    for (const id of result.banned)
+        setStatusColor(athMap.get(id), "ban");
+    for (const id of result.spamed)
+        setStatusColor(athMap.get(id), "spam");
 }
 
 function addQuickCheckBtns(feedbackNodes)
@@ -315,9 +356,8 @@ function onCloseVoterPopup()
     }
     // if (document.body.querySelector("#ZHE_BLOCKING_VOTER"))
     //     document.body.removeChild(BLOCKING_FLAG);
-    CUR_ANSWER = null;
-    CUR_ARTICLE = null;
-    CUR_QUESTION = null;
+    CUR_VOTER_ID = null;
+    CUR_VOTER_TYPE = null;
     AUTO_SPIDE_ZAN = false;
     SPIDE_LIST = [];
 }
@@ -503,9 +543,9 @@ $("body").on("click", "span.Voters", function ()
      */
     const itemContent = JSON.parse(itemNode.dataset.zaModuleInfo || itemNode.dataset.zaExtraModule).card.content;
     if (itemContent.type === "Answer")
-        CUR_ANSWER = itemContent.token;
+        CUR_VOTER_TYPE = "answer", CUR_VOTER_ID = itemContent.token;
     else if (itemContent.type === "Post")
-        CUR_ARTICLE = itemContent.token;
+        CUR_VOTER_TYPE = "article", CUR_VOTER_ID = itemContent.token;
 });
 $("body").on("click", "button.NumberBoard-item", e =>
 {
@@ -515,7 +555,7 @@ $("body").on("click", "button.NumberBoard-item", e =>
     if (headerNode && itemName === "关注者")
     {
         const headerContent = JSON.parse(headerNode.dataset.zaModuleInfo || headerNode.dataset.zaExtraModule).card.content;
-        CUR_QUESTION = headerContent.token;
+        CUR_VOTER_TYPE = "question", CUR_VOTER_ID = headerContent.token;
     }
 });
 $("body").on("mousedown", "button.NumberBoard-item", e =>
@@ -556,12 +596,7 @@ $("body").on("click", "button.Btn-Similarity", e =>
 {
     const thisbtn = e.target;
     const msg = { action: "chksim", target: "", data: null };
-    if (CUR_ANSWER)
-        msg.target = "answer", msg.data = CUR_ANSWER;
-    else if (CUR_ARTICLE)
-        msg.target = "article", msg.data = CUR_ARTICLE;
-    else
-        return;
+    msg.target = CUR_VOTER_TYPE, msg.data = CUR_VOTER_ID;
     const voterList = thisbtn.parentNode.parentNode.parentNode;
     /**@type {HTMLButtonElement[]}*/
     const btns = [];
@@ -613,8 +648,9 @@ $("body").on("drop", ".RichContent-inner", ev =>
     else
         return;
 
-    const id = JSON.parse(wrapper.dataset.zaModuleInfo || wrapper.dataset.zaExtraModule).card.content.token;
-    saveADetail(target, id);
+    const ansInfo = getAAInfo(node);
+    const aid = ansInfo.token || ansInfo.itemId;
+    saveADetail(target, aid);
 });
 
 

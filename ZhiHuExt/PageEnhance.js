@@ -1,49 +1,269 @@
 "use strict"
 
+
+/**@type {QuestType | string}*/
+let pageData;
+let pageType;
+
+function rootFinder(records)
+{
+    for (let i = 0; i < records.length; ++i)
+    {
+        const record = records[i];
+        if (record.type != "childList")
+            continue;
+        const nodes = record.addedNodes;
+        for (let j = 0; j < nodes.length; ++j)
+        {
+            const node = nodes[j];
+            if (!(node instanceof Element))
+                continue;
+            if (node.id === "data")
+                return node;
+            const obj = node.querySelector("#data");
+            if (obj)
+                return obj;
+        }
+    }
+    return null;
+}
+
+/**
+ * @param {HTMLElement} node
+ * @param {string} uid
+ */
+async function chkSpamAndSetBG(node, uid)
+{
+    const result = await ContentBase.checkSpam("users", uid);
+    if (result.banned.has(uid))
+        setStatusColor(node, "ban");
+    else if (result.spamed.has(uid))
+        setStatusColor(node, "spam");
+}
+
+function onObjFound(obj)
+{
+    const state = JSON.parse(obj.dataset.state);
+    console.log(state);
+    const entities = APIParser.parseEntities(state.entities);
+    ContentBase._report("batch", entities);
+    if (state.token)
+        ContentBase.CUR_TOKEN = new UserToken(state.token);
+    console.log(entities);
+    if (pageType === "people")
+    {
+        //process user
+        ContentBase.CUR_USER = entities.users.filter(u => u.id === pageData)[0];
+        console.log("the user", ContentBase.CUR_USER);
+        setTimeout(peopleEnhance, 800);//later refesh may erase added buttons(sometimes won't), so delay it.
+    }
+    else if (pageType === "question")
+    {
+        pageData = Object.values(state.entities.questions)[0];
+        setTimeout(qstEnhance, 800);//later refesh may erase added buttons, so delay it.
+    }
+}
+
+function processArticleOld(obj)
+{
+    let txt = obj.innerText;
+    {
+        const part = txt.split("new Date(");
+        txt = part[0] + part[1].replace(")", "");
+    }
+    const artdata = JSON.parse(txt);
+    console.log(artdata);
+
+    const artdb = artdata.database;
+    const output = new StandardDB();
+    {
+        //process user
+        const selfUser = artdata.me.slug;
+        const usersEntry = Object.entries(artdb.User);
+        for (let i = 0; i < usersEntry.length; ++i)
+        {
+            const [name, theuser] = usersEntry[i];
+            if (name === selfUser)
+                continue;
+            const user = User.fromRawJson(theuser);
+            output.users.push(user);
+        }
+
+        /**@type {ArtType}*/
+        const post = Object.values(artdb.Post)[0];
+        output.topics.push(...post.topics.map(t => new Topic(t.id, t.name)));
+        const article = new Article(post.slug, post.title, post.author, post.likesCount, post.summary.replace(/<[^>]+>/g, ""),
+            Date.parse(post.publishedTime) / 1000, Date.parse(post.updated) / 1000);
+        if (post.content)
+        {
+            const dt = new ADetail(article.id, post.content);
+            output.details.push(dt);
+        }
+        output.articles.push(article);
+        post.lastestLikers.forEach(theuser =>
+        {
+            const user = User.fromRawJson(theuser);
+            output.users.push(user);
+            output.zanarts.push(new Zan(user, article));
+        });
+
+        [post.meta.previous, post.meta.next].filter(p => p != null).forEach(p =>
+        {
+            const ath = User.fromRawJson(p.author);
+            output.users.push(ath);
+            output.topics.push(...p.topics.map(t => new Topic(t.id, t.name)));
+            const subart = new Article(p.slug, p.title, ath.id, p.likesCount, p.summary.replace(/<[^>]+>/g, ""),
+                Date.parse(p.publishedTime) / 1000);//no updated time
+            if (p.content)
+            {
+                const dt = new ADetail(article.id, p.content);
+                output.details.push(dt);
+            }
+            output.articles.push(subart);
+        });
+    }
+
+    console.log("artpage-report", output);
+    ContentBase._report("batch", output);
+}
+
+async function peopleEnhance()
+{
+    $("body").on("click", ".Btn-AutoActSpider", async e =>
+    {
+        const thisbtn = e.target;
+        const theuid = thisbtn.dataset.id;
+        const lcount = e.shiftKey ? 270 : (e.ctrlKey ? 70 : 5);
+        const ret = await ContentBase.fetchUserActs(theuid, lcount, undefined, undefined,
+            (cur, time) => thisbtn.innerText = cur + "/" + Date.fromUTCSeconds(time).Format("MMdd"));
+        const acts = ret.acts.selfMerge();
+        thisbtn.innerText = (acts.zans.length + acts.zanarts.length) + "赞";
+        ContentBase._report("batch", acts);
+        console.log(acts);
+    });
+
+    const header = $("#ProfileHeader")[0];
+    if (!header)
+        return;
+    const uid = pageData;
+    const btn1 = createButton(["Btn-ReportSpam", "Button--primary"], "广告");
+    btn1.dataset.id = uid;
+    btn1.dataset.type = "member";
+    const btn2 = createButton(["Btn-StatVoter", "Button--primary"], "粉丝");
+    btn2.dataset.id = uid;
+    btn2.dataset.qname = "athid";
+    const btn3 = createButton(["Btn-StatVoter", "Button--primary"], "赞谁");
+    btn3.dataset.id = uid;
+    btn3.dataset.qname = "uid";
+    const btn4 = createButton(["Btn-AutoActSpider", "Button--primary"], "爬");
+    btn4.dataset.id = uid;
+    const btn5 = createButton(["Btn-ShowTime", "Button--primary"], "时间图");
+    btn5.dataset.id = uid;
+    btn5.dataset.qname = "uid";
+    if (!header.hasChild(".ProfileButtonGroup"))
+    {
+        const dummydiv = document.createElement("div");
+        dummydiv.className = "MemberButtonGroup ProfileButtonGroup ProfileHeader-buttons";
+        $(".ProfileHeader-contentFooter", header).append(dummydiv);
+    }
+    $(".ProfileButtonGroup", header).prepend(btn1, btn2, btn3, btn4, btn5);
+
+    //spider fot follow
+    btn4.draggable = true;
+    btn4.ondragstart = (ev) =>
+    {
+        ev.dataTransfer.setData("text", "spider");
+    }
+    $("body").on("dragover", "a.NumberBoard-item", ev => ev.preventDefault());
+    $("body").on("drop", "a.NumberBoard-item", async ev =>
+    {
+        ev.preventDefault();
+        /**@type {string}*/
+        const txt = ev.originalEvent.dataTransfer.getData("text");
+        if (txt != "spider" && !Number(txt)) return;
+        let cnt = Number(txt) || Number(ev.currentTarget.innerText.split('\n')[1].replace(',', ''));
+        console.log("spider for follow", ev);
+        const suffix = ev.currentTarget.href.split("/").pop();
+        let ret = null;
+        if (suffix === "following")
+            ret = await ContentBase.fetchFollows("followees", uid, cnt);
+        else if (suffix === "followers")
+            ret = await ContentBase.fetchFollows("followers", uid, cnt);
+        else
+            return;
+        ContentBase._report("follow", ret);
+    });
+
+    chkSpamAndSetBG(btn1, uid);
+}
+
+async function qstEnhance()
+{
+    const qstArea = $("div.QuestionHeader-footer-inner").find("div.QuestionButtonGroup")
+    if (qstArea.length > 0)
+    {
+        const qid = ContentBase.CUR_QUESTION;
+        const btn = createButton(["Btn-ReportSpam", "Button--primary"], "广告");
+        btn.dataset.id = qid;
+        btn.dataset.type = "question";
+        const btn2 = createButton(["Btn-StatVoter", "Button--primary"], "最爱赞");
+        btn2.dataset.id = qid;
+        btn2.dataset.qname = "qid";
+        const btn3 = createButton(["Btn-AssocAns", "Button--primary"], "启发");
+        btn3.dataset.id = qid;
+        btn3.dataset.qname = "qid";
+        const btn4 = createButton(["Btn-ShowTime", "Button--primary"], "时间图");
+        btn4.dataset.id = qid;
+        btn4.dataset.qname = "qid";
+        qstArea.prepend(btn);
+        qstArea.prepend(btn2);
+        qstArea.prepend(btn3);
+        qstArea.prepend(btn4);
+    }
+
+    const qstBoard = $(".NumberBoard")[0];
+    if (qstBoard)
+    {
+        const athid = pageData.author.urlToken;
+        const bdItem = makeElement("div", "NumberBoard-item", null,
+            ["div", "NumberBoard-itemInner", null,
+                ["div", "NumberBoard-itemName", null, "提问者"],
+                ["a", "NumberBoard-itemValue", { href: `https://www.zhihu.com/people/${athid}` },
+                    ["img", ["Avatar", "Avatar--large", "UserLink-avatar"],
+                        { src: pageData.author.avatarUrl, alt: pageData.author.name, title: pageData.author.name, width: "25", height: "25" }
+                    ]
+                ]
+            ]);
+        qstBoard.append(bdItem);
+        if (athid)
+            chkSpamAndSetBG(bdItem, athid);
+    }
+
+    const qstHead = $(".QuestionHeader")[0];
+    qstHead.ondragover = ev => ev.preventDefault();
+    qstHead.ondrop = saveQuestion;
+}
+
 !function ()
 {
-    "use strict"
-    let pageType;
-    let uid, qid;
     const url = window.location.href;
     const mth1 = url.match(/zhihu.com\/question\/(\d*)/i);
     const mth2 = url.match(/zhuanlan.zhihu.com\/p\/(\d*)/i);
     const mth3 = url.match(/www.zhihu.com\/(?:org|people)\/([^\/\?]+)/i);
     const mth4 = url.match(/zhihu.com\/?$/i);
     if (mth1)
-        pageType = "question", qid = Number(mth1[1]);
+        pageType = "question", ContentBase.CUR_QUESTION = Number(mth1[1]);
     else if (mth2)
         pageType = "article";
     else if (mth3)
-        pageType = "people", uid = mth3[1];
+        pageType = "people", pageData = mth3[1];
     else if(mth4)
         pageType = "main";
     else
         return;
 
     console.log(pageType + " page");
-    function rootFinder(records)
-    {
-        for (let i = 0; i < records.length; ++i)
-        {
-            const record = records[i];
-            if (record.type != "childList")
-                continue;
-            const nodes = record.addedNodes;
-            for (let j = 0; j < nodes.length; ++j)
-            {
-                const node = nodes[j];
-                if (!(node instanceof Element))
-                    continue;
-                if (node.id === "data")
-                    return node;
-                const obj = node.querySelector("#data");
-                if (obj)
-                    return obj;
-            }
-        }
-        return null;
-    }
+    
     const obs = new MutationObserver(records =>
     {
         if (document.body == null)
@@ -64,195 +284,7 @@
         onObjFound(obj);
     });
     obs.observe(document, { "childList": true, "subtree": true });
-
    
-    function onObjFound(obj)
-    {
-        const state = JSON.parse(obj.dataset.state);
-        console.log(state);
-        const entities = APIParser.parseEntities(state.entities);
-        ContentBase._report("batch", entities);
-        if (state.token)
-            ContentBase.CUR_TOKEN = new UserToken(state.token);
-        console.log(entities);
-        if (pageType === "people")
-        {
-            //process user
-            ContentBase.CUR_USER = entities.users.filter(u => u.id === uid)[0];
-            console.log("the user", ContentBase.CUR_USER);
-            setTimeout(peopleEnhance, 800);//later refesh may erase added buttons(sometimes won't), so delay it.
-        }
-        else if (pageType === "question")
-        {
-            setTimeout(qstEnhance, 800);//later refesh may erase added buttons, so delay it.
-        }
-    }
-
-    function processArticleOld(obj)
-    {
-        let txt = obj.innerText;
-        {
-            const part = txt.split("new Date(");
-            txt = part[0] + part[1].replace(")", "");
-        }
-        const artdata = JSON.parse(txt);
-        console.log(artdata);
-
-        const artdb = artdata.database;
-        const output = new StandardDB();
-        {
-            //process user
-            const selfUser = artdata.me.slug;
-            const usersEntry = Object.entries(artdb.User);
-            for (let i = 0; i < usersEntry.length; ++i)
-            {
-                const [name, theuser] = usersEntry[i];
-                if (name === selfUser)
-                    continue;
-                const user = User.fromRawJson(theuser);
-                output.users.push(user);
-            }
-
-            /**@type {ArtType}*/
-            const post = Object.values(artdb.Post)[0];
-            output.topics.push(...post.topics.map(t => new Topic(t.id, t.name)));
-            const article = new Article(post.slug, post.title, post.author, post.likesCount, post.summary.replace(/<[^>]+>/g, ""),
-                Date.parse(post.publishedTime) / 1000, Date.parse(post.updated) / 1000);
-            if (post.content)
-            {
-                const dt = new ADetail(article.id, post.content);
-                output.details.push(dt);
-            }
-            output.articles.push(article);
-            post.lastestLikers.forEach(theuser =>
-            {
-                const user = User.fromRawJson(theuser);
-                output.users.push(user);
-                output.zanarts.push(new Zan(user, article));
-            });
-
-            [post.meta.previous, post.meta.next].filter(p => p != null).forEach(p =>
-            {
-                const ath = User.fromRawJson(p.author);
-                output.users.push(ath);
-                output.topics.push(...p.topics.map(t => new Topic(t.id, t.name)));
-                const subart = new Article(p.slug, p.title, ath.id, p.likesCount, p.summary.replace(/<[^>]+>/g, ""),
-                    Date.parse(p.publishedTime) / 1000);//no updated time
-                if (p.content)
-                {
-                    const dt = new ADetail(article.id, p.content);
-                    output.details.push(dt);
-                }
-                output.articles.push(subart);
-            });
-        }
-
-        console.log("artpage-report", output);
-        ContentBase._report("batch", output);
-    }
-
-    function peopleEnhance()
-    {
-        $("body").on("click", ".Btn-AutoActSpider", async e =>
-        {
-            const thisbtn = e.target;
-            const theuid = thisbtn.dataset.id;
-            const lcount = e.shiftKey ? 270 : (e.ctrlKey ? 70 : 5);
-            const ret = await ContentBase.fetchUserActs(theuid, lcount, undefined, undefined,
-                (cur, time) => thisbtn.innerText = cur + "/" + Date.fromUTCSeconds(time).Format("MMdd"));
-            const acts = ret.acts.selfMerge();
-            thisbtn.innerText = (acts.zans.length + acts.zanarts.length) + "赞";
-            ContentBase._report("batch", acts);
-            console.log(acts);
-        });
-
-        const header = $("#ProfileHeader")[0];
-        if (!header)
-            return;
-        const btn1 = createButton(["Btn-ReportSpam", "Button--primary"], "广告");
-        btn1.dataset.id = uid;
-        btn1.dataset.type = "member";
-        const btn2 = createButton(["Btn-StatVoter", "Button--primary"], "粉丝");
-        btn2.dataset.id = uid;
-        btn2.dataset.qname = "athid";
-        const btn3 = createButton(["Btn-StatVoter", "Button--primary"], "赞谁");
-        btn3.dataset.id = uid;
-        btn3.dataset.qname = "uid";
-        const btn4 = createButton(["Btn-AutoActSpider", "Button--primary"], "爬");
-        btn4.dataset.id = uid;
-        const btn5 = createButton(["Btn-ShowTime", "Button--primary"], "时间图");
-        btn5.dataset.id = uid;
-        btn5.dataset.qname = "uid";
-        if (!header.hasChild(".ProfileButtonGroup"))
-        {
-            const dummydiv = document.createElement("div");
-            dummydiv.className = "MemberButtonGroup ProfileButtonGroup ProfileHeader-buttons";
-            $(".ProfileHeader-contentFooter", header).append(dummydiv);
-        }
-        $(".ProfileButtonGroup", header).prepend(btn1, btn2, btn3, btn4, btn5);
-
-        SendMsgAsync({ action: "chkspam", target: "users", data: [uid] }).then(x =>
-        {
-            if (x.banned.length > 0)
-                btn1.style.backgroundColor = "black";
-            else if (x.spamed.length > 0)
-                btn1.style.backgroundColor = "cornsilk";
-        })
-
-        //spider fot follow
-        btn4.draggable = true;
-        btn4.ondragstart = (ev) =>
-        {
-            ev.dataTransfer.setData("text", "spider");
-        }
-        $("body").on("dragover", "a.NumberBoard-item", ev => ev.preventDefault());
-        $("body").on("drop", "a.NumberBoard-item", async ev =>
-        {
-            ev.preventDefault();
-            /**@type {string}*/
-            const txt = ev.originalEvent.dataTransfer.getData("text");
-            if (txt != "spider" && !Number(txt)) return;
-            let cnt = Number(txt) || Number(ev.currentTarget.innerText.split('\n')[1].replace(',', ''));
-            console.log("spider for follow", ev);
-            const suffix = ev.currentTarget.href.split("/").pop();
-            let ret = null;
-            if (suffix === "following")
-                ret = await ContentBase.fetchFollows("followees", uid, cnt);
-            else if (suffix === "followers")
-                ret = await ContentBase.fetchFollows("followers", uid, cnt);
-            else
-                return;
-            ContentBase._report("follow", ret);
-        });
-    }
-
-    function qstEnhance()
-    {
-        const qstArea = $("div.QuestionHeader-footer-inner").find("div.QuestionButtonGroup")
-        if (qstArea.length > 0)
-        {
-            const btn = createButton(["Btn-ReportSpam", "Button--primary"], "广告");
-            btn.dataset.id = qid;
-            btn.dataset.type = "question";
-            const btn2 = createButton(["Btn-StatVoter", "Button--primary"], "最爱赞");
-            btn2.dataset.id = qid;
-            btn2.dataset.qname = "qid";
-            const btn3 = createButton(["Btn-AssocAns", "Button--primary"], "启发");
-            btn3.dataset.id = qid;
-            btn3.dataset.qname = "qid";
-            const btn4 = createButton(["Btn-ShowTime", "Button--primary"], "时间图");
-            btn4.dataset.id = qid;
-            btn4.dataset.qname = "qid";
-            qstArea.prepend(btn);
-            qstArea.prepend(btn2);
-            qstArea.prepend(btn3);
-            qstArea.prepend(btn4);
-        }
-        const qstHead = $(".QuestionHeader")[0];
-        qstHead.ondragover = ev => ev.preventDefault();
-        qstHead.ondrop = saveQuestion;
-    }
-
 }()
 
 

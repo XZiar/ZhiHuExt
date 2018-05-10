@@ -596,6 +596,33 @@ function createButton(extraClass, text)
     return btn;
 }
 /**
+ * @param {string} type
+ * @param {string | string[]} classes
+ * @param {{}} [props]
+ * @param {HTMLElement[] | [][]} [childs]
+ */
+function makeElement(type, classes, props, ...childs)
+{
+    /**@type HTMLElement*/
+    const ele = document.createElement(type);
+    if (classes instanceof Array)
+        ele.addClasses(...classes);
+    else if (typeof (classes) === "string")
+        ele.addClass(classes);
+    if (props)
+        Object.assign(ele, props);
+    for (const child of childs)
+    {
+        if (child instanceof HTMLElement)
+            ele.appendChild(child);
+        else if (typeof (child) === "string")
+            ele.innerText = child;
+        else
+            ele.appendChild(makeElement(...child));
+    }
+    return ele;
+}
+/**
  * @param {number} width
  * @param {number} height
  * @param {string} viewbox

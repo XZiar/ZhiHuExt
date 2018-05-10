@@ -1,12 +1,15 @@
 .QuestionHeader-footer-inner .QuestionHeader-side {
-	width: auto;
+    width: auto;
 }
 .QuestionHeader-footer-inner .QuestionHeader-footer-main {
-	width: auto;
+    width: auto;
 }
 .QuestionButtonGroup .Button {
     margin: 0 4px !important;
     padding: 0 10px !important;
+}
+.QuestionHeader-side .QuestionFollowStatus-counts {
+    width: auto;
 }
 
 .MemberButtonGroup .Button + .Button {
