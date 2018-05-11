@@ -610,7 +610,19 @@ function makeElement(type, classes, props, ...childs)
     else if (typeof (classes) === "string")
         ele.addClass(classes);
     if (props)
+    {
+        if (props.hasOwnProperty("dataset"))
+        {
+            Object.entries(props.dataset).forEach(([k, v]) => { ele.dataset[k] = v; });
+            delete props.dataset;
+        }
+        if (props.hasOwnProperty("style"))
+        {
+            Object.entries(props.style).forEach(([k, v]) => { ele.style[k] = v; });
+            delete props.style;
+        }
         Object.assign(ele, props);
+    }
     for (const child of childs)
     {
         if (child instanceof HTMLElement)

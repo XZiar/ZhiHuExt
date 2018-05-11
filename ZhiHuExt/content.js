@@ -10,22 +10,6 @@ let AUTO_SPIDE_ZAN = false, NOW_SPIDE = false;// dirty hack for auto-spide, assu
 /**@type {{ name: string, btn: HTMLButtonElement }}*/
 let SPIDE_LIST = [];
 
-/**
- * @param {HTMLElement} node
- * @param {"banned" | "spamed" | "normal"} status
- */
-function setStatusColor(node, status)
-{
-    switch (status)
-    {
-        case "ban":
-            node.style.backgroundColor = node instanceof HTMLDivElement ? "#a0a0a0" : "black";
-            break;
-        case "spam":
-            node.style.backgroundColor = "cornsilk";
-            break;
-    }
-}
 
 function setLimVoter(count)
 {
@@ -82,7 +66,7 @@ async function autoReportAll(ev)
         thisbtn.textContent = uid;
         if (user.status === "ban" || user.status === "sban")
         {
-            thisbtn.style.backgroundColor = "black";
+            PageBase.setChkStatusColor(thisbtn, "ban");
             const acts = (await ContentBase.fetchUserActs(uid, 236)).acts;
             ContentBase._report("batch", acts);
         }
@@ -90,7 +74,7 @@ async function autoReportAll(ev)
         {
             try
             {
-                thisbtn.style.backgroundColor = "rgb(0,224,32)";
+                PageBase.setChkStatusColor(thisbtn, "succ");
                 await ContentBase.reportSpam(uid, "member");
                 cnt++;
             }
@@ -101,7 +85,7 @@ async function autoReportAll(ev)
             }
         }
     }
-    thisbtn.style.backgroundColor = alldone ? "rgb(0,224,32)" : "rgb(224,0,32)";
+    PageBase.setChkStatusColor(thisbtn, alldone ? "succ" : "fail");
     thisbtn.textContent = cnt + "个";
 }
 
@@ -126,7 +110,7 @@ function setDraggable(element)
 async function addSpamVoterBtns(voterNodes)
 {
     const users = [];
-    const btnMap = [];
+    const btnMap = new Map();
     for (let idx = 0; idx < voterNodes.length; ++idx)
     {
         const node = voterNodes[idx];
@@ -142,17 +126,14 @@ async function addSpamVoterBtns(voterNodes)
         {
             const votedate = Number(hashid.substr(1));
             const [, , , hour, minu, ,] = new Date(votedate * 1000).getDetailCHN();
-            const vdspan = document.createElement("span");
-            vdspan.className = "ContentItem-statusItem";
-            vdspan.textContent = `${hour}:${minu}`;
-            $(".ContentItem-status", node).append(vdspan);
+            $(".ContentItem-status", node).append(makeElement("span", "ContentItem-statusItem", null, `${hour}:${minu}`));
         }
 
         const btn = createButton(["Btn-ReportSpam", "Button--primary"], "广告");
         btn.dataset.id = uid;
         btn.dataset.type = "member";
         $(".ContentItem-extra", node).prepend(btn);
-        btnMap.push(btn);
+        btnMap.set(uid, btn);
 
         const btn2 = createButton(["Btn-CheckStatus", "Button--primary"], "检测");
         btn2.dataset.id = uid;
@@ -160,18 +141,13 @@ async function addSpamVoterBtns(voterNodes)
         $(".ContentItem-extra", node).prepend(btn2);
     }
     const result = await ContentBase.checkSpam("users", users);
+    PageBase.setUserStatusColor(result, btnMap);
     const normalList = [];
-    for (let idx = 0; idx < btnMap.length; ++idx)
+    btnMap.forEach((btn, uid) =>
     {
-        const btn = btnMap[idx];
-        const id = btn.dataset.id;
-        if (result.banned.has(id))
-            setStatusColor(btn, "ban");
-        else if (result.spamed.has(id))
-            setStatusColor(btn, "spam");
-        else
-            normalList.push({ name: id, btn: btn.parentNode.children[0] });
-    }
+        if (!result.banned.has(uid) && !result.spamed.has(uid))
+            normalList.push({ name: uid, btn: btn.parentNode.children[0] });
+    });
     if (AUTO_SPIDE_ZAN)
     {
         if (NOW_SPIDE)
@@ -214,7 +190,7 @@ function monitorVoter(voterPopup)
                 if (btns[i].dataset.id == ds.id)
                     break;
                 if (btns[i].style.backgroundColor == "")
-                    btns[i].style.backgroundColor = "rgb(0, 224, 32)";
+                    PageBase.setChkStatusColor(btns[i], "succ");
             }
         }
         const btn2 = createButton(["Btn-AssocAns", "Button--primary"], "启发");
@@ -226,13 +202,13 @@ function monitorVoter(voterPopup)
             if (!AUTO_SPIDE_ZAN)
             {
                 AUTO_SPIDE_ZAN = true;
-                btn5.style.backgroundColor = "rgb(0, 224, 32)";
+                PageBase.setChkStatusColor(btn5, "succ");
                 btn1.click();
             }
             else
             {
                 AUTO_SPIDE_ZAN = false;
-                btn5.style.backgroundColor = "";
+                PageBase.setChkStatusColor(btn5, "clear");
             }
         }; 
 
@@ -325,10 +301,7 @@ async function addAASpamBtns(answerNodes)
                 athMap.set(athMth[1], aArea.querySelector("div.AuthorInfo-head"));
         });
     const result = await ContentBase.checkSpam("users", Array.from(athMap.keys()));
-    for (const id of result.banned)
-        setStatusColor(athMap.get(id), "ban");
-    for (const id of result.spamed)
-        setStatusColor(athMap.get(id), "spam");
+    PageBase.setUserStatusColor(result, athMap);
 }
 
 function addQuickCheckBtns(feedbackNodes)
@@ -398,16 +371,16 @@ $("body").on("click", "button.Btn-ReportSpam", function ()
 {
     const btn = $(this)[0];
     ContentBase.reportSpam(btn.dataset.id, btn.dataset.type)
-        .done(() => btn.style.backgroundColor = "rgb(0,224,32)")
+        .done(() => PageBase.setChkStatusColor(btn, "succ"))
         .fail((e) =>
         {
             console.warn("report fail:" + e.code, e.error);
             if (e.code === 103001)//repeat
-                btn.style.backgroundColor = "rgb(224,224,32)";
+                PageBase.setChkStatusColor(btn, "repeat");
             else if (e.code === 4039)//need verify
-                btn.style.backgroundColor = "rgb(32,64,192)";
+                PageBase.setChkStatusColor(btn, "verify");
             else
-                btn.style.backgroundColor = "rgb(224,0,32)";
+                PageBase.setChkStatusColor(btn, "fail");
         });
 });
 $("body").on("click", "button.Btn-CheckSpam", async function (e)
@@ -477,17 +450,18 @@ async function onChkStatus(e)
     const user = await ContentBase.checkUserState(uid, undefined, [1]);
     if (!user)
         return;
+    const repBtn = $(btn).siblings(".Btn-ReportSpam")[0];
     if (user.status === "ban" || user.status === "sban")
     {
-        btn.style.backgroundColor = "black";
-        $(btn).siblings(".Btn-ReportSpam")[0].style.backgroundColor = "black";
+        PageBase.setChkStatusColor(btn, "ban");
+        PageBase.setChkStatusColor(repBtn, "ban");
         const acts = (await ContentBase.fetchUserActs(uid, 236)).acts;
         ContentBase._report("batch", acts);
     }
     else
     {
-        btn.style.backgroundColor = "rgb(0,224,32)";
-        $(btn).siblings(".Btn-ReportSpam")[0].style.backgroundColor = "";
+        PageBase.setChkStatusColor(btn, "succ");
+        PageBase.setChkStatusColor(repBtn, "clear");
     }
 }
 
@@ -495,16 +469,16 @@ $("body").on("click", "button.Btn-CheckStatus", onChkStatus);
 $("body").on("click", "button.Btn-CheckAllStatus", async function (e)
 {
     if (NOW_SPIDE)
+    {
+        NOW_SPIDE = false;
         return;
+    }
     const btn = $(this)[0];
     const isCtrl = e.ctrlKey, isShift = e.shiftKey;
     const voterList = btn.parentNode.parentNode.parentNode;
     SPIDE_LIST = [];
-    $(voterList).find(".ContentItem").each((idx, item) =>
+    $(voterList).find(".ContentItem-extra").each((idx, extraArea) =>
     {
-        const extraArea = item.querySelector(".ContentItem-extra");
-        if (!extraArea)
-            return;
         const btnChk = extraArea.children[0], btnSpam = extraArea.children[1];
         if (btnChk.style.backgroundColor != "")//has result
             return;
@@ -518,7 +492,7 @@ $("body").on("click", "button.Btn-CheckAllStatus", async function (e)
     try
     {
         NOW_SPIDE = true;
-        for (let idx = 0; idx < SPIDE_LIST.length; ++idx)
+        for (let idx = 0; idx < SPIDE_LIST.length && NOW_SPIDE; ++idx)
         {
             btn.textContent = SPIDE_LIST[idx].name;
             const event = { target: SPIDE_LIST[idx].btn, ctrlKey: false };
@@ -722,7 +696,6 @@ async function TrashDropper(ev)
     }
 }
 {
-    const fbtns = document.body.querySelector(".CornerButtons");
     const svgZH = createSVG(24, 24, "0 0 100 91",
         "M53.29 80.035l7.32.002 2.41 8.24 13.128-8.24h15.477v-67.98H53.29v67.978zm7.79-60.598h22.756v53.22h-8.73l-8.718 5.473-1.587-5.46-3.72-.012v-53.22zM46.818 43.162h-16.35c.545-8.467.687-16.12.687-22.955h15.987s.615-7.05-2.68-6.97H16.807c1.09-4.1 2.46-8.332 4.1-12.708 0 0-7.523 0-10.085 6.74-1.06 2.78-4.128 13.48-9.592 24.41 1.84-.2 7.927-.37 11.512-6.94.66-1.84.785-2.08 1.605-4.54h9.02c0 3.28-.374 20.9-.526 22.95H6.51c-3.67 0-4.863 7.38-4.863 7.38H22.14C20.765 66.11 13.385 79.24 0 89.62c6.403 1.828 12.784-.29 15.937-3.094 0 0 7.182-6.53 11.12-21.64L43.92 85.18s2.473-8.402-.388-12.496c-2.37-2.788-8.768-10.33-11.496-13.064l-4.57 3.627c1.363-4.368 2.183-8.61 2.46-12.71H49.19s-.027-7.38-2.372-7.38",
         { fill: "#ff7000" });
@@ -730,10 +703,8 @@ async function TrashDropper(ev)
     btn1.dataset.tooltip = "知乎疯牛病";
     btn1.dataset.tooltipPosition = "left";
     btn1.appendChild(svgZH);
-    const btndiv1 = document.createElement("div");
-    btndiv1.id = "MarkBtn";
-    btndiv1.addClass("CornerAnimayedFlex");
-    btndiv1.appendChild(btn1);
+    
+    const btndiv1 = makeElement("div", "CornerAnimayedFlex", { id: "MarkBtn" }, btn1);
     btndiv1.draggable = true;
     btndiv1.ondragstart = (ev) =>
     {
@@ -749,13 +720,11 @@ async function TrashDropper(ev)
     btn2.dataset.tooltip = "记录广告";
     btn2.dataset.tooltipPosition = "left";
     btn2.appendChild(svgTrash);
-    const btndiv2 = document.createElement("div");
-    btndiv2.id = "TrashBtn";
-    btndiv2.addClass("CornerAnimayedFlex");
-    btndiv2.appendChild(btn2);
+    const btndiv2 = makeElement("div", "CornerAnimayedFlex", { id: "TrashBtn" }, btn2);
     btndiv2.ondragover = ev => ev.preventDefault();
     btndiv2.ondrop = TrashDropper;
 
+    const fbtns = document.body.querySelector(".CornerButtons");
     if (fbtns)
     {
         fbtns.prepend(btndiv1);

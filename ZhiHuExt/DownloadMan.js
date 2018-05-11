@@ -40,10 +40,7 @@ class DownloadMan
             console.warn("unknown data type", data);
             return;
         }
-        const anchor = document.createElement("a");
-        anchor.href = url;
-        anchor.style.display = "none";
-        anchor.download = filename;
+        const anchor = makeElement("a", [], { href: url, download: filename, style: { display: none } });
         document.body.appendChild(anchor);
         DOWNLOAD_WAIT.add(url);
         anchor.click();

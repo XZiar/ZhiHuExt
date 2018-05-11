@@ -1,5 +1,7 @@
 "use strict"
 
+//internel functionality support
+
 let _CUR_USER;
 let _CUR_ANSWER;
 let _CUR_QUESTION;
@@ -379,7 +381,7 @@ class ContentBase
     /**
      * @param {string} uid
      * @param {function(StandardDB, string, number):boolean} [bypass]
-     * @param {[number, number=, function=]} [chkacts]
+     * @param {[number, number, any]} [chkacts]
      * @param {boolean} [waitAll]
      * @returns {Promise<User>}
      */

@@ -374,11 +374,15 @@ function encodeObj(objs, umapper)
             selUser.innerHTML = "", selObj.innerHTML = "";
             const frag1 = document.createDocumentFragment(), frag2 = document.createDocumentFragment();
             frag1.appendChild(createOption("", "只看某用户")); frag2.appendChild(createOption("", "只看某回答/文章"));
+            /**@type {Set}*/
             const uids = new Set(wholeData2.mapToProp(1)).toArray(), aids = new Set(wholeData2.mapToProp(2)).toArray();
-            createOption(uids, uids).forEach(opt => frag1.appendChild(opt));
-            createOption(aids, aids).forEach(opt => frag2.appendChild(opt));
-            selUser.appendChild(frag1);
-            selObj.appendChild(frag2);
+            if (uids.size < 1000)
+            {
+                createOption(uids, uids).forEach(opt => frag1.appendChild(opt));
+                createOption(aids, aids).forEach(opt => frag2.appendChild(opt));
+                selUser.appendChild(frag1);
+                selObj.appendChild(frag2);
+            }
         }
         $("#changeonly").text(qs.only === "true" ? "切换到分时" : "切换到不分时");
         $("#changestack").text(qs.stack === "true" ? "切换到非堆栈图" : "切换到堆栈累积图");

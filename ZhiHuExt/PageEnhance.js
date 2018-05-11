@@ -1,5 +1,7 @@
 "use strict"
 
+//enhances on each type of ZhiHu pages
+
 
 /**@type {QuestType | string}*/
 let pageData;
@@ -26,19 +28,6 @@ function rootFinder(records)
         }
     }
     return null;
-}
-
-/**
- * @param {HTMLElement} node
- * @param {string} uid
- */
-async function chkSpamAndSetBG(node, uid)
-{
-    const result = await ContentBase.checkSpam("users", uid);
-    if (result.banned.has(uid))
-        setStatusColor(node, "ban");
-    else if (result.spamed.has(uid))
-        setStatusColor(node, "spam");
 }
 
 function onObjFound(obj)
@@ -161,11 +150,7 @@ async function peopleEnhance()
     btn5.dataset.id = uid;
     btn5.dataset.qname = "uid";
     if (!header.hasChild(".ProfileButtonGroup"))
-    {
-        const dummydiv = document.createElement("div");
-        dummydiv.className = "MemberButtonGroup ProfileButtonGroup ProfileHeader-buttons";
-        $(".ProfileHeader-contentFooter", header).append(dummydiv);
-    }
+        $(".ProfileHeader-contentFooter", header).append(makeElement("div", ["MemberButtonGroup", "ProfileButtonGroup", "ProfileHeader-buttons"], null));
     $(".ProfileButtonGroup", header).prepend(btn1, btn2, btn3, btn4, btn5);
 
     //spider fot follow
@@ -194,7 +179,7 @@ async function peopleEnhance()
         ContentBase._report("follow", ret);
     });
 
-    chkSpamAndSetBG(btn1, uid);
+    PageBase.setUserStatusColor(await ContentBase.checkSpam("users", uid), btn1, uid);
 }
 
 async function qstEnhance()
@@ -225,18 +210,17 @@ async function qstEnhance()
     if (qstBoard)
     {
         const athid = pageData.author.urlToken;
+        const athname = pageData.author.name;
         const bdItem = makeElement("div", "NumberBoard-item", null,
             ["div", "NumberBoard-itemInner", null,
                 ["div", "NumberBoard-itemName", null, "提问者"],
-                ["a", "NumberBoard-itemValue", { href: `https://www.zhihu.com/people/${athid}` },
-                    ["img", ["Avatar", "Avatar--large", "UserLink-avatar"],
-                        { src: pageData.author.avatarUrl, alt: pageData.author.name, title: pageData.author.name, width: "25", height: "25" }
-                    ]
+                ["a", "NumberBoard-itemValue", { href: `https://www.zhihu.com/people/${athid}`, dataset: { tooltip: athname, tooltipPosition: "right" } },
+                    ["img", ["Avatar", "Avatar--large", "UserLink-avatar"], { src: pageData.author.avatarUrl, alt: athname, title: athname, width: "25", height: "25" } ]
                 ]
             ]);
         qstBoard.append(bdItem);
         if (athid)
-            chkSpamAndSetBG(bdItem, athid);
+            PageBase.setUserStatusColor(await ContentBase.checkSpam("users", athid), bdItem, athid);
     }
 
     const qstHead = $(".QuestionHeader")[0];
@@ -244,20 +228,100 @@ async function qstEnhance()
     qstHead.ondrop = saveQuestion;
 }
 
+function reportEnhance()
+{
+    console.log("report-result page");
+
+    /**
+     * @param {HTMLElement[]} feedbackNodes
+     */
+    function addQuickCheckBtns(feedbackNodes)
+    {
+        feedbackNodes.filter(node => !node.hasChild(".Btn-QCheckStatus"))
+            .forEach(node =>
+            {
+                const hrefNode = Array.from(node.children[1].querySelectorAll("a"))
+                    .filter(aNode => aNode.href.includes("/people/"))[0];
+                if (!hrefNode)
+                    return;
+                const btnNode = node.children[2];
+                const btn = createButton(["Btn-QCheckStatus"], "检测");
+                btn.dataset.id = hrefNode.href.split("/").pop();
+                btn.dataset.name = hrefNode.text;
+                btnNode.insertBefore(btn, btnNode.children[1]);
+            });
+    }
+
+    const bodyObserver = new MutationObserver(records =>
+    {
+        const addNodes = Array.fromArray(records
+            .map(record => $.makeArray(record.addedNodes)
+                .filter(node => node instanceof HTMLDivElement)
+            ));
+        const feedbackNodes = $(addNodes).filter(".zm-pm-item").toArray()
+            .filter(ele => ele.dataset.name === "知乎管理员" && ele.dataset.type === "feedback");
+        if (feedbackNodes.length > 0)
+            addQuickCheckBtns(feedbackNodes);
+    });
+    async function onChkStatus(e)
+    {
+        const btn = e.target;
+        const uid = btn.dataset.id;
+        const user = await ContentBase.checkUserState(uid, undefined, [250], true);
+        if (!user)
+            return;
+        if (user.status === "ban" || user.status === "sban")
+            btn.style.background = "black";
+        else
+            btn.style.background = "rgb(0,224,32)";
+    }
+    $("body").on("click", "button.Btn-QCheckStatus", onChkStatus);
+    $("body").on("click", "button.Btn-QCheckStatusAll", async function (e)
+    {
+        const thisbtn = e.target;
+        /**@type {HTMLButtonElement[]}*/
+        const btns = $("button.Btn-QCheckStatus", document).toArray()
+            .filter(x => x.style.background === "");
+        for (let i = 0; i < btns.length; ++i)
+        {
+            thisbtn.textContent = btns[i].dataset.name;
+            await Promise.all([onChkStatus({ target: btns[i] }), _sleep(1200)]);
+        }
+        thisbtn.textContent = "检测全部";
+    });
+
+
+    const chkAll = createButton(["Btn-QCheckStatusAll"], "检测全部");
+    const dummydiv = makeElement("div", [], { style: { textAlign: "center" } }, chkAll);
+    $("#zh-pm-detail-item-wrap").prepend(dummydiv);
+
+    const curNodes = $(".zm-pm-item", document).toArray();
+    addQuickCheckBtns(curNodes);
+
+    bodyObserver.observe(document.body, { "childList": true, "subtree": true });
+}
+
 !function ()
 {
     const url = window.location.href;
-    const mth1 = url.match(/zhihu.com\/question\/(\d*)/i);
-    const mth2 = url.match(/zhuanlan.zhihu.com\/p\/(\d*)/i);
-    const mth3 = url.match(/www.zhihu.com\/(?:org|people)\/([^\/\?]+)/i);
-    const mth4 = url.match(/zhihu.com\/?$/i);
-    if (mth1)
-        pageType = "question", ContentBase.CUR_QUESTION = Number(mth1[1]);
-    else if (mth2)
+    const mthResp = url.match(/www.zhihu.com\/inbox\/\8912224000/i);
+    const mthQst = url.match(/zhihu.com\/question\/(\d*)/i);
+    const mthArt = url.match(/zhuanlan.zhihu.com\/p\/(\d*)/i);
+    const mthUser = url.match(/www.zhihu.com\/(?:org|people)\/([^\/\?]+)/i);
+    const mthMain = url.match(/zhihu.com\/?$/i);
+    if (mthResp)
+    {
+        pageType = "report";
+        document.addEventListener("DOMContentLoaded", reportEnhance);
+        return;
+    }
+    if (mthQst)
+        pageType = "question", ContentBase.CUR_QUESTION = Number(mthQst[1]);
+    else if (mthArt)
         pageType = "article";
-    else if (mth3)
-        pageType = "people", pageData = mth3[1];
-    else if(mth4)
+    else if (mthUser)
+        pageType = "people", pageData = mthUser[1];
+    else if (mthMain)
         pageType = "main";
     else
         return;
