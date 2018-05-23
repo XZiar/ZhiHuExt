@@ -276,28 +276,44 @@ function reportEnhance()
             btn.style.background = "rgb(0,224,32)";
     }
     $("body").on("click", "button.Btn-QCheckStatus", onChkStatus);
-    $("body").on("click", "button.Btn-QCheckStatusAll", async function (e)
+
+    const chkAll = createButton(["Btn-QCheckStatusAll"], "检测全部");
+    chkAll.addEventListener("click", async ()=>
     {
-        const thisbtn = e.target;
+        if(chkAll.dataset.isChecking === "true")
+        {     
+            chkAll.dataset.isChecking = "false";
+            return;
+        }
+        chkAll.dataset.isChecking = "true";
         /**@type {HTMLButtonElement[]}*/
         const btns = $("button.Btn-QCheckStatus", document).toArray()
             .filter(x => x.style.background === "");
-        for (let i = 0; i < btns.length; ++i)
+        for (let i = 0; i < btns.length && chkAll.dataset.isChecking === "true"; ++i)
         {
-            thisbtn.textContent = btns[i].dataset.name;
+            chkAll.textContent = btns[i].dataset.name;
             await Promise.all([onChkStatus({ target: btns[i] }), _sleep(1200)]);
         }
-        thisbtn.textContent = "检测全部";
+        chkAll.textContent = "检测全部";
     });
+    {
+        const dummydiv = makeElement("div", [], { style: { textAlign: "center" } }, chkAll);
+        $("#zh-pm-detail-item-wrap").prepend(dummydiv);
+    }
 
-
-    const chkAll = createButton(["Btn-QCheckStatusAll"], "检测全部");
-    const dummydiv = makeElement("div", [], { style: { textAlign: "center" } }, chkAll);
-    $("#zh-pm-detail-item-wrap").prepend(dummydiv);
+    const svgTrash = createSVG(24, 24, "0 0 512 512",
+        "M341,128V99c0-19.1-14.5-35-34.5-35H205.4C185.5,64,171,79.9,171,99v29H80v32h9.2c0,0,5.4,0.6,8.2,3.4c2.8,2.8,3.9,9,3.9,9  l19,241.7c1.5,29.4,1.5,33.9,36,33.9h199.4c34.5,0,34.5-4.4,36-33.8l19-241.6c0,0,1.1-6.3,3.9-9.1c2.8-2.8,8.2-3.4,8.2-3.4h9.2v-32  h-91V128z M192,99c0-9.6,7.8-15,17.7-15h91.7c9.9,0,18.6,5.5,18.6,15v29H192V99z M183.5,384l-10.3-192h20.3L204,384H183.5z   M267.1,384h-22V192h22V384z M328.7,384h-20.4l10.5-192h20.3L328.7,384z",
+        { fill: "#000" });
+    const chkAll2 = makeElement("button", "FeedbackButton-button-3waL", { title:"检测全部", style:{ bottom: "120px" } });
+    chkAll2.appendChild(svgTrash);
+    chkAll2.addEventListener("click", ()=>{ chkAll.click(); });
+    {
+        const dummydiv = makeElement("span", [], null, ["div", [], null, chkAll2]);
+        $("body").append(dummydiv);
+    }
 
     const curNodes = $(".zm-pm-item", document).toArray();
     addQuickCheckBtns(curNodes);
-
     bodyObserver.observe(document.body, { "childList": true, "subtree": true });
 }
 

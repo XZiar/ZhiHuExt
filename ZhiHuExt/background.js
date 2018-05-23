@@ -249,6 +249,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) =>
 {
     switch (request.action)
     {
+        case "echo":
+            chrome.tabs.sendMessage(sender.tab.id, request.data);
+            break;
         case "copy":
             $("#copyData").val(request.data);
             $("#copyBtn")[0].click();

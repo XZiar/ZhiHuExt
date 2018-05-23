@@ -259,10 +259,13 @@ $(document).on("click", "#go", async e =>
     }
 });
 
-
-!function ()
+chrome.runtime.onMessage.addListener(data=>
 {
-    ContentBase.checkUserState("zhihuadmin");
-
-}()
-
+    if (data.id === "cookie")
+    {
+        console.log("recieve cookie", data.val);
+        const xudidstr = _getTheCookie("d_c0", data.val);
+        if (xudidstr)
+            ContentBase.CUR_TOKEN = new UserToken2(xudidstr.split("|")[0]);
+    }
+});

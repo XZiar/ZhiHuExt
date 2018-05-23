@@ -521,11 +521,27 @@ function _getQueryString(qurl)
         ret[p[0]] = decodeURIComponent(p[1].replace(/\+/g, " "));
     }
     return ret;
-};
+}
 function _toQueryString(obj)
 {
     const query = Object.entries(obj).map(x => `${x[0]}=${x[1]}`).join("&");
     return query;
+}
+
+/**
+ * @description get specific cookie
+ * @param {string} name 
+ * @param {string} [cookie] 
+ */
+function _getTheCookie(name, cookie)
+{
+    const obj = (cookie || document.cookie).split(";")
+        .map(x=>x.trim())
+        .filter(/**@param {string} [x]*/(x) => x.startsWith(`${name}=`))[0];
+    if (obj)
+        return obj.match(/\"(.*)\"/i)[1];
+    else
+        return null;
 }
 
 /**

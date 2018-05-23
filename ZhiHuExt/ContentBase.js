@@ -482,6 +482,11 @@ function hookerHandler(e)
 }
 
 {
+    const xudidstr = _getTheCookie("d_c0");
+    if (xudidstr)
+    {
+        ContentBase.CUR_TOKEN = new UserToken2(xudidstr.split("|")[0]);
+    }
     const obs = new MutationObserver(records =>
     {
         for (let i = 0; i < records.length; ++i)

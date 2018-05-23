@@ -22,6 +22,7 @@
   [
     "*://www.zhihu.com/",
     "*://zhuanlan.zhihu.com/",
+    "*://api.zhihu.com/",
     "*://127.0.0.1:*/",
     "tabs",
     "storage",
@@ -62,6 +63,18 @@
       "css":
       [
         "cssfix.css"
+      ],
+      "run_at": "document_start"
+    },
+    {
+      "matches":
+      [
+        "*://api.zhihu.com/getcookie"
+      ],
+      "all_frames": true,
+      "js":
+      [
+        "CookieHooker.js"
       ],
       "run_at": "document_start"
     },
