@@ -245,12 +245,25 @@ async function blocking(api, id)
     return ret;
 }
 
+chrome.webRequest.onBeforeSendHeaders.addListener(detail=>
+{
+    console.debug("getcookie:", detail);
+    const ck = detail.requestHeaders.filter(x => x.name.toLowerCase() === "cookie")[0];
+    if(ck)
+    {
+        const ckval = {};
+        _getCookie(ck.value).forEach((val, key) => ckval[key] = val);
+        chrome.tabs.sendMessage(detail.tabId, { id: "cookie", val: ck.value });
+    }
+    return true;
+}, { urls: ["*://api.zhihu.com/getcookie"] }, ["requestHeaders"]);
+
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) =>
 {
     switch (request.action)
     {
         case "echo":
-            chrome.tabs.sendMessage(sender.tab.id, request.data);
+            //chrome.tabs.sendMessage(sender.tab.id, request.data);
             break;
         case "copy":
             $("#copyData").val(request.data);

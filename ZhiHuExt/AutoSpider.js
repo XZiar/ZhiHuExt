@@ -1,13 +1,16 @@
 "use strict"
 
 /**@type {Map<string, User>}}*/
-const uids = new Map();
+let uids = new Map();
 /**@type {Map<string, number>}}*/
-const utimeOld = new Map(), utimeNew = new Map();
-const u404s = new Set();
+let utimeOld = new Map();
+/**@type {Map<string, number>}}*/
+let utimeNew = new Map();
+let u404s = new Set();
 let chkreports = new StandardDB();
 let isRunning = false;
 let rowcount = 0;
+let curBtn = null;
 
 /**@type {HTMLInputElement}}*/
 const aloneRec = $("#aloneRec")[0], autoLoop = $("#autoLoop")[0], wtime = $("#waittime")[0], maxact = $("#maxact")[0], limitdate = $("#limitdate")[0];
@@ -57,6 +60,10 @@ async function fastChk(uid, begintime, wailtAll)
 {
     ContentBase.BASE_LIM_DATE = new Date(limitdate.value).toUTCSeconds();
     const user = await ContentBase.checkUserState(uid, bypasser, [maxact.value], wailtAll);
+    if(curBtn)
+    {
+        curBtn.style.background = user ? "green" : "red";
+    }    
     if (!user)
     {
         u404s.add(uid);
@@ -122,7 +129,12 @@ $(document).on("click", "input[name=repeat]:radio", e =>
 });
 $(document).on("click", "#show404", e =>
 {
-    $("#out404")[0].value = JSON.stringify(u404s.toArray());
+    $("#outbox")[0].value = JSON.stringify(u404s.toArray());
+});
+$(document).on("click", "#showban", e =>
+{
+    const bans = Array.from(uids.values()).filter(u=>u.status!="").mapToProp("id");
+    $("#outbox")[0].value = JSON.stringify(bans);
 });
 $(document).on("click", "#del404", e =>
 {
@@ -136,6 +148,54 @@ $(document).on("click", "#clean", e =>
 {
     chkreports = new StandardDB();
 });
+$(document).on("click", "#bakstate", e=>
+{
+    const state = 
+    { 
+        users: Array.from(Array.from(uids.values())),
+        utimeOld: Array.from(utimeOld.entries()),
+        utimeNew: Array.from(utimeNew.entries()),
+        u404s: u404s.toArray(),
+        chkreports: chkreports,
+        input: $("#userinput")[0].value
+    };
+    const time = new Date().Format("yyyyMMdd-hhmm");
+    DownloadMan.exportDownload(state, "json", `AutoSpider-state-${time}.json`);
+});
+$("body").on("dragover", "#bakstate", ev => ev.preventDefault());
+$("body").on("drop", "#bakstate", ev =>
+{
+    ev.preventDefault();
+    const files = ev.originalEvent.dataTransfer.files;
+    if (files.length <= 0)
+        return;
+    const reader = new FileReader();
+    reader.onload = e => 
+    {
+        const content = e.target.result;
+        const state = JSON.parse(content);
+        console.log(state);
+        uids.clear();
+        rowcount = 0;
+        thetable.clear();
+        state.users.forEach(usr => 
+        {
+           let user = new User();
+           Object.assign(user, usr);
+           uids.set(user.id, user);
+           const newdata = { usr: { id: user.id, name: user.name }, index: rowcount++ };
+           Object.assign(newdata, user);
+           thetable.row.add(newdata);
+        });
+        utimeOld = new Map(state.utimeOld);
+        utimeNew = new Map(state.utimeNew);
+        u404s = new Set(state.u404s);
+        Object.assign(chkreports, state.chkreports);
+        $("#userinput")[0].value = state.input;
+        thetable.draw(false);
+    }
+    reader.readAsText(files[0]);
+});
 $(document).on("click", "#export", e =>
 {
     const btn = e.target;
@@ -145,9 +205,9 @@ $(document).on("click", "#export", e =>
     const time = new Date().Format("yyyyMMdd-hhmm");
     DownloadMan.exportDownload(res, "json", `AutoSpider-${time}.json`);
 });
-$(document).on("click", "#import", e =>
+$(document).on("click", "#import", ev =>
 {
-    const btn = e.target;
+    const btn = ev.target;
     const files = $("#infile")[0].files;
     if (files.length <= 0)
         return;
@@ -236,6 +296,7 @@ $(document).on("click", "#go", async e =>
         return;
     }
     isRunning = true;
+    curBtn = btn;
     const isCtrl = e.ctrlKey;
     try
     {
@@ -256,16 +317,8 @@ $(document).on("click", "#go", async e =>
     {
         console.warn(e);
         isRunning = false;
+        curBtn.style.background = "";
+        curBtn = null;
     }
 });
 
-chrome.runtime.onMessage.addListener(data=>
-{
-    if (data.id === "cookie")
-    {
-        console.log("recieve cookie", data.val);
-        const xudidstr = _getTheCookie("d_c0", data.val);
-        if (xudidstr)
-            ContentBase.CUR_TOKEN = new UserToken2(xudidstr.split("|")[0]);
-    }
-});

@@ -23,7 +23,7 @@
     </style>
 </head>
 <body>
-    <iframe src="https://api.zhihu.com/getcookie" id="ifr" style="display: none"></iframe>
+    <!-- <iframe src="https://api.zhihu.com/getcookie" id="ifr" style="display: none"></iframe> -->
     <div>
         <table id="maintable" class="cell-border hover order-column stripe" width="100%">
             <thead>
@@ -45,6 +45,7 @@
             <button id="refresh">刷新</button>
             <button id="show404">失败项</button>
             <button id="del404">清理失败项</button>
+            <button id="showban">封禁项</button>
             <button id="go">开始</button>
             <button id="chkban">复查封禁</button>
             <br />
@@ -61,10 +62,11 @@
             <button id="clean">清理</button>
             <button id="export">导出</button>
             <button id="import">导入</button> <input type="file" id="infile" />
+            <button id="bakstate">备份状态</button>
         </div>
         <div>
             <textarea id="userinput" style="width:100%; height:160px"></textarea>
-            <textarea id="out404" style="width:100%; height:50px"></textarea>
+            <textarea id="outbox" style="width:100%; height:50px"></textarea>
         </div>
     </div>
     <script src="AutoSpider.js"></script>

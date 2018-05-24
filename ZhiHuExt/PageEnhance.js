@@ -286,15 +286,22 @@ function reportEnhance()
             return;
         }
         chkAll.dataset.isChecking = "true";
-        /**@type {HTMLButtonElement[]}*/
-        const btns = $("button.Btn-QCheckStatus", document).toArray()
-            .filter(x => x.style.background === "");
-        for (let i = 0; i < btns.length && chkAll.dataset.isChecking === "true"; ++i)
+        try
         {
-            chkAll.textContent = btns[i].dataset.name;
-            await Promise.all([onChkStatus({ target: btns[i] }), _sleep(1200)]);
+            /**@type {HTMLButtonElement[]}*/
+            const btns = $("button.Btn-QCheckStatus", document).toArray()
+                .filter(x => x.style.background === "");
+            for (let i = 0; i < btns.length && chkAll.dataset.isChecking === "true"; ++i)
+            {
+                chkAll.textContent = btns[i].dataset.name;
+                await Promise.all([onChkStatus({ target: btns[i] }), _sleep(1200)]);
+            }
         }
-        chkAll.textContent = "检测全部";
+        finally
+        {
+            chkAll.dataset.isChecking = "false";
+            chkAll.textContent = "检测全部";
+        }
     });
     {
         const dummydiv = makeElement("div", [], { style: { textAlign: "center" } }, chkAll);

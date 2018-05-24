@@ -84,10 +84,10 @@
          */
         async function newfetch(req, init)
         {
-            if (init && init.headers && init.headers.hasOwnProperty("X-UDID") && selfDom)
-            {
-                selfDom.dispatchEvent(new CustomEvent("ZHHookerNotify", {detail: {udid: init.headers["X-UDID"], type: "udid"}}));
-            }
+            // if (init && init.headers && init.headers.hasOwnProperty("X-UDID") && selfDom)
+            // {
+            //     selfDom.dispatchEvent(new CustomEvent("ZHHookerNotify", {detail: {udid: init.headers["X-UDID"], type: "udid"}}));
+            // }
             if (!req.includes("www.zhihu.com/api/v"))
                 return oldfetch(req, init);
             const apiparts = req.substring(req.indexOf("/api/v") + 8, req.indexOf("?")).split("/");

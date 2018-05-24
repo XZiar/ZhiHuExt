@@ -28,6 +28,7 @@
     "storage",
     "unlimitedStorage",
     "downloads",
+    "webRequest",
     "notifications"
   ],
   "externally_connectable":
@@ -38,6 +39,10 @@
       "*://zhuanlan.zhihu.com/p/*"
     ]
   },
+  "web_accessible_resources": 
+  [
+    "AutoSpider.html"
+  ],
   "background":
   {
     "page": "background.html"
@@ -69,12 +74,12 @@
     {
       "matches":
       [
-        "*://api.zhihu.com/getcookie"
+        "*://api.zhihu.com/autospider"
       ],
       "all_frames": true,
       "js":
       [
-        "CookieHooker.js"
+        "APIPageHooker.js"
       ],
       "run_at": "document_start"
     },
@@ -96,7 +101,8 @@
     {
       "matches":
       [
-        "*://www.zhihu.com/*"
+        "*://www.zhihu.com/*",
+        "*://zhuanlan.zhihu.com/p/*"
       ],
       "exclude_matches":
       [

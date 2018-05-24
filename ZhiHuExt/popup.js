@@ -22,6 +22,11 @@ $(document).on("click", "button#rfs", rfs);
 $(document).on("click", "button.openpage", e =>
 {
     const dest = e.target.dataset.htmlname;
+    if (e.ctrlKey && dest === "AutoSpider")
+    {
+        chrome.runtime.sendMessage({ action: "openpage", isBackground: false, incognito: true, target: `https://api.zhihu.com/autospider` });
+        return;
+    }
     chrome.runtime.sendMessage({ action: "openpage", isBackground: false, target: dest+".html" });
 });
 $("#upd").click(e =>

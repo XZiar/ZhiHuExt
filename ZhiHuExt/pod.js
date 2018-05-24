@@ -3,33 +3,39 @@
 class UserToken
 {
     /**
-     * @param {{carCompose:string, xUDID:string, xsrf:string}} token
+     * @param {{carCompose:string, xUDID:string, xsrf:string} | Map<string, string>} token
      */
     constructor(token)
     {
-        this.authorization = token.carCompose ? token.carCompose.split("|") : null;
-        this.xUDID = token.xUDID;
-        this.xsrf = token.xsrf;
+        if (token instanceof Map)
+        {
+            const loginToken = token.get("z_c0");
+            if (loginToken)
+            {
+                const mth1 = loginToken.match(/\"(.*)\"/i);
+                this.authorization = mth1 ? mth1[1] : loginToken;
+            }
+            else
+                this.authorization = null;
+            
+            const mth2 = (token.get("d_c0") || "").match(/\"(.*)\"/i);
+            this.xUDID = mth2 ? mth2[1].split("|")[0] : null;
+            
+            this.xsrf = token.get("_xsrf");
+        }
+        else
+        {
+            this.authorization = token.carCompose ? token.carCompose.split("|").map(x => x.startsWith("4:") ? "4:z_c0" : x).join("|") : null;
+            this.xUDID = token.xUDID;
+            this.xsrf = token.xsrf;
+        }
     }
     toHeader()
     {
-        const auth = this.authorization ? "Bearer " + this.authorization.map(x => x.startsWith("4:") ? "4:z_c0" : x).join("|")
-            : "oauth c3cef7c66a1843f8b3a9e6a1e3160e20";
-        return { authorization: auth, "X-UDID": this.xUDID, "X-API-VERSION": "3.0.40" }
-    }
-}
-class UserToken2
-{
-    /**
-     * @param {string} token
-     */
-    constructor(token)
-    {
-        this.xUDID = token;
-    }
-    toHeader()
-    {
-        return { "X-UDID": this.xUDID, "X-API-VERSION": "3.0.40" }
+        const header = { "X-UDID": this.xUDID };
+        if (!this.authorization)
+            header["authorization"] = "oauth c3cef7c66a1843f8b3a9e6a1e3160e20";
+            return header;
     }
 }
 

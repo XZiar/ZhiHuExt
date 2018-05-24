@@ -513,10 +513,10 @@ function _getQueryString(qurl)
         qurl = idx > 0 ? url.substring(idx) : "";
     }
     const querys = qurl.split("&");
-    var ret = {};
-    for (var i = 0; i < querys.length; ++i)
+    const ret = {};
+    for (let i = 0; i < querys.length; ++i)
     {
-        var p = querys[i].split('=');
+        const p = querys[i].split('=');
         if (p.length != 2) continue;
         ret[p[0]] = decodeURIComponent(p[1].replace(/\+/g, " "));
     }
@@ -530,18 +530,20 @@ function _toQueryString(obj)
 
 /**
  * @description get specific cookie
- * @param {string} name 
  * @param {string} [cookie] 
  */
-function _getTheCookie(name, cookie)
+function _getCookie(cookie)
 {
+    /**@type {Map<string, string>} */
+    const ret = new Map();
     const obj = (cookie || document.cookie).split(";")
-        .map(x=>x.trim())
-        .filter(/**@param {string} [x]*/(x) => x.startsWith(`${name}=`))[0];
-    if (obj)
-        return obj.match(/\"(.*)\"/i)[1];
-    else
-        return null;
+        .forEach(x=>
+            {
+                const str = x.trim();
+                const idx = str.indexOf("=");
+                ret.set(str.substr(0, idx), str.substr(idx+1));
+            });
+    return ret;
 }
 
 /**

@@ -5,7 +5,7 @@
 let _CUR_USER;
 let _CUR_ANSWER;
 let _CUR_QUESTION;
-/**@type {UserToken|UserToken2}*/
+/**@type {UserToken}*/
 let _CUR_TOKEN;
 /**@type {HTMLScriptElement}*/
 let _CUR_HOOKER;
@@ -40,14 +40,15 @@ class ContentBase
      * @param {"answer" | "article"} obj
      * @param {number | string} id
      * @param {number} offset
+     * @param {object} header
      * @returns {Promise<{users: User[], end: boolean, start: boolean, total: number}>}
      */
-    static _fetchAnsVoters(obj, id, offset)
+    static _fetchAnsVoters(obj, id, offset, header)
     {
         const part = (obj === "answer") ? "voters" : "likers";
         const zanquery = (obj === "answer") ? ",voteup_count" : "";
         const pms = $.Deferred();
-        ContentBase._get(`https://www.zhihu.com/api/v4/${obj}s/${id}/${part}?include=data[*].answer_count,articles_count,follower_count${zanquery}&limit=20&offset=${offset}`)
+        ContentBase._get(`https://www.zhihu.com/api/v4/${obj}s/${id}/${part}?include=data[*].answer_count,articles_count,follower_count${zanquery}&limit=20&offset=${offset}`, undefined, header)
             .done((data, status, xhr) =>
             {
                 const users = data.data.map(User.fromRawJson);
@@ -122,10 +123,23 @@ class ContentBase
         return pms;
     }
 
+    static _xhr()
+    {
+        const xhr = $.ajaxSettings.xhr();
+        const oldSetter = xhr.setRequestHeader;
+        xhr.setRequestHeader = (name, val) => 
+        {
+            if (name.toLowerCase() !== "x-requested-with")
+                oldSetter.call(xhr, name, val);
+        }
+        return xhr;
+    }
+
     static _get(url, data, headers)
     {
         return $.ajax(url,
             {
+                xhr: ContentBase._xhr,
                 type: "GET",
                 data: data,
                 headers: headers,
@@ -147,6 +161,7 @@ class ContentBase
         }
         return $.ajax(url,
             {
+                xhr: ContentBase._xhr,
                 type: "POST",
                 contentType: cType,
                 headers: headers,
@@ -209,8 +224,9 @@ class ContentBase
      */
     static async fetchTheVoters(obj, id, limit, config, onProgress)
     {
+        const tokenhead = ContentBase.CUR_TOKEN ? ContentBase.CUR_TOKEN.toHeader() : {};
         let errcnt = 0;
-        const first = await ContentBase._fetchAnsVoters(obj, id, 0);
+        const first = await ContentBase._fetchAnsVoters(obj, id, 0, tokenhead);
         /**@type {User[]}*/
         let ret = config === "old+" ? [] : first.users;
         let oldtotal = first.total, demand = Math.min(oldtotal, limit)
@@ -226,7 +242,7 @@ class ContentBase
         {
             try
             {
-                const part = await ContentBase._fetchAnsVoters(obj, id, offset);
+                const part = await ContentBase._fetchAnsVoters(obj, id, offset, tokenhead);
                 const newtotal = part.total;
                 const newusrs = part.users.filter(u => !usrset.has(u.id));
                 newusrs.forEach(u => usrset.add(u.id));
@@ -263,6 +279,7 @@ class ContentBase
         let time = begintime || new Date().toUTCSeconds(); 
         limittime = limittime || ContentBase.BASE_LIM_DATE;
         const tokenhead = ContentBase.CUR_TOKEN ? ContentBase.CUR_TOKEN.toHeader() : {};
+        tokenhead["x-api-version"] = "3.0.40";
         const ret = new StandardDB();
         let isEnd = false;
         for (let i = 0; i < maxloop && time > limittime && !isEnd; ++i)
@@ -462,6 +479,12 @@ class ContentBase
         }
         return pms;
     }
+
+    /**@param {string} [cookie]*/
+    static prepareToken(cookie)
+    {
+        ContentBase.CUR_TOKEN = new UserToken(_getCookie(cookie))
+    }
 }
 
 /**@param e {CustomEvent}*/
@@ -474,7 +497,7 @@ function hookerHandler(e)
                 const oldId = ContentBase.CUR_TOKEN && ContentBase.CUR_TOKEN.xUDID;
                 if (e.detail.udid != oldId)
                 {
-                    ContentBase.CUR_TOKEN = new UserToken2(e.detail.udid);
+                    ContentBase.CUR_TOKEN = new UserToken(e.detail.udid);
                     console.log("UDID changed:", oldId, e.detail.udid, e);
                 }    
             } break;
@@ -482,11 +505,17 @@ function hookerHandler(e)
 }
 
 {
-    const xudidstr = _getTheCookie("d_c0");
-    if (xudidstr)
+    ContentBase.prepareToken();
+    chrome.runtime.onMessage.addListener(data=>
     {
-        ContentBase.CUR_TOKEN = new UserToken2(xudidstr.split("|")[0]);
-    }
+        if (data.id === "cookie")
+        {
+            //console.log("recieve cookie", data.val);
+            ContentBase.prepareToken(data.val);
+            console.log("[current token]", ContentBase.CUR_TOKEN);
+        }
+    });
+    fetch("https://api.zhihu.com/getcookie", { credentials: "include" });
     const obs = new MutationObserver(records =>
     {
         for (let i = 0; i < records.length; ++i)
@@ -504,8 +533,8 @@ function hookerHandler(e)
                 {
                     obs.disconnect();
                     _CUR_HOOKER = node;
-                    node.addEventListener("ZHHookerNotify", hookerHandler);
-                    console.log("[ZHIHU_Hook] inked!");
+                    //node.addEventListener("ZHHookerNotify", hookerHandler);
+                    console.log("[ZHIHU_Hook] linked!");
                     return;
                 }
             }
