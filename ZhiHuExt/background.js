@@ -226,7 +226,7 @@ async function blocking(api, id)
                 url: `http://www.zhihu.com/api/v4/people/${usr.id}`,
                 url_token: usr.id,
                 user_type: "people"
-                };
+            };
             return ret;
         });
 

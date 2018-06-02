@@ -59,7 +59,7 @@ namespace DBExportor.Controllers
                 LOG.LogInformation($"answer's index cache built");
                 var dict2 = db.articles.ToDictionary(art => art.id, art => art.author_);
                 caches["art-author"] = dict2;
-                caches["author-art"] = dict1.ToLookup(kv => kv.Value, kv => kv.Key);
+                caches["author-art"] = dict2.ToLookup(kv => kv.Value, kv => kv.Key);
                 LOG.LogInformation($"article's index cache built");
             }
             GC.Collect(2, GCCollectionMode.Optimized, false, true);

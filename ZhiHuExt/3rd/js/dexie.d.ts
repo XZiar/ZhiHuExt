@@ -1,527 +1,717 @@
-﻿// Type definitions for Dexie v2.0.1
-// Project: https://github.com/dfahlander/Dexie.js
-// Definitions by: David Fahlander <http://github.com/dfahlander>
-
-declare type IndexableTypePart =
-    string | number | Date | ArrayBuffer | ArrayBufferView | DataView | Array<Array<void>>;
-
-declare type IndexableTypeArray = Array<IndexableTypePart>;
-declare type IndexableTypeArrayReadonly = ReadonlyArray<IndexableTypePart>;
-export declare type IndexableType = IndexableTypePart | IndexableTypeArrayReadonly;
-
-declare type ThenShortcut<T,TResult> =  (value: T) => TResult | PromiseLike<TResult>;
-
-declare type TransactionMode = 'r' | 'r!' | 'r?' | 'rw' | 'rw!' | 'rw?';
-
-interface ProbablyError {
-    name?: string;
-    stack?: string;
-    message?: string;
+/*
+ * Dexie.js - a minimalistic wrapper for IndexedDB
+ * ===============================================
+ *
+ * By David Fahlander, david.fahlander@gmail.com
+ *
+ * Version 3.0.0-alpha.2, Sat Mar 03 2018
+ *
+ * http://dexie.org
+ *
+ * Apache License Version 2.0, January 2004, http://www.apache.org/licenses/
+ */
+ export interface IndexSpec {
+  name: string;
+  keyPath: string | Array<string> | undefined;
+  unique: boolean | undefined;
+  multi: boolean | undefined;
+  auto: boolean | undefined;
+  compound: boolean | undefined;
+  src: string;
 }
-
-// Dexie is actually default exported at the end of this file.
-// Still, need to keep this explicit export anyway. Needed in order for
-// Typescript 2.1 to allow extension of the Dexie API.
-export declare class Dexie {
-    constructor(databaseName: string, options?: {
-        addons?: Array<(db: Dexie) => void>,
-        autoOpen?: boolean,
-        indexedDB?: IDBFactory,
-        IDBKeyRange?: {new(): IDBKeyRange}
-    });
-
-    readonly name: string;
-    readonly tables: Dexie.Table<any, any>[];
-    readonly verno: number;
-
-    static addons: Array<(db: Dexie) => void>;
-    static version: number;
-    static semVer: string;
-    static currentTransaction: Dexie.Transaction;
-    static waitFor<T> (promise: PromiseLike<T> | T) : Dexie.Promise<T>;
-    static waitFor<T> (promise: PromiseLike<T> | T, timeoutMilliseconds: number) : Dexie.Promise<T>;
-
-    static getDatabaseNames(): Dexie.Promise<string[]>;
-    static getDatabaseNames<R>(thenShortcut: ThenShortcut<string[],R>): Dexie.Promise<R>;
-
-    static override<F> (origFunc:F, overridedFactory: (fn:any)=>any) : F;
-    
-    static getByKeyPath(obj: Object, keyPath: string): any;
-
-    static setByKeyPath(obj: Object, keyPath: string, value: any): void;
-
-    static delByKeyPath(obj: Object, keyPath: string): void;
-
-    static shallowClone<T> (obj: T): T;
-
-    static deepClone<T>(obj: T): T;
-    
-    static asap(fn: Function) : void;
-    
-    static maxKey: Array<Array<void>> | string;
-    static minKey: number;
-
-    static exists(dbName: string) : Dexie.Promise<boolean>;
-
-    static delete(dbName: string): Dexie.Promise<void>;
-    
-    static dependencies: {
-        indexedDB: IDBFactory,
-        IDBKeyRange: IDBKeyRange
-    };
-        
-    static default: Dexie;
-    
-    version(versionNumber: Number): Dexie.Version;
-
-    on: Dexie.DbEvents;
-
-    open(): Dexie.Promise<Dexie>;
-
-    table(tableName: string): Dexie.Table<any, any>;
-
-    table<T>(tableName: string): Dexie.Table<T, any>;
-
-    table<T, Key>(tableName: string): Dexie.Table<T, Key>;
-
-    transaction<U>(mode: TransactionMode, table: Dexie.Table<any, any>, scope: () => PromiseLike<U> | U): Dexie.Promise<U>;
-
-    transaction<U>(mode: TransactionMode, table: Dexie.Table<any, any>, table2: Dexie.Table<any, any>, scope: () => PromiseLike<U> | U): Dexie.Promise<U>;
-
-    transaction<U>(mode: TransactionMode, table: Dexie.Table<any, any>, table2: Dexie.Table<any, any>, table3: Dexie.Table<any, any>, scope: () => PromiseLike<U> | U): Dexie.Promise<U>;
-
-    transaction<U>(mode: TransactionMode, table: Dexie.Table<any, any>, table2: Dexie.Table<any, any>, table3: Dexie.Table<any, any>, table4: Dexie.Table<any,any>, scope: () => PromiseLike<U> | U): Dexie.Promise<U>;
-
-    transaction<U>(mode: TransactionMode, table: Dexie.Table<any, any>, table2: Dexie.Table<any, any>, table3: Dexie.Table<any, any>, table4: Dexie.Table<any,any>, table5: Dexie.Table<any,any>, scope: () => PromiseLike<U> | U): Dexie.Promise<U>;
-
-    transaction<U>(mode: TransactionMode, tables: Dexie.Table<any, any>[], scope: () => PromiseLike<U> | U): Dexie.Promise<U>;
-
-    close(): void;
-
-    delete(): Dexie.Promise<void>;
-
-    isOpen(): boolean;
-
-    hasBeenClosed(): boolean;
-
-    hasFailed(): boolean;
-
-    dynamicallyOpened(): boolean;
-
-    backendDB(): IDBDatabase;
-
-    vip<U>(scopeFunction: () => U): U;
-    
-    // Make it possible to touch physical class constructors where they reside - as properties on db instance.
-    // For example, checking if (x instanceof db.Table). Can't do (x instanceof Dexie.Table because it's just a virtual interface)
-    Table : new()=>Dexie.Table<any,any>;
-    WhereClause: new()=>Dexie.WhereClause<any,any>;
-    Version: new()=>Dexie.Version;
-    Transaction: new()=>Dexie.Transaction;
-    Collection: new()=>Dexie.Collection<any,any>;
+export interface TableSchema {
+  name: string;
+  primKey: IndexSpec;
+  indexes: IndexSpec[];
+  mappedClass: Function;
+  idxByName: {[name: string]: IndexSpec};
+  readHook?: (x:any) => any
 }
+export type IndexableTypePart =
+string | number | Date | ArrayBuffer | ArrayBufferView | DataView | Array<Array<void>>;
+export type IndexableTypeArray = Array<IndexableTypePart>;
+export type IndexableTypeArrayReadonly = ReadonlyArray<IndexableTypePart>;
+export type IDBValidKey = IndexableTypePart | IndexableTypeArrayReadonly;
+export interface IDBCursor {
+  readonly direction: IDBCursorDirection;
+  key: IDBValidKey;
+  readonly primaryKey: any;
+  source: IDBObjectStore | IDBIndex;
+  advance(count: number): void;
+  continue(key?: IDBKeyRange | IDBValidKey): void;
+  delete(): IDBRequest;
+  update(value: any): IDBRequest;
+  readonly NEXT: string;
+  readonly NEXT_NO_DUPLICATE: string;
+  readonly PREV: string;
+  readonly PREV_NO_DUPLICATE: string;
+}
+export interface IDBDatabaseEventMap {
+  "abort": IDBEvent;
+  "error": IDBEvent;
+}
+export interface IDBDatabase extends EventTarget {
+  readonly name: string;
+  readonly objectStoreNames: DOMStringList;
+  onabort: (this: IDBDatabase, ev: IDBEvent) => any;
+  onerror: (this: IDBDatabase, ev: IDBEvent) => any;
+  version: number;
+  onversionchange: (ev: IDBVersionChangeEvent) => any;
+  close(): void;
+  createObjectStore(name: string, optionalParameters?: IDBObjectStoreParameters): IDBObjectStore;
+  deleteObjectStore(name: string): void;
+  transaction(storeNames: string | string[], mode?: IDBTransactionMode): IDBTransaction;
+  addEventListener(type: "versionchange", listener: (ev: IDBVersionChangeEvent) => any, useCapture?: boolean): void;
+  addEventListener<K extends keyof IDBDatabaseEventMap>(type: K, listener: (this: IDBDatabase, ev: IDBDatabaseEventMap[K]) => any, useCapture?: boolean): void;
+  addEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
+  removeEventListener<K extends keyof IDBDatabaseEventMap>(type: K, listener: (this: IDBDatabase, ev: IDBDatabaseEventMap[K]) => any, useCapture?: boolean): void;
+  removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
+}
+export interface IDBIndexParameters {
+  multiEntry?: boolean;
+  unique?: boolean;
+}
+export interface IDBObjectStoreParameters {
+  autoIncrement?: boolean;
+  keyPath?: IDBKeyPath | null;
+}
+export type IDBKeyPath = string | string[];
+export interface IDBFactory {
+  cmp(first: any, second: any): number;
+  deleteDatabase(name: string): IDBOpenDBRequest;
+  open(name: string, version?: number): IDBOpenDBRequest;
+}
+export interface IDBIndex {
+  keyPath: string | string[];
+  readonly name: string;
+  readonly objectStore: IDBObjectStore;
+  readonly unique: boolean;
+  multiEntry: boolean;
+  count(key?: IDBKeyRange | IDBValidKey): IDBRequest;
+  get(key: IDBKeyRange | IDBValidKey): IDBRequest;
+  getKey(key: IDBKeyRange | IDBValidKey): IDBRequest;
+  getAll?(key?: IDBKeyRange | IDBValidKey, limit?: number): IDBRequest;
+  getAllKeys?(key?: IDBKeyRange | IDBValidKey, limit?: number): IDBRequest;  
+  openCursor(range?: IDBKeyRange | IDBValidKey, direction?: IDBCursorDirection): IDBRequest;
+  openKeyCursor(range?: IDBKeyRange | IDBValidKey, direction?: IDBCursorDirection): IDBRequest;
+}
+export interface IDBKeyRange {
+  readonly lower: any;
+  readonly lowerOpen: boolean;
+  readonly upper: any;
+  readonly upperOpen: boolean;
+}
+export interface IDBKeyRangeConstructor {
+  prototype: IDBKeyRange;
+  new(): IDBKeyRange;
+  bound(lower: any, upper: any, lowerOpen?: boolean, upperOpen?: boolean): IDBKeyRange;
+  lowerBound(lower: any, open?: boolean): IDBKeyRange;
+  only(value: any): IDBKeyRange;
+  upperBound(upper: any, open?: boolean): IDBKeyRange;
+}
+export interface IDBObjectStore {
+  readonly indexNames: DOMStringList;
+  keyPath: string | string[];
+  readonly name: string;
+  readonly transaction: IDBTransaction;
+  autoIncrement: boolean;
+  add(value: any, key?: IDBValidKey): IDBRequest;
+  clear(): IDBRequest;
+  count(key?: IDBKeyRange | IDBValidKey): IDBRequest;
+  createIndex(name: string, keyPath: string | string[], optionalParameters?: IDBIndexParameters): IDBIndex;
+  delete(key: IDBKeyRange | IDBValidKey): IDBRequest;
+  deleteIndex(indexName: string): void;
+  get(key: any): IDBRequest;
+  index(name: string): IDBIndex;
+  openCursor(range?: IDBKeyRange | IDBValidKey, direction?: IDBCursorDirection): IDBRequest;
+  openKeyCursor?(range?: IDBKeyRange | IDBValidKey, direction?: IDBCursorDirection): IDBRequest;
+  put(value: any, key?: IDBValidKey): IDBRequest;
+  getAll?(key?: IDBKeyRange | IDBValidKey, limit?: number): IDBRequest;
+  getAllKeys?(key?: IDBKeyRange | IDBValidKey, limit?: number): IDBRequest;  
+}
+export interface IDBOpenDBRequestEventMap extends IDBRequestEventMap {
+  "blocked": IDBEvent;
+  "upgradeneeded": IDBVersionChangeEvent;
+}
+export interface IDBOpenDBRequest extends IDBRequest {
+  onblocked: (this: IDBOpenDBRequest, ev: IDBEvent) => any;
+  onupgradeneeded: (this: IDBOpenDBRequest, ev: IDBVersionChangeEvent) => any;
+  addEventListener<K extends keyof IDBOpenDBRequestEventMap>(type: K, listener: (this: IDBOpenDBRequest, ev: IDBOpenDBRequestEventMap[K]) => any, useCapture?: boolean): void;
+  addEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
+  removeEventListener<K extends keyof IDBOpenDBRequestEventMap>(type: K, listener: (this: IDBOpenDBRequest, ev: IDBOpenDBRequestEventMap[K]) => any, useCapture?: boolean): void;
+  removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
+}
+export interface IDBRequestEventMap {
+  "error": IDBEvent;
+  "success": IDBEvent;
+}
+export interface IDBRequest extends EventTarget {
+  readonly error: DOMException;
+  onerror: (this: IDBRequest, ev: IDBEvent) => any;
+  onsuccess: (this: IDBRequest, ev: IDBEvent) => any;
+  readonly readyState: IDBRequestReadyState;
+  readonly result: any;
+  source: IDBObjectStore | IDBIndex | IDBCursor;
+  readonly transaction: IDBTransaction;
+  addEventListener<K extends keyof IDBRequestEventMap>(type: K, listener: (this: IDBRequest, ev: IDBRequestEventMap[K]) => any, useCapture?: boolean): void;
+  addEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
+  removeEventListener<K extends keyof IDBRequestEventMap>(type: K, listener: (this: IDBRequest, ev: IDBRequestEventMap[K]) => any, useCapture?: boolean): void;
+  removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
+}
+export interface IDBEvent extends Event {
+  target: IDBRequest;
+}
+export interface IDBTransactionEventMap {
+  "abort": IDBEvent;
+  "complete": IDBEvent;
+  "error": IDBEvent;
+}
+export interface IDBTransaction extends EventTarget {
+  readonly db: IDBDatabase;
+  readonly error: DOMException;
+  readonly mode: IDBTransactionMode;
+  onabort: (this: IDBTransaction, ev: IDBEvent) => any;
+  oncomplete: (this: IDBTransaction, ev: IDBEvent) => any;
+  onerror: (this: IDBTransaction, ev: IDBEvent) => any;
+  abort(): void;
+  objectStore(name: string): IDBObjectStore;
+  readonly READ_ONLY: string;
+  readonly READ_WRITE: string;
+  readonly VERSION_CHANGE: string;
+  addEventListener<K extends keyof IDBTransactionEventMap>(type: K, listener: (this: IDBTransaction, ev: IDBTransactionEventMap[K]) => any, useCapture?: boolean): void;
+  addEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
+  removeEventListener<K extends keyof IDBTransactionEventMap>(type: K, listener: (this: IDBTransaction, ev: IDBTransactionEventMap[K]) => any, useCapture?: boolean): void;
+  removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
+}
+export interface IDBVersionChangeEvent extends IDBEvent {
+  readonly newVersion: number | null;
+  readonly oldVersion: number;
+}
+export interface DexieEvent {
+  subscribers: Function[];
+  fire(...args:any[]): any;
+  subscribe(fn: (...args:any[]) => any): void;
+  unsubscribe(fn: (...args:any[]) => any): void;
+}
+export interface DexieEventSet {
+  (eventName: string): DexieEvent; // To be able to unsubscribe.
 
+  addEventType (
+	  eventName: string,
+	  chainFunction?: (f1:Function,f2:Function)=>Function,
+	  defaultFunction?: Function): DexieEvent;
+  addEventType (
+	  events: {[eventName:string]: ('asap' | [(f1:Function,f2:Function)=>Function, Function])})
+	  : DexieEvent;    
+}
+export type TransactionMode = 'readonly' | 'readwrite' | 'r' | 'r!' | 'r?' | 'rw' | 'rw!' | 'rw?';
+export interface PromiseExtendedConstructor extends PromiseConstructor {
+  readonly prototype: PromiseExtended;
+  new <T>(executor: (resolve: (value?: T | PromiseLike<T>) => void, reject: (reason?: any) => void) => void): PromiseExtended<T>;
+  all<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>(values: [T1 | PromiseLike<T1>, T2 | PromiseLike<T2>, T3 | PromiseLike<T3>, T4 | PromiseLike <T4>, T5 | PromiseLike<T5>, T6 | PromiseLike<T6>, T7 | PromiseLike<T7>, T8 | PromiseLike<T8>, T9 | PromiseLike<T9>, T10 | PromiseLike<T10>]): PromiseExtended<[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10]>;
+  all<T1, T2, T3, T4, T5, T6, T7, T8, T9>(values: [T1 | PromiseLike<T1>, T2 | PromiseLike<T2>, T3 | PromiseLike<T3>, T4 | PromiseLike <T4>, T5 | PromiseLike<T5>, T6 | PromiseLike<T6>, T7 | PromiseLike<T7>, T8 | PromiseLike<T8>, T9 | PromiseLike<T9>]): PromiseExtended<[T1, T2, T3, T4, T5, T6, T7, T8, T9]>;
+  all<T1, T2, T3, T4, T5, T6, T7, T8>(values: [T1 | PromiseLike<T1>, T2 | PromiseLike<T2>, T3 | PromiseLike<T3>, T4 | PromiseLike <T4>, T5 | PromiseLike<T5>, T6 | PromiseLike<T6>, T7 | PromiseLike<T7>, T8 | PromiseLike<T8>]): PromiseExtended<[T1, T2, T3, T4, T5, T6, T7, T8]>;
+  all<T1, T2, T3, T4, T5, T6, T7>(values: [T1 | PromiseLike<T1>, T2 | PromiseLike<T2>, T3 | PromiseLike<T3>, T4 | PromiseLike <T4>, T5 | PromiseLike<T5>, T6 | PromiseLike<T6>, T7 | PromiseLike<T7>]): PromiseExtended<[T1, T2, T3, T4, T5, T6, T7]>;
+  all<T1, T2, T3, T4, T5, T6>(values: [T1 | PromiseLike<T1>, T2 | PromiseLike<T2>, T3 | PromiseLike<T3>, T4 | PromiseLike <T4>, T5 | PromiseLike<T5>, T6 | PromiseLike<T6>]): PromiseExtended<[T1, T2, T3, T4, T5, T6]>;
+  all<T1, T2, T3, T4, T5>(values: [T1 | PromiseLike<T1>, T2 | PromiseLike<T2>, T3 | PromiseLike<T3>, T4 | PromiseLike <T4>, T5 | PromiseLike<T5>]): PromiseExtended<[T1, T2, T3, T4, T5]>;
+  all<T1, T2, T3, T4>(values: [T1 | PromiseLike<T1>, T2 | PromiseLike<T2>, T3 | PromiseLike<T3>, T4 | PromiseLike <T4>]): PromiseExtended<[T1, T2, T3, T4]>;
+  all<T1, T2, T3>(values: [T1 | PromiseLike<T1>, T2 | PromiseLike<T2>, T3 | PromiseLike<T3>]): PromiseExtended<[T1, T2, T3]>;
+  all<T1, T2>(values: [T1 | PromiseLike<T1>, T2 | PromiseLike<T2>]): PromiseExtended<[T1, T2]>;
+  all<T>(values: (T | PromiseLike<T>)[]): PromiseExtended<T[]>;
+  race<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>(values: [T1 | PromiseLike<T1>, T2 | PromiseLike<T2>, T3 | PromiseLike<T3>, T4 | PromiseLike<T4>, T5 | PromiseLike<T5>, T6 | PromiseLike<T6>, T7 | PromiseLike<T7>, T8 | PromiseLike<T8>, T9 | PromiseLike<T9>, T10 | PromiseLike<T10>]): PromiseExtended<T1 | T2 | T3 | T4 | T5 | T6 | T7 | T8 | T9 | T10>;
+  race<T1, T2, T3, T4, T5, T6, T7, T8, T9>(values: [T1 | PromiseLike<T1>, T2 | PromiseLike<T2>, T3 | PromiseLike<T3>, T4 | PromiseLike<T4>, T5 | PromiseLike<T5>, T6 | PromiseLike<T6>, T7 | PromiseLike<T7>, T8 | PromiseLike<T8>, T9 | PromiseLike<T9>]): PromiseExtended<T1 | T2 | T3 | T4 | T5 | T6 | T7 | T8 | T9>;
+  race<T1, T2, T3, T4, T5, T6, T7, T8>(values: [T1 | PromiseLike<T1>, T2 | PromiseLike<T2>, T3 | PromiseLike<T3>, T4 | PromiseLike<T4>, T5 | PromiseLike<T5>, T6 | PromiseLike<T6>, T7 | PromiseLike<T7>, T8 | PromiseLike<T8>]): PromiseExtended<T1 | T2 | T3 | T4 | T5 | T6 | T7 | T8>;
+  race<T1, T2, T3, T4, T5, T6, T7>(values: [T1 | PromiseLike<T1>, T2 | PromiseLike<T2>, T3 | PromiseLike<T3>, T4 | PromiseLike<T4>, T5 | PromiseLike<T5>, T6 | PromiseLike<T6>, T7 | PromiseLike<T7>]): PromiseExtended<T1 | T2 | T3 | T4 | T5 | T6 | T7>;
+  race<T1, T2, T3, T4, T5, T6>(values: [T1 | PromiseLike<T1>, T2 | PromiseLike<T2>, T3 | PromiseLike<T3>, T4 | PromiseLike<T4>, T5 | PromiseLike<T5>, T6 | PromiseLike<T6>]): PromiseExtended<T1 | T2 | T3 | T4 | T5 | T6>;
+  race<T1, T2, T3, T4, T5>(values: [T1 | PromiseLike<T1>, T2 | PromiseLike<T2>, T3 | PromiseLike<T3>, T4 | PromiseLike<T4>, T5 | PromiseLike<T5>]): PromiseExtended<T1 | T2 | T3 | T4 | T5>;
+  race<T1, T2, T3, T4>(values: [T1 | PromiseLike<T1>, T2 | PromiseLike<T2>, T3 | PromiseLike<T3>, T4 | PromiseLike<T4>]): PromiseExtended<T1 | T2 | T3 | T4>;
+  race<T1, T2, T3>(values: [T1 | PromiseLike<T1>, T2 | PromiseLike<T2>, T3 | PromiseLike<T3>]): PromiseExtended<T1 | T2 | T3>;
+  race<T1, T2>(values: [T1 | PromiseLike<T1>, T2 | PromiseLike<T2>]): PromiseExtended<T1 | T2>;
+  race<T>(values: (T | PromiseLike<T>)[]): PromiseExtended<T>;
+  reject(reason: any): PromiseExtended<never>;
+  reject<T>(reason: any): PromiseExtended<T>;
+  resolve<T>(value: T | PromiseLike<T>): PromiseExtended<T>;
+  resolve(): PromiseExtended<void>;
+}
+/** The interface of Dexie.Promise, which basically extends standard Promise with methods:
+ *  
+ *  finally() - also subject for standardization
+ *  timeout() - set a completion timeout
+ *  catch(ErrorClass, handler) - java style error catching
+ *  catch(errorName, handler) - cross-domain safe type error catching (checking error.name instead of instanceof)
+ * 
+ */
+export interface PromiseExtended<T=any> extends Promise<T> {
+  then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): PromiseExtended<TResult1 | TResult2>;
+  catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): PromiseExtended<T | TResult>;
+  catch<TResult = never>(ErrorConstructor: Function, onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): PromiseExtended<T | TResult>;
+  catch<TResult = never>(errorName: string, onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): PromiseExtended<T | TResult>;
+  finally<U>(onFinally?: () => U | PromiseLike<U>): PromiseExtended<T>;
+  timeout (ms: number, msg?: string): PromiseExtended<T>;
+}
+export type ThenShortcut<T,TResult> =  (value: T) => TResult | PromiseLike<TResult>;
+export type IndexableType = IDBValidKey;
+export interface Collection<T=any, TKey=IndexableType> {
+  //db: Database;
+  and(filter: (x: T) => boolean): Collection<T, TKey>;
+  clone(props?: Object): Collection<T, TKey>;
+  count(): PromiseExtended<number>;
+  count<R>(thenShortcut: ThenShortcut<number, R>): PromiseExtended<R>;
+  distinct(): Collection<T, TKey>;
+  each(callback: (obj: T, cursor: {key: IndexableType, primaryKey: TKey}) => any): PromiseExtended<void>;
+  eachKey(callback: (key: IndexableType, cursor: {key: IndexableType, primaryKey: TKey}) => any): PromiseExtended<void>;
+  eachPrimaryKey(callback: (key: TKey, cursor: {key: IndexableType, primaryKey: TKey}) => any): PromiseExtended<void>;
+  eachUniqueKey(callback: (key: IndexableType, cursor: {key: IndexableType, primaryKey: TKey}) => any): PromiseExtended<void>;
+  filter(filter: (x: T) => boolean): Collection<T, TKey>;
+  first(): PromiseExtended<T | undefined>;
+  first<R>(thenShortcut: ThenShortcut<T | undefined, R>): PromiseExtended<R>;
+  keys(): PromiseExtended<IndexableTypeArray>;
+  keys<R>(thenShortcut: ThenShortcut<IndexableTypeArray, R>): PromiseExtended<R>;
+  primaryKeys(): PromiseExtended<TKey[]>;
+  primaryKeys<R>(thenShortcut: ThenShortcut<TKey[], R>): PromiseExtended<R>;
+  last(): PromiseExtended<T | undefined>;
+  last<R>(thenShortcut: ThenShortcut<T | undefined, R>): PromiseExtended<R>;
+  limit(n: number): Collection<T, TKey>;
+  offset(n: number): Collection<T, TKey>;
+  or(indexOrPrimayKey: string): WhereClause<T, TKey>;
+  raw(): Collection<T, TKey>;
+  reverse(): Collection<T, TKey>;
+  sortBy(keyPath: string): PromiseExtended<T[]>;
+  sortBy<R>(keyPath: string, thenShortcut: ThenShortcut<T[], R>) : PromiseExtended<R>;
+  toArray(): PromiseExtended<Array<T>>;
+  toArray<R>(thenShortcut: ThenShortcut<T[], R>) : PromiseExtended<R>;
+  uniqueKeys(): PromiseExtended<IndexableTypeArray>;
+  uniqueKeys<R>(thenShortcut: ThenShortcut<IndexableTypeArray, R>): PromiseExtended<R>;
+  until(filter: (value: T) => boolean, includeStopEntry?: boolean): Collection<T, TKey>;
+  // Mutating methods
+  delete(): PromiseExtended<number>;
+  modify(changeCallback: (obj: T, ctx:{value: T}) => void): PromiseExtended<number>;
+  modify(changes: { [keyPath: string]: any } ): PromiseExtended<number>;
+}
+export interface WhereClause<T=any, TKey=IndexableType> {
+  above(key: any): Collection<T, TKey>;
+  aboveOrEqual(key: any): Collection<T, TKey>;
+  anyOf(keys: IndexableTypeArrayReadonly): Collection<T, TKey>;
+  anyOf(...keys: IndexableTypeArray): Collection<T, TKey>;
+  anyOfIgnoreCase(keys: string[]): Collection<T, TKey>;
+  anyOfIgnoreCase(...keys: string[]): Collection<T, TKey>;
+  below(key: any): Collection<T, TKey>;
+  belowOrEqual(key: any): Collection<T, TKey>;
+  between(lower: any, upper: any, includeLower?: boolean, includeUpper?: boolean): Collection<T, TKey>;
+  equals(key: any): Collection<T, TKey>;
+  equalsIgnoreCase(key: string): Collection<T, TKey>;
+  inAnyRange(ranges: ReadonlyArray<{0: any, 1: any}>): Collection<T, TKey>;
+  startsWith(key: string): Collection<T, TKey>;
+  startsWithAnyOf(prefixes: string[]): Collection<T, TKey>;
+  startsWithAnyOf(...prefixes: string[]): Collection<T, TKey>;
+  startsWithIgnoreCase(key: string): Collection<T, TKey>;
+  startsWithAnyOfIgnoreCase(prefixes: string[]): Collection<T, TKey>;
+  startsWithAnyOfIgnoreCase(...prefixes: string[]): Collection<T, TKey>;
+  noneOf(keys: Array<any>): Collection<T, TKey>;
+  notEqual(key: any): Collection<T, TKey>;
+}
+export interface Database {
+  readonly name: string;
+  readonly tables: Table[];
+  
+  table<T=any, TKey=any>(tableName: string): Table<T, TKey>;
+
+  transaction<U>(mode: TransactionMode, table: Table, scope: () => PromiseLike<U> | U): PromiseExtended<U>;
+
+  transaction<U>(mode: TransactionMode, table: Table, table2: Table, scope: () => PromiseLike<U> | U): PromiseExtended<U>;
+
+  transaction<U>(mode: TransactionMode, table: Table, table2: Table, table3: Table, scope: () => PromiseLike<U> | U): PromiseExtended<U>;
+
+  transaction<U>(mode: TransactionMode, table: Table, table2: Table, table3: Table, table4: Table, scope: () => PromiseLike<U> | U): PromiseExtended<U>;
+
+  transaction<U>(mode: TransactionMode, table: Table, table2: Table, table3: Table, table4: Table, table5: Table, scope: () => PromiseLike<U> | U): PromiseExtended<U>;
+
+  transaction<U>(mode: TransactionMode, tables: Table[], scope: () => PromiseLike<U> | U): PromiseExtended<U>;
+}
+export interface TransactionEvents extends DexieEventSet {
+  (eventName: 'complete', subscriber: () => any): void;
+  (eventName: 'abort', subscriber: () => any): void;
+  (eventName: 'error', subscriber: (error:any) => any): void;
+  complete: DexieEvent;
+  abort: DexieEvent;
+  error: DexieEvent;
+}
+export interface Transaction {
+  db: Database;
+  active: boolean;
+  mode: IDBTransactionMode;
+  //tables: { [type: string]: Table<any, any> }; Deprecated since 2.0. Obsolete from v3.0.
+  storeNames: Array<string>;
+  parent?: Transaction;
+  on: TransactionEvents;
+  abort(): void;
+  table(tableName: string): Table<any, any>;
+  table<T>(tableName: string): Table<T, any>;
+  table<T, Key>(tableName: string): Table<T, Key>;
+}
+export interface CreatingHookContext<T,Key> {
+  onsuccess?: (primKey: Key) => void;
+  onerror?: (err: any) => void;
+}
+export interface UpdatingHookContext<T,Key> {
+  onsuccess?: (updatedObj: T) => void;
+  onerror?: (err: any) => void;
+}
+export interface DeletingHookContext<T,Key> {
+  onsuccess?: () => void;
+  onerror?: (err: any) => void;
+}
+export interface TableHooks<T=any,TKey=IndexableType> extends DexieEventSet {
+  (eventName: 'creating', subscriber: (this: CreatingHookContext<T,TKey>, primKey:TKey, obj:T, transaction:Transaction) => any): void;
+  (eventName: 'reading', subscriber: (obj:T) => T | any): void;
+  (eventName: 'updating', subscriber: (this: UpdatingHookContext<T,TKey>, modifications:Object, primKey:TKey, obj:T, transaction:Transaction) => any): void;
+  (eventName: 'deleting', subscriber: (this: DeletingHookContext<T,TKey>, primKey:TKey, obj:T, transaction:Transaction) => any): void;
+  creating: DexieEvent;
+  reading: DexieEvent;
+  updating: DexieEvent;
+  deleting: DexieEvent;
+}
+export interface Table<T=any, TKey=IndexableType> {
+  db: Database;
+  name: string;
+  schema: TableSchema;
+  hook: TableHooks<T, TKey>;
+
+  get(key: TKey): PromiseExtended<T | undefined>;
+  get<R>(key: TKey, thenShortcut: ThenShortcut<T | undefined,R>): PromiseExtended<R>;
+  get(equalityCriterias: {[key:string]:any}): PromiseExtended<T | undefined>;
+  get<R>(equalityCriterias: {[key:string]:any}, thenShortcut: ThenShortcut<T | undefined, R>): PromiseExtended<R>;
+  where(index: string | string[]): WhereClause<T, TKey>;
+  where(equalityCriterias: {[key:string]:any}): Collection<T, TKey>;
+
+  filter(fn: (obj: T) => boolean): Collection<T, TKey>;
+
+  count(): PromiseExtended<number>;
+  count<R>(thenShortcut: ThenShortcut<number, R>): PromiseExtended<R>;
+
+  offset(n: number): Collection<T, TKey>;
+
+  limit(n: number): Collection<T, TKey>;
+
+  each(callback: (obj: T, cursor: {key: any, primaryKey: TKey}) => any): PromiseExtended<void>;
+
+  toArray(): PromiseExtended<Array<T>>;
+  toArray<R>(thenShortcut: ThenShortcut<T[], R>): PromiseExtended<R>;
+
+  toCollection(): Collection<T, TKey>;
+  orderBy(index: string | string[]): Collection<T, TKey>;
+  reverse(): Collection<T, TKey>;
+  mapToClass(constructor: Function): Function;
+  add(item: T, key?: TKey): PromiseExtended<TKey>;
+  update(key: TKey | T, changes: { [keyPath: string]: any }): PromiseExtended<number>;
+  put(item: T, key?: TKey): PromiseExtended<TKey>;
+  delete(key: TKey): PromiseExtended<void>;
+  clear(): PromiseExtended<void>;
+  bulkAdd(items: T[], keys?: IndexableTypeArrayReadonly): PromiseExtended<TKey>;
+  bulkPut(items: T[], keys?: IndexableTypeArrayReadonly): PromiseExtended<TKey>;
+  bulkDelete(keys: IndexableTypeArrayReadonly) : PromiseExtended<void>;
+}
+export interface Version {
+  stores(schema: { [tableName: string]: string | null }): Version;
+  upgrade(fn: (trans: Transaction) => void): Version;
+}
+export interface DexieOnReadyEvent {
+  subscribe(fn: () => any, bSticky: boolean): void;
+  unsubscribe(fn: () => any): void;
+  fire(): any;
+}
+export interface DexieVersionChangeEvent {
+  subscribe(fn: (event: IDBVersionChangeEvent) => any): void;
+  unsubscribe(fn: (event: IDBVersionChangeEvent) => any): void;
+  fire(event: IDBVersionChangeEvent): any;
+}
+export interface DbEvents extends DexieEventSet {
+  (eventName: 'ready', subscriber: () => any, bSticky?: boolean): void;
+  (eventName: 'populate', subscriber: () => any): void;
+  (eventName: 'blocked', subscriber: (event: IDBVersionChangeEvent) => any): void;
+  (eventName: 'versionchange', subscriber: (event: IDBVersionChangeEvent) => any): void;
+  ready: DexieOnReadyEvent;
+  populate: DexieEvent;
+  blocked: DexieEvent;
+  versionchange: DexieVersionChangeEvent;        
+}
+export type DbSchema = {[tableName: string]: TableSchema};
+export interface Dexie extends Database {
+  readonly name: string;
+  readonly tables: Table[];
+  readonly verno: number;
+  
+  readonly _allTables: {[name: string]: Table<any,any>};
+
+  _createTransaction: (
+	this: Dexie,
+	mode: IDBTransactionMode,
+	storeNames: ArrayLike<string>,
+	dbschema: DbSchema,
+	parentTransaction?: Transaction | null) => Transaction;
+  
+  _dbSchema: DbSchema;
+
+  version(versionNumber: number): Version;
+
+  on: DbEvents;
+
+  open(): PromiseExtended<Dexie>;
+
+  table<T=any, TKey=IndexableType>(tableName: string): Table<T, TKey>;
+
+  transaction<U>(mode: TransactionMode, table: Table, scope: () => PromiseLike<U> | U): PromiseExtended<U>;
+
+  transaction<U>(mode: TransactionMode, table: Table, table2: Table, scope: () => PromiseLike<U> | U): PromiseExtended<U>;
+
+  transaction<U>(mode: TransactionMode, table: Table, table2: Table, table3: Table, scope: () => PromiseLike<U> | U): PromiseExtended<U>;
+
+  transaction<U>(mode: TransactionMode, table: Table, table2: Table, table3: Table, table4: Table<any,any>, scope: () => PromiseLike<U> | U): PromiseExtended<U>;
+
+  transaction<U>(mode: TransactionMode, table: Table, table2: Table, table3: Table, table4: Table<any,any>, table5: Table<any,any>, scope: () => PromiseLike<U> | U): PromiseExtended<U>;
+
+  transaction<U>(mode: TransactionMode, tables: Table[], scope: () => PromiseLike<U> | U): PromiseExtended<U>;
+
+  close(): void;
+
+  delete(): PromiseExtended<void>;
+
+  isOpen(): boolean;
+
+  hasBeenClosed(): boolean;
+
+  hasFailed(): boolean;
+
+  dynamicallyOpened(): boolean;
+
+  backendDB(): IDBDatabase;
+  
+  // Make it possible to touch physical class constructors where they reside - as properties on db instance.
+  // For example, checking if (x instanceof db.Table). Can't do (x instanceof Dexie.Table because it's just a virtual interface)
+  Table : {prototype: Table};
+  WhereClause: {prototype: WhereClause};
+  Version: {prototype: Version};
+  Transaction: {prototype: Transaction};
+  Collection: {prototype: Collection};
+}
+/** DexieError
+ * 
+ * Common base class for all errors originating from Dexie.js except TypeError,
+ * SyntaxError and RangeError.
+ * 
+ * http://dexie.org/docs/DexieErrors/DexieError
+ * 
+ */
+export interface DexieError extends Error {
+  name: string;
+  message: string;
+  stack: string;
+  inner: any;
+  toString(): string;
+}
+/**
+ * List of the names of auto-generated error classes that extends DexieError
+ * and shares the interface of DexieError.
+ * 
+ * Each error should be documented at http://dexie.org/docs/DexieErrors/Dexie.<errname>
+ * 
+ * The generic type DexieExceptionClasses is a map of full error name to
+ * error constructor. The DexieExceptionClasses is mixed in into Dexie,
+ * so that it is always possible to throw or catch certain errors via
+ * Dexie.ErrorName. Example:
+ * 
+ * try {
+ *   throw new Dexie.InvalidTableError("Invalid table foo", innerError?);
+ * } catch (err) {
+ *   if (err instanceof Dexie.InvalidTableError) {
+ *     // Could also have check for err.name === "InvalidTableError", or
+ *     // err.name === Dexie.errnames.InvalidTableError.
+ *     console.log("Seems to be an invalid table here...");
+ *   } else {
+ *     throw err;
+ *   }
+ * }
+ */
+export type DexieErrors = {
+  // http://dexie.org/docs/DexieErrors/Dexie.OpenFailedError
+  OpenFailed: 'OpenFailedError',
+
+  // http://dexie.org/docs/DexieErrors/Dexie.VersionChangeError
+  VersionChange: 'VersionChangeError',
+
+  // http://dexie.org/docs/DexieErrors/Dexie.SchemaError
+  Schema: 'SchemaError',
+
+  // http://dexie.org/docs/DexieErrors/Dexie.UpgradeError
+  Upgrade: 'UpgradeError',
+
+  // http://dexie.org/docs/DexieErrors/Dexie.InvalidTableError
+  InvalidTable: 'InvalidTableError',
+
+  // http://dexie.org/docs/DexieErrors/Dexie.MissingAPIError
+  MissingAPI: 'MissingAPIError',
+
+  // http://dexie.org/docs/DexieErrors/Dexie.NoSuchDatabaseError
+  NoSuchDatabase: 'NoSuchDatabaseError',
+
+  // http://dexie.org/docs/DexieErrors/Dexie.InvalidArgumentError
+  InvalidArgument: 'InvalidArgumentError',
+
+  // http://dexie.org/docs/DexieErrors/Dexie.SubTransactionError
+  SubTransaction: 'SubTransactionError',
+
+  // http://dexie.org/docs/DexieErrors/Dexie.UnsupportedError
+  Unsupported: 'UnsupportedError',
+
+  // http://dexie.org/docs/DexieErrors/Dexie.InternalError
+  Internal: 'InternalError',
+
+  // http://dexie.org/docs/DexieErrors/Dexie.DatabaseClosedError
+  DatabaseClosed: 'DatabaseClosedError',
+
+  // http://dexie.org/docs/DexieErrors/Dexie.PrematureCommitError
+  PrematureCommit: 'PrematureCommitError',
+
+  // http://dexie.org/docs/DexieErrors/Dexie.ForeignAwaitError
+  ForeignAwait: 'ForeignAwaitError',
+
+  // http://dexie.org/docs/DexieErrors/Dexie.UnknownError
+  Unknown: 'UnknownError',
+
+  // http://dexie.org/docs/DexieErrors/Dexie.ConstraintError
+  Constraint: 'ConstraintError',
+
+  // http://dexie.org/docs/DexieErrors/Dexie.DataError
+  Data: 'DataError',
+
+  // http://dexie.org/docs/DexieErrors/Dexie.TransactionInactiveError
+  TransactionInactive: 'TransactionInactiveError',
+
+  // http://dexie.org/docs/DexieErrors/Dexie.ReadOnlyError
+  ReadOnly: 'ReadOnlyError',
+  
+  // http://dexie.org/docs/DexieErrors/Dexie.VersionError
+  Version: 'VersionError',
+
+  // http://dexie.org/docs/DexieErrors/Dexie.NotFoundError
+  NotFound: 'NotFoundError',
+
+  // http://dexie.org/docs/DexieErrors/Dexie.InvalidStateError
+  InvalidState: 'InvalidStateError',
+
+  // http://dexie.org/docs/DexieErrors/Dexie.InvalidAccessError
+  InvalidAccess: 'InvalidAccessError',
+
+  // http://dexie.org/docs/DexieErrors/Dexie.AbortError
+  Abort: 'AbortError',
+
+  // http://dexie.org/docs/DexieErrors/Dexie.TimeoutError
+  Timeout: 'TimeoutError',
+
+  // http://dexie.org/docs/DexieErrors/Dexie.QuotaExceededError
+  QuotaExceeded: 'QuotaExceededError',
+
+  // http://dexie.org/docs/DexieErrors/Dexie.DataCloneError
+  DataClone: 'DataCloneError'
+}
+/** ModifyError
+ * 
+ * http://dexie.org/docs/DexieErrors/Dexie.ModifyError
+ */
+export interface ModifyError extends DexieError {
+  failures: Array<any>;
+  failedKeys: IndexableTypeArrayReadonly;
+  successCount: number;
+}
+/** BulkError
+ * 
+ * http://dexie.org/docs/DexieErrors/Dexie.BulkError
+ */
+export interface BulkError extends DexieError {
+  failures: Array<any>;
+}
+export interface DexieErrorConstructor {
+  new(msg?: string, inner?: Object) : DexieError;
+  new(inner: Object): DexieError;
+  prototype: DexieError;
+}
+export interface ModifyErrorConstructor {
+  new (
+	msg?:string,
+	failures?: any[],
+	successCount?: number,
+	failedKeys?: IndexableTypeArrayReadonly) : ModifyError;
+  prototype: ModifyError;
+}
+export interface BulkErrorConstructor {
+  new (msg?:string, failures?: any[]) : BulkError;
+  prototype: BulkError;
+}
+export type ExceptionSet = {[P in DexieErrors[keyof DexieErrors]]: DexieErrorConstructor};
+export type DexieExceptionClasses = ExceptionSet & {
+  DexieError: DexieErrorConstructor,
+  ModifyError: ModifyErrorConstructor;
+  BulkError: BulkErrorConstructor;
+}
+export interface DexieDOMDependencies {
+  indexedDB: IDBFactory;
+  IDBKeyRange: IDBKeyRangeConstructor;
+}
+export interface DexieOptions {
+  addons?: Array<(db: Dexie) => void>,
+  autoOpen?: boolean,
+  indexedDB?: {open: Function},
+  IDBKeyRange?: {bound: Function, lowerBound: Function, upperBound: Function},
+  allowEmptyDB?: boolean;
+}
+export interface DexieConstructor extends DexieExceptionClasses {
+  new(databaseName: string, options?: DexieOptions) : Dexie;
+  prototype: Dexie;
+
+  addons: Array<(db: Dexie) => void>;
+  version: number;
+  semVer: string;
+  currentTransaction: Transaction;
+  waitFor<T> (promise: PromiseLike<T> | T, timeoutMilliseconds?: number) : Promise<T>;
+
+  getDatabaseNames(): Promise<string[]>;
+  getDatabaseNames<R>(thenShortcut: ThenShortcut<string[],R>): Promise<R>;
+
+  vip<U>(scopeFunction: () => U): U;
+  ignoreTransaction<U>(fn: ()=> U) : U;
+  override<F> (origFunc:F, overridedFactory: (fn:any)=>any) : F; // ?
+  getByKeyPath(obj: Object, keyPath: string): any;
+  setByKeyPath(obj: Object, keyPath: string, value: any): void;
+  delByKeyPath(obj: Object, keyPath: string): void;
+  shallowClone<T> (obj: T): T;
+  deepClone<T>(obj: T): T;
+  asap(fn: Function) : void; //?
+  maxKey: Array<Array<void>> | string;
+  minKey: number;
+  exists(dbName: string) : Promise<boolean>;
+  delete(dbName: string): Promise<void>;
+  dependencies: DexieDOMDependencies;
+  default: Dexie; // Work-around for different build tools handling default imports differently.
+
+  Promise: PromiseExtendedConstructor;
+  //TableSchema: {}; // Deprecate!
+  //IndexSpec: {new():IndexSpec}; //? Deprecate
+  Events: (ctx?: any)=>DexieEventSet;
+
+  errnames: {[P in keyof DexieExceptionClasses]: P};
+}
+export declare var Dexie: DexieConstructor;
+export interface _Table<T, TKey> extends Table<T, TKey> {}
+export interface _Collection<T,TKey> extends Collection<T,TKey> {}
 export declare module Dexie {
-
-    interface Promise<T> {
-        // From Promise<T> in lib.es2015.d.ts and lib.es2015.symbol.wellknown.d.ts but with return type Dexie.Promise<T>:
-        then(onfulfilled?: ((value: T) => T | PromiseLike<T>) | undefined | null, onrejected?: ((reason: any) => T | PromiseLike<T>) | undefined | null): Dexie.Promise<T>;
-        then<TResult>(onfulfilled: ((value: T) => T | PromiseLike<T>) | undefined | null, onrejected: (reason: any) => TResult | PromiseLike<TResult>): Dexie.Promise<T | TResult>;
-        then<TResult>(onfulfilled: (value: T) => TResult | PromiseLike<TResult>, onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): Dexie.Promise<TResult>;
-        then<TResult1, TResult2>(onfulfilled: (value: T) => TResult1 | PromiseLike<TResult1>, onrejected: (reason: any) => TResult2 | PromiseLike<TResult2>): Dexie.Promise<TResult1 | TResult2>;
-        catch(onrejected?: ((reason: any) => T | PromiseLike<T>) | undefined | null): Dexie.Promise<T>;
-        catch<TResult>(onrejected: (reason: any) => TResult | PromiseLike<TResult>): Dexie.Promise<T | TResult>;
-        readonly [Symbol.toStringTag]: "Promise";
-        
-        // Extended methods provided by Dexie.Promise:
-
-        /**
-         * Catch errors where error => error.name === errorName. Other errors will remain uncaught.
-         * 
-         * @param errorName Name of the type of error to catch such as 'RangeError', 'TypeError', 'DatabaseClosedError', etc.
-         * @param onrejected The callback to execute when the Promise is rejected.
-         * @returns A Promise for the completion of the callback.
-         */
-        catch<TResult>(errorName: string, onrejected: (reason: Error) => TResult | PromiseLike<TResult>): Dexie.Promise<T | TResult>;
-
-        /**
-         * Catch errors where error => error.name === errorName. Other errors will remain uncaught.
-         * 
-         * @param errorName Name of the type of error to catch such as 'RangeError', 'TypeError', 'DatabaseClosedError', etc.
-         * @param onrejected The callback to execute when the Promise is rejected.
-         * @returns A Promise for the completion of the callback.
-         */
-        catch(errorName: string, onrejected: (reason: Error) => T | PromiseLike<T>): Dexie.Promise<T>;
-
-        /**
-         * Catch errors where error => error instanceof errorConstructor. Other errors will remain uncaught.
-         * 
-         * @param errorConstructor Type of error to catch such as RangeError, TypeError, etc.
-         * @param onrejected The callback to execute when the Promise is rejected.
-         * @returns A Promise for the completion of the callback.
-         */
-        catch<TResult,TError>(errorConstructor: {new():TError}, onrejected: (reason: TError) => TResult | PromiseLike<TResult>): Dexie.Promise<T | TResult>;
-
-        /**
-         * Catch errors where error => error instanceof errorConstructor. Other errors will remain uncaught.
-         * 
-         * @param errorConstructor Type of error to catch such as RangeError, TypeError, etc.
-         * @param onrejected The callback to execute when the Promise is rejected.
-         * @returns A Promise for the completion of the callback.
-         */
-        catch<TError>(errorConstructor: {new():TError}, onrejected: (reason: TError) => T | PromiseLike<T>): Dexie.Promise<T>;
-
-        /**
-         * Attaches a callback to be executed when promise is settled no matter if it was rejected
-         * or resolved.
-         * 
-         * @param onFinally The callback to execute when promise is settled.
-         * @returns A Promise for the completion of the callback.
-         */
-        finally(onFinally: () => void): Dexie.Promise<T>;
-
-        /**
-         * Apply a timeout limit for the promise. If timeout is reached before promise is settled,
-         * the returned promise will reject with an Error object where name='TimeoutError'.
-         * 
-         * @param milliseconds Number of milliseconds for the timeout.
-         * @returns A Promise that will resolve or reject identically to current Promise, but if timeout is reached,
-         *          it will reject with TimeoutError.
-         */
-        timeout(milliseconds: number): Dexie.Promise<T>;    
-    }
-
-    interface DexiePromiseConstructor {
-        // From lib.es6.d.ts:
-        all<TAll>(values: Iterable<TAll | PromiseLike<TAll>>): Dexie.Promise<TAll[]>;
-        race<T>(values: Iterable<T | PromiseLike<T>>): Dexie.Promise<T>;
-        readonly prototype: Dexie.Promise<any>;
-        new <T>(executor: (resolve: (value?: T | PromiseLike<T>) => void, reject: (reason?: any) => void) => void): Dexie.Promise<T>;
-        all<T1, T2, T3, T4, T5, T6, T7, T8, T9, T10>(values: [T1 | PromiseLike<T1>, T2 | PromiseLike<T2>, T3 | PromiseLike<T3>, T4 | PromiseLike <T4>, T5 | PromiseLike<T5>, T6 | PromiseLike<T6>, T7 | PromiseLike<T7>, T8 | PromiseLike<T8>, T9 | PromiseLike<T9>, T10 | PromiseLike<T10>]): Dexie.Promise<[T1, T2, T3, T4, T5, T6, T7, T8, T9, T10]>;
-        all<T1, T2, T3, T4, T5, T6, T7, T8, T9>(values: [T1 | PromiseLike<T1>, T2 | PromiseLike<T2>, T3 | PromiseLike<T3>, T4 | PromiseLike <T4>, T5 | PromiseLike<T5>, T6 | PromiseLike<T6>, T7 | PromiseLike<T7>, T8 | PromiseLike<T8>, T9 | PromiseLike<T9>]): Dexie.Promise<[T1, T2, T3, T4, T5, T6, T7, T8, T9]>;
-        all<T1, T2, T3, T4, T5, T6, T7, T8>(values: [T1 | PromiseLike<T1>, T2 | PromiseLike<T2>, T3 | PromiseLike<T3>, T4 | PromiseLike <T4>, T5 | PromiseLike<T5>, T6 | PromiseLike<T6>, T7 | PromiseLike<T7>, T8 | PromiseLike<T8>]): Dexie.Promise<[T1, T2, T3, T4, T5, T6, T7, T8]>;
-        all<T1, T2, T3, T4, T5, T6, T7>(values: [T1 | PromiseLike<T1>, T2 | PromiseLike<T2>, T3 | PromiseLike<T3>, T4 | PromiseLike <T4>, T5 | PromiseLike<T5>, T6 | PromiseLike<T6>, T7 | PromiseLike<T7>]): Dexie.Promise<[T1, T2, T3, T4, T5, T6, T7]>;
-        all<T1, T2, T3, T4, T5, T6>(values: [T1 | PromiseLike<T1>, T2 | PromiseLike<T2>, T3 | PromiseLike<T3>, T4 | PromiseLike <T4>, T5 | PromiseLike<T5>, T6 | PromiseLike<T6>]): Dexie.Promise<[T1, T2, T3, T4, T5, T6]>;
-        all<T1, T2, T3, T4, T5>(values: [T1 | PromiseLike<T1>, T2 | PromiseLike<T2>, T3 | PromiseLike<T3>, T4 | PromiseLike <T4>, T5 | PromiseLike<T5>]): Dexie.Promise<[T1, T2, T3, T4, T5]>;
-        all<T1, T2, T3, T4>(values: [T1 | PromiseLike<T1>, T2 | PromiseLike<T2>, T3 | PromiseLike<T3>, T4 | PromiseLike <T4>]): Dexie.Promise<[T1, T2, T3, T4]>;
-        all<T1, T2, T3>(values: [T1 | PromiseLike<T1>, T2 | PromiseLike<T2>, T3 | PromiseLike<T3>]): Dexie.Promise<[T1, T2, T3]>;
-        all<T1, T2>(values: [T1 | PromiseLike<T1>, T2 | PromiseLike<T2>]): Dexie.Promise<[T1, T2]>;
-        all<T>(values: (T | PromiseLike<T>)[]): Dexie.Promise<T[]>;
-        reject(reason: any): Dexie.Promise<never>;
-        reject<T>(reason: any): Dexie.Promise<T>;
-        resolve<T>(value: T | PromiseLike<T>): Dexie.Promise<T>;
-        resolve(): Dexie.Promise<void>;
-    }
-    
-
-    var Promise: DexiePromiseConstructor;
-
-    interface Version {
-        stores(schema: { [key: string]: string | null }): Version;
-        upgrade(fn: (trans: Transaction) => void): Version;
-    }
-
-    interface Transaction {
-        active: boolean;
-        db: Dexie;
-        mode: string;
-        idbtrans: IDBTransaction;
-        tables: { [type: string]: Table<any, any> };
-        storeNames: Array<string>;
-        on: TransactionEvents;
-        abort(): void;
-        table(tableName: string): Table<any, any>;
-        table<T>(tableName: string): Table<T, any>;
-        table<T, Key>(tableName: string): Table<T, Key>;
-    }
-
-    interface DexieEvent {
-        subscribers: Function[];
-        fire(...args:any[]): any;
-        subscribe(fn: (...args:any[]) => any): void;
-        unsubscribe(fn: (...args:any[]) => any): void;
-    }
-
-    interface DexieErrorEvent {
-        subscribe(fn: (error: any) => any): void;
-        unsubscribe(fn: (error: any) => any): void;
-        fire(error: any): any;
-    }
-
-    interface DexieVersionChangeEvent {
-        subscribe(fn: (event: IDBVersionChangeEvent) => any): void;
-        unsubscribe(fn: (event: IDBVersionChangeEvent) => any): void;
-        fire(event: IDBVersionChangeEvent): any;
-    }
-
-    interface DexieOnReadyEvent {
-        subscribe(fn: () => any, bSticky: boolean): void;
-        unsubscribe(fn: () => any): void;
-        fire(): any;
-    }
-
-    interface DexieEventSet {
-        (eventName: string): DexieEvent; // To be able to unsubscribe.
-
-        addEventType (
-            eventName: string,
-            chainFunction?: (f1:Function,f2:Function)=>Function,
-            defaultFunction?: Function):Dexie.DexieEvent;
-        addEventType (
-            events: {[eventName:string]: ('asap' | [(f1:Function,f2:Function)=>Function, Function])})
-            : Dexie.DexieEvent;    
-    }
-
-    interface DbEvents extends DexieEventSet {
-        (eventName: 'ready', subscriber: () => any, bSticky?: boolean): void;
-        (eventName: 'populate', subscriber: () => any): void;
-        (eventName: 'blocked', subscriber: () => any): void;
-        (eventName: 'versionchange', subscriber: (event: IDBVersionChangeEvent) => any): void;
-        ready: Dexie.DexieOnReadyEvent;
-        populate: Dexie.DexieEvent;
-        blocked: Dexie.DexieEvent;
-        versionchange: Dexie.DexieVersionChangeEvent;        
-    }
-
-    interface CreatingHookContext<T,Key> {
-        onsuccess?: (primKey: Key) => void;
-        onerror?: (err: any) => void;
-    }
-
-    interface UpdatingHookContext<T,Key> {
-        onsuccess?: (updatedObj: T) => void;
-        onerror?: (err: any) => void;
-    }
-
-    interface DeletingHookContext<T,Key> {
-        onsuccess?: () => void;
-        onerror?: (err: any) => void;
-    }
-
-    interface TableHooks<T,Key> extends DexieEventSet {
-        (eventName: 'creating', subscriber: (this: CreatingHookContext<T,Key>, primKey:Key, obj:T, transaction:Transaction) => any): void;
-        (eventName: 'reading', subscriber: (obj:T) => T | any): void;
-        (eventName: 'updating', subscriber: (this: UpdatingHookContext<T,Key>, modifications:Object, primKey:Key, obj:T, transaction:Transaction) => any): void;
-        (eventName: 'deleting', subscriber: (this: DeletingHookContext<T,Key>, primKey:Key, obj:T, transaction:Transaction) => any): void;
-        creating: DexieEvent;
-        reading: DexieEvent;
-        updating: DexieEvent;
-        deleting: DexieEvent;
-    }
-
-    interface TransactionEvents extends DexieEventSet {
-        (eventName: 'complete', subscriber: () => any): void;
-        (eventName: 'abort', subscriber: () => any): void;
-        (eventName: 'error', subscriber: (error:any) => any): void;
-        complete: DexieEvent;
-        abort: DexieEvent;
-        error: DexieEvent;
-    }    
-
-    interface Table<T, Key> {
-        name: string;
-        schema: TableSchema;
-        hook: TableHooks<T, Key>;
-
-        get(key: Key): Promise<T | undefined>;
-        get<R>(key: Key, thenShortcut: ThenShortcut<T | undefined,R>): Promise<R>;
-        get(equalityCriterias: {[key:string]:IndexableType}): Promise<T | undefined>;
-        get<R>(equalityCriterias: {[key:string]:IndexableType}, thenShortcut: ThenShortcut<T | undefined, R>): Promise<R>;
-        where(index: string | string[]): WhereClause<T, Key>;
-        where(equalityCriterias: {[key:string]:IndexableType}): Collection<T, Key>;
-
-        filter(fn: (obj: T) => boolean): Collection<T, Key>;
-
-        count(): Promise<number>;
-        count<R>(thenShortcut: ThenShortcut<number, R>): Promise<R>;
-
-        offset(n: number): Collection<T, Key>;
-
-        limit(n: number): Collection<T, Key>;
-
-        each(callback: (obj: T, cursor: {key: IndexableType, primaryKey: Key}) => any): Promise<void>;
-
-        toArray(): Promise<Array<T>>;
-        toArray<R>(thenShortcut: ThenShortcut<T[], R>): Promise<R>;
-
-        toCollection(): Collection<T, Key>;
-        orderBy(index: string | string[]): Collection<T, Key>;
-        reverse(): Collection<T, Key>;
-        mapToClass(constructor: Function): Function;
-        add(item: T, key?: Key): Promise<Key>;
-        update(key: Key, changes: { [keyPath: string]: any }): Promise<number>;
-        put(item: T, key?: Key): Promise<Key>;
-        delete(key: Key): Promise<void>;
-        clear(): Promise<void>;
-        bulkAdd(items: T[], keys?: IndexableTypeArrayReadonly): Promise<Key>;
-        bulkPut(items: T[], keys?: IndexableTypeArrayReadonly): Promise<Key>;
-        bulkDelete(keys: IndexableTypeArrayReadonly) : Promise<void>;
-    }
-
-    interface WhereClause<T, Key> {
-        above(key: IndexableType): Collection<T, Key>;
-        aboveOrEqual(key: IndexableType): Collection<T, Key>;
-        anyOf(keys: IndexableTypeArrayReadonly): Collection<T, Key>;
-        anyOf(...keys: IndexableTypeArray): Collection<T, Key>;
-        anyOfIgnoreCase(keys: string[]): Collection<T, Key>;
-        anyOfIgnoreCase(...keys: string[]): Collection<T, Key>;
-        below(key: IndexableType): Collection<T, Key>;
-        belowOrEqual(key: IndexableType): Collection<T, Key>;
-        between(lower: IndexableType, upper: IndexableType, includeLower?: boolean, includeUpper?: boolean): Collection<T, Key>;
-        equals(key: IndexableType): Collection<T, Key>;
-        equalsIgnoreCase(key: string): Collection<T, Key>;
-        inAnyRange(ranges: Array<IndexableTypeArrayReadonly>): Collection<T, Key>;
-        startsWith(key: string): Collection<T, Key>;
-        startsWithAnyOf(prefixes: string[]): Collection<T, Key>;
-        startsWithAnyOf(...prefixes: string[]): Collection<T, Key>;
-        startsWithIgnoreCase(key: string): Collection<T, Key>;
-        startsWithAnyOfIgnoreCase(prefixes: string[]): Collection<T, Key>;
-        startsWithAnyOfIgnoreCase(...prefixes: string[]): Collection<T, Key>;
-        noneOf(keys: Array<IndexableType>): Collection<T, Key>;
-        notEqual(key: IndexableType): Collection<T, Key>;
-    }
-
-    interface Collection<T, Key> {
-        and(filter: (x: T) => boolean): Collection<T, Key>;
-        clone(props?: Object): Collection<T, Key>;
-        count(): Promise<number>;
-        count<R>(thenShortcut: ThenShortcut<number, R>): Promise<R>;
-        distinct(): Collection<T, Key>;
-        each(callback: (obj: T, cursor: {key: IndexableType, primaryKey: Key}) => any): Promise<void>;
-        eachKey(callback: (key: IndexableType, cursor: {key: IndexableType, primaryKey: Key}) => any): Promise<void>;
-        eachPrimaryKey(callback: (key: Key, cursor: {key: IndexableType, primaryKey: Key}) => any): Promise<void>;
-        eachUniqueKey(callback: (key: IndexableType, cursor: {key: IndexableType, primaryKey: Key}) => any): Promise<void>;
-        filter(filter: (x: T) => boolean): Collection<T, Key>;
-        first(): Promise<T | undefined>;
-        first<R>(thenShortcut: ThenShortcut<T | undefined, R>): Promise<R>;
-        keys(): Promise<IndexableTypeArray>;
-        keys<R>(thenShortcut: ThenShortcut<IndexableTypeArray, R>): Promise<R>;
-        primaryKeys(): Promise<Key[]>;
-        primaryKeys<R>(thenShortcut: ThenShortcut<Key[], R>): Promise<R>;
-        last(): Promise<T | undefined>;
-        last<R>(thenShortcut: ThenShortcut<T | undefined, R>): Promise<R>;
-        limit(n: number): Collection<T, Key>;
-        offset(n: number): Collection<T, Key>;
-        or(indexOrPrimayKey: string): WhereClause<T, Key>;
-        raw(): Collection<T, Key>;
-        reverse(): Collection<T, Key>;
-        sortBy(keyPath: string): Promise<T[]>;
-        sortBy<R>(keyPath: string, thenShortcut: ThenShortcut<T[], R>) : Promise<R>;
-        toArray(): Promise<Array<T>>;
-        toArray<R>(thenShortcut: ThenShortcut<T[], R>) : Promise<R>;
-        uniqueKeys(): Promise<IndexableTypeArray>;
-        uniqueKeys<R>(thenShortcut: ThenShortcut<IndexableTypeArray, R>): Promise<R>;
-        until(filter: (value: T) => boolean, includeStopEntry?: boolean): Collection<T, Key>;
-        // Mutating methods
-        delete(): Promise<number>;
-        modify(changeCallback: (obj: T, ctx:{value: T}) => void): Promise<number>;
-        modify(changes: { [keyPath: string]: any } ): Promise<number>;
-    }
-
-    interface TableSchema {
-        name: string;
-        primKey: IndexSpec;
-        indexes: IndexSpec[];
-        mappedClass: Function;
-    }
-
-    interface IndexSpec {
-        name: string;
-        keyPath: string | Array<string>;
-        unique: boolean;
-        multi: boolean;
-        auto: boolean;
-        compound: boolean;
-        src: string;
-    }
-    
-    // Make it possible to touch physical classes as they are 
-    var TableSchema: new()=>TableSchema,
-        IndexSpec: new()=>IndexSpec,
-        Events: any; // Too complex to define correctly right now.
-    
-    // errnames - handy spellcheck in switch (error.name) {} cases.        
-    var errnames: {
-        // Error names generated by indexedDB:
-        Unknown: 'UnknownError';
-        Constraint: 'ConstraintError';
-        Data: 'DataError';
-        TransactionInactive: 'TransactionInactiveError';
-        ReadOnly: 'ReadOnlyError';
-        Version: 'VersionError';
-        NotFound: 'NotFoundError';
-        InvalidState: 'InvalidStateError';
-        InvalidAccess: 'InvalidAccessError';
-        Abort: 'AbortError';
-        Timeout: 'TimeoutError';
-        QuotaExceeded: 'QuotaExceededError';
-        Syntax: 'SyntaxError';
-        DataClone: 'DataCloneError';
-        
-        // Dexie-specific error names:
-        Modify: 'ModifyError';
-        OpenFailed: 'OpenFailedError';
-        VersionChange: 'VersionChangeError';
-        Schema: 'SchemaError';
-        Upgrade: 'UpgradeError';
-        InvalidTable: 'InvalidTableError';
-        MissingAPI: 'MissingAPIError';
-        NoSuchDatabase: 'NoSuchDatabaseError';
-        InvalidArgument: 'InvalidArgumentError';
-        SubTransaction: 'Error';
-        Unsupported: 'UnsupportedError';
-        Internal: 'InternalError';
-        DatabaseClosed: 'DatabaseClosedError';
-    };
-    
-    class DexieError extends Error {
-        name: string;
-        message: string;
-        stack: string;
-        inner: any;
-
-        constructor (name?:string, message?:string);
-        toString(): string;
-    }
-    
-    class ModifyError extends DexieError{
-        constructor (msg?:string, failures?: any[], successCount?: number, failedKeys?: IndexableTypeArrayReadonly);
-        failures: Array<any>;
-        failedKeys: IndexableTypeArrayReadonly;
-        successCount: number;
-    }
-    
-    class BulkError extends DexieError{
-        constructor (msg?:string, failures?: any[]);
-        failures: Array<any>;
-    }
-    
-    class OpenFailedError extends DexieError {constructor (msg?: string, inner?: Object);constructor (inner: Object);}
-    class VersionChangeError extends DexieError {constructor (msg?: string, inner?: Object);	constructor (inner: Object);}
-    class SchemaError extends DexieError {constructor (msg?: string, inner?: Object);	constructor (inner: Object);}
-    class UpgradeError extends DexieError {constructor (msg?: string, inner?: Object);	constructor (inner: Object);}
-    class InvalidTableError extends DexieError {constructor (msg?: string, inner?: Object);	constructor (inner: Object);}
-    class MissingAPIError extends DexieError {constructor (msg?: string, inner?: Object);	constructor (inner: Object);}
-    class NoSuchDatabaseError extends DexieError {constructor (msg?: string, inner?: Object);	constructor (inner: Object);}
-    class InvalidArgumentError extends DexieError {constructor (msg?: string, inner?: Object);	constructor (inner: Object);}
-    class SubTransactionError extends DexieError {constructor (msg?: string, inner?: Object);	constructor (inner: Object);}
-    class UnsupportedError extends DexieError {constructor (msg?: string, inner?: Object);	constructor (inner: Object);}
-    class InternalError extends DexieError {constructor (msg?: string, inner?: Object);	constructor (inner: Object);}
-    class DatabaseClosedError extends DexieError {constructor (msg?: string, inner?: Object);	constructor (inner: Object);}
-    class UnknownError extends DexieError {constructor (msg?: string, inner?: Object);	constructor (inner: Object);}
-    class ConstraintError extends DexieError {constructor (msg?: string, inner?: Object);	constructor (inner: Object);}
-    class DataError extends DexieError {constructor (msg?: string, inner?: Object);	constructor (inner: Object);}
-    class TransactionInactiveError extends DexieError {constructor (msg?: string, inner?: Object);	constructor (inner: Object);}
-    class ReadOnlyError extends DexieError {constructor (msg?: string, inner?: Object);	constructor (inner: Object);}
-    class VersionError extends DexieError {constructor (msg?: string, inner?: Object);	constructor (inner: Object);}
-    class NotFoundError extends DexieError {constructor (msg?: string, inner?: Object);	constructor (inner: Object);}
-    class InvalidStateError extends DexieError {constructor (msg?: string, inner?: Object);	constructor (inner: Object);}
-    class InvalidAccessError extends DexieError {constructor (msg?: string, inner?: Object);	constructor (inner: Object);}
-    class AbortError extends DexieError {constructor (msg?: string, inner?: Object);	constructor (inner: Object);}
-    class TimeoutError extends DexieError {constructor (msg?: string, inner?: Object);	constructor (inner: Object);}
-    class QuotaExceededError extends DexieError {constructor (msg?: string, inner?: Object);	constructor (inner: Object);}
-    class SyntaxError extends DexieError {constructor (msg?: string, inner?: Object);	constructor (inner: Object);}
-    class DataCloneError extends DexieError {constructor (msg?: string, inner?: Object);	constructor (inner: Object);}
+  // The "Dexie.Promise" type.
+  type Promise<T=any> = PromiseExtended<T> // Because many samples have been Dexie.Promise.
+  // The "Dexie.Table" interface. Same as named exported interface Table.
+  interface Table<T=any,TKey=any> extends _Table<T,TKey> {} // Because all samples have been Dexie.Table<...>
+  // The "Dexie.Collection" interface. Same as named exported interface Collection.
+  interface Collection<T=any,TKey=any> extends _Collection<T, TKey> {} // Because app-code may declare it.
 }
+
+export as namespace Dexie;
 
 export default Dexie;

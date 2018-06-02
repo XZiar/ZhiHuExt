@@ -622,7 +622,7 @@ $("body").on("drop", ".RichContent-inner", ev =>
     else
         return;
 
-    const ansInfo = getAAInfo(node);
+    const ansInfo = getAAInfo(wrapper);
     const aid = ansInfo.token || ansInfo.itemId;
     saveADetail(target, aid);
 });
