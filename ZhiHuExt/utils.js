@@ -6,12 +6,12 @@ Array.prototype.addall = function (other)
         other.forEach(x => this.push(v));
     else
         console.warn("cannot add non-array to array", other);
-}
+};
 Array.prototype.flatArray = function ()
 {
     return Array.fromArrays(...this);
-}
-Array.prototype.findInArray = function(array)
+};
+Array.prototype.findInArray = function (array)
 {
     if (!(array instanceof Array))
     {
@@ -26,11 +26,11 @@ Array.prototype.findInArray = function(array)
             ret.push(obj);
     }
     return ret;
-}
+};
 Array.prototype.last = function ()
 {
     return this[this.length - 1];
-}
+};
 /**
  * @param {string} keyName
  */
@@ -42,7 +42,7 @@ Array.prototype.mapToProp = function (keyName)
         ret.push((this[idx])[keyName]);
     }
     return ret;
-}
+};
 Array.prototype.groupBy = function (keyName)
 {
     const ret = new Map();
@@ -60,22 +60,22 @@ Array.prototype.groupBy = function (keyName)
         list.push(obj);
     }
     return ret;
-}
+};
 Array.fromArrays = function (...array)
 {
     return [].concat.apply([], array);
-}
+};
 Array.fromArray = function (array)
 {
     if (array instanceof Array)
         return Array.fromArrays(...array);
     else
         return [array];
-}
+};
 Array.prototype.filterUnique = function ()
 {
     return Array.from(new Set(this));
-}
+};
 
 Set.prototype.intersection = function (other)
 {
@@ -84,17 +84,17 @@ Set.prototype.intersection = function (other)
         if (other.has(ele))
             ret.add(ele);
     return ret;
-}
+};
 Set.prototype.toArray = function ()
 {
     return Array.from(this);
-}
+};
 
 String.prototype.removeSuffix = function (count)
 {
     const del = Math.min(this.length, count);
     return this.substring(0, this.length - del);
-}
+};
 
 Math.minmax = (num, min, max) => Math.max(Math.min(num, max), min);
 Math.mrange = (arr) =>
@@ -103,7 +103,7 @@ Math.mrange = (arr) =>
     for (let i = 1; i < arr.length; ++i)
         minv = Math.min(minv, arr[i]), maxv = Math.max(maxv, arr[i]);
     return [minv, maxv];
-}
+};
 
 
 const _DateForamter =
@@ -134,7 +134,7 @@ Date.prototype.Format = function (fmt)
         if (_DateForamter[k].test(fmt))
             fmt = fmt.replace(RegExp.$1, (RegExp.$1.length == 1) ? (o[k]) : (("00" + o[k]).substr(("" + o[k]).length)));
     return fmt;
-}
+};
 Date.prototype.FormatCHN = function (fmt)
 {
     const chndate = new Date(this.getTime() + 8 * 3600000);
@@ -155,21 +155,21 @@ Date.prototype.FormatCHN = function (fmt)
         if (_DateForamter[k].test(fmt))
             fmt = fmt.replace(RegExp.$1, (RegExp.$1.length == 1) ? (o[k]) : (("00" + o[k]).substr(("" + o[k]).length)));
     return fmt;
-}
+};
 Date.prototype.getDetailCHN = function ()
 {
     const chndate = new Date(this.getTime() + 8 * 3600000);
     return [chndate.getUTCFullYear(), chndate.getUTCMonth() + 1, chndate.getUTCDate(), chndate.getUTCHours(), chndate.getUTCMinutes(), chndate.getUTCSeconds(), chndate.getUTCMilliseconds()];
-}
+};
 Date.getDetailCHN = function (time)
 {
     const chndate = new Date(time * 1000 + 8 * 3600000);
     return [chndate.getUTCFullYear(), chndate.getUTCMonth() + 1, chndate.getUTCDate(), chndate.getUTCHours(), chndate.getUTCMinutes(), chndate.getUTCSeconds(), chndate.getUTCMilliseconds()];
-}
+};
 Date.prototype.toUTCSeconds = function ()
 {
     return Math.floor(this.getTime() / 1000);
-}
+};
 Date.fromUTCSeconds = (time) => new Date(time * 1000);
 
 $.prototype.forEach = function (consumer)
@@ -182,37 +182,37 @@ $.prototype.forEach = function (consumer)
         }
         catch (e) { console.warn(e); }
     });
-}
+};
 
 HTMLElement.prototype.hasClass = function (className)
 {
     return this.classList.contains(className);
-}
+};
 HTMLDivElement.prototype.hasChild = function (selector)
 {
     if (this.querySelector(selector))
         return true;
     else
         return false;
-}
+};
 Node.prototype.addClass = function (className)
 {
     this.classList.add(className);
-}
+};
 Node.prototype.addClasses = function (...names)
 {
     for (let idx = 0, len = names.length; idx < len; ++idx)
         this.classList.add(names[idx]);
-}
+};
 Node.prototype.removeClass = function (className)
 {
     this.classList.remove(className);
-}
+};
 Node.prototype.removeClasses = function (...names)
 {
     for (let idx = 0, len = names.length; idx < len; ++idx)
         this.classList.remove(names[idx]);
-}
+};
 
 
 /**
@@ -517,7 +517,7 @@ function _getQueryString(qurl)
     for (let i = 0; i < querys.length; ++i)
     {
         const p = querys[i].split('=');
-        if (p.length != 2) continue;
+        if (p.length !== 2) continue;
         ret[p[0]] = decodeURIComponent(p[1].replace(/\+/g, " "));
     }
     return ret;
@@ -668,7 +668,7 @@ function createSVG(width, height, viewbox, paths, attrs)
     svg.innerHTML = pathstrs;
     svg.setAttribute("width", width);
     svg.setAttribute("height", height);
-    svg.setAttribute("viewBox", viewbox)
+    svg.setAttribute("viewBox", viewbox);
     if (attrs)
     {
         if (!(attrs instanceof Array))
@@ -755,7 +755,7 @@ async function toBase64Img(resppms, defcontent)
     {
         const resp = await resppms;
         reader.onloadend = () => pms.resolve(reader.result);
-        reader.onerror = e => { Console.warn(e); pms.resolve(defcontent) };
+        reader.onerror = e => { Console.warn(e); pms.resolve(defcontent); };
         const data = await resp.blob();
         reader.readAsDataURL(data);
     }

@@ -82,6 +82,25 @@ function displayRender(render, elser)
     return func;
 }
 
+/**
+ * @param {string} domid
+ * @param {string} text
+ * @param {boolean} isActive
+ */
+function chgLoaderState(domid, text, isActive)
+{
+    /**@type {HTMLDivElement} */
+    const domLoader = document.querySelector("div#" + domid);
+    if (domLoader)
+    {
+        domLoader.dataset.text = text;
+        if (isActive === false)
+            domLoader.classList.remove("is-active");
+        else
+            domLoader.classList.add("is-active");
+    }
+    console.log(`Loader[${domid}]`, text);
+}
 
 $(document).on("click", "a.bgopen", e =>
 {

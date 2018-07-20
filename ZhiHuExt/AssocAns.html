@@ -10,6 +10,7 @@
     <script src="DownloadMan.js"></script>
     <link rel="stylesheet" href="3rd/css/jquery.dataTables.min.css">
     <link rel="stylesheet" href="3rd/css/nouislider.min.css">
+    <link rel="stylesheet" href="3rd/css/loader-default.css">
     <script src="3rd/js/jquery.dataTables.min.js"></script>
     <script src="3rd/js/nouislider.min.js"></script>
     <title>联想回答</title>
@@ -17,9 +18,11 @@
         td:last-child {
             font-weight: bold;
         }
+
         table.dataTable tbody td {
             padding: 6px 10px;
         }
+
         table.dataTable tbody td {
             padding: 6px 8px;
         }
@@ -27,10 +30,11 @@
 </head>
 <body>
     <div>
+        <div id="tabloader" class="loader loader-default is-active" data-text="Loading" data-blink></div>
         <table id="maintable" class="cell-border hover order-column stripe" width="100%">
             <thead>
                 <tr>
-                    <th width="8%">AnswerId</th>
+                    <th width="8%">Id</th>
                     <th width="45%">链接/标题</th>
                     <th width="15%">作者</th>
                     <th width="16%">日期</th>

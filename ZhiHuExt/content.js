@@ -145,7 +145,7 @@ async function addSpamVoterBtns(voterNodes)
     const normalList = [];
     btnMap.forEach((btn, uid) =>
     {
-        if (!result.banned.has(uid) && !result.spamed.has(uid))
+        if (!result.banned.has(uid) && !result.spamed.has(uid) && btn.parentNode)
             normalList.push({ name: uid, btn: btn.parentNode.children[0] });
     });
     if (AUTO_SPIDE_ZAN)
@@ -511,15 +511,14 @@ $("body").on("click", "span.Voters", function ()
     const itemNode = $(span).parents("div.AnswerItem")[0] || $(span).parents("div.ArticleItem")[0];
     if (!itemNode)
         return;
-
-    /**
-     * @type {{type: "Post"|"Answer", token: string, upvote_num: number, comment_num: number, publish_timestamp: number, author_member_hash_id: string}}
-     */
-    const itemContent = JSON.parse(itemNode.dataset.zaModuleInfo || itemNode.dataset.zaExtraModule).card.content;
-    if (itemContent.type === "Answer")
-        CUR_VOTER_TYPE = "answer", CUR_VOTER_ID = itemContent.token;
-    else if (itemContent.type === "Post")
-        CUR_VOTER_TYPE = "article", CUR_VOTER_ID = itemContent.token;
+    const aaInfo = getAAInfo(itemNode);
+    if (!aaInfo) return;
+    if (aaInfo.type === "Answer" || aaInfo.type === "answer")
+        CUR_VOTER_TYPE = "answer", CUR_VOTER_ID = aaInfo.token || aaInfo.itemId;
+    else if (aaInfo.type === "Post" || aaInfo.type === "article")
+        CUR_VOTER_TYPE = "article", CUR_VOTER_ID = aaInfo.token || aaInfo.itemId;
+    else
+        return;
 });
 $("body").on("click", "button.NumberBoard-item", e =>
 {

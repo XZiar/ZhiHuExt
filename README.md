@@ -17,7 +17,7 @@
  
  * 插件开发环境为最新稳定版chrome，不保证能在旧版chrome或其他Chromium核心浏览器上正常使用。插件要求chrome版本最低为58。
 
- * 所有标注着“广告”的按钮都是一键举报（以垃圾广告的理由），无法撤销，点击前请三思。
+ * **所有标注着“广告”的按钮都是一键举报（以垃圾广告的理由）**，无法撤销，点击前请三思。
 
  * Chrome的IndexedDB特性决定了，频繁更新/写入数据库会有大量写入放大。通俗地说，大量使用插件捕获数据会带来大量磁盘写入，SSD用户请注意。
 
@@ -33,7 +33,7 @@
 
  * 插件没有提示信息，但每次对数据库的写入都会在工具栏按钮上显示蓝色下标。
 
- * 插件运行后，“反作弊限制”的用户界面会被解除限制。
+ * 插件运行后，“反作弊限制”的用户界面会被解除限制，但“该账号已停用”的用户无能为力。
 
  * 将链接/头像拖到页面右下角的`垃圾桶`按钮即为人工标注负面用户/问题/回答/文章。通过插件举报的用户/问题/回答/文章也会被自动标注入数据库。
 
@@ -65,7 +65,7 @@
  * [clipboard.js](https://clipboardjs.com/) Modern copy to clipboard [MIT License](https://zenorocha.mit-license.org/)
  * [DataTables](https://datatables.net/) Table plug-in for jQuery [MIT License](https://datatables.net/license/mit)
  * [echarts](http://echarts.baidu.com/) A powerful, interactive charting and visualization library for browser [BSD-3 License](./License/echarts.license)
- * [3d-force-graph](https://github.com/vasturiano/3d-force-graph/) 3D force-directed graph component using ThreeJS/WebGL [MIT License](./License/3d-force-graph.license)
+ * [css-loader](https://github.com/raphaelfabeni/css-loader) Simple loaders for your web applications using only one div and pure CSS [MIT License](https://github.com/raphaelfabeni/css-loader)
 
 ## License
 

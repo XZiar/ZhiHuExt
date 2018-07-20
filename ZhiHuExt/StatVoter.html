@@ -10,12 +10,14 @@
     <script src="AnalysePage.js"></script>
     <script src="DownloadMan.js"></script>
     <link rel="stylesheet" href="3rd/css/jquery.dataTables.min.css">
+    <link rel="stylesheet" href="3rd/css/loader-default.css">
     <script src="3rd/js/jquery.dataTables.min.js"></script>
     <title>统计点赞</title>
     <style>
         td:last-child {
             font-weight: bold;
         }
+
         table.dataTable tbody td {
             padding: 6px 10px;
         }
@@ -23,9 +25,10 @@
 </head>
 <body>
     <div>
+        <div id="tabloader" class="loader loader-default is-active" data-text="Loading" data-blink></div>
         <h3 style="text-align:center">
             <span id="zansum"></span>个赞中,  有<span id="banzansum"></span>个来自封禁用户的赞
-            <button id="chkAllStatus">检测全部</button><button id="Btn-Similarity">相似度</button>
+            <button id="chkAllStatus">检测全部</button><button class="Btn-Similarity">相似度</button>
         </h3>
         <table id="maintable" class="cell-border hover order-column stripe" width="100%">
             <thead>

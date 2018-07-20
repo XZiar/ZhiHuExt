@@ -592,6 +592,7 @@ class APIParser
                         const actor = act.actor || act.actors[0];
                         output.followqsts.push(new Zan(_any(actor.url_token, actor.urlToken), act.target.id, _any(act.created_time, act.createdTime)));
                     }
+                    // fall through
                 case "QUESTION_CREATE":
                     APIParser.parseByType(output, act.target);
                     break;

@@ -13,49 +13,74 @@ let sliderHandle, missdate;
  */
 async function AssocByVoters(voters)
 {
-    if (voters[0].hasOwnProperty("count"))
-        voters = voters.mapToProp("key");
-    const uid0 = new Set(voters);
+    const uid0 = new Set(await toPureArray(voters));
     uid0.delete("");//except anonymous user
     /**@type {string[]}*/
     const uids = uid0.toArray();
 
-    /**@type {BagArray}*/
-    const anss = await DBfunc("getIdByVoter", voters, "answer", "desc");
-    await AssocByAnswers(anss);
+    /**@type {[Promise<BagArray>, Promise<BagArray>]}*/
+    const pmss = [DBfunc("getIdByVoter", voters, "answer", "desc"), DBfunc("getIdByVoter", voters, "article", "desc")];
+    chgLoaderState("tabloader", "收集点赞人点赞对象");
+    const [anss, arts] = await Promise.all(pmss);
+    await AssocByAAs(anss, arts);
 }
 /**
  * @param {BagArray} anss
+ * @param {BagArray} arts
  */
-async function AssocByAnswers(anss)
+async function AssocByAAs(anss, arts)
 {
     console.log(`${anss.length} answers`, anss);
+    console.log(`${arts.length} articles`, arts);
     if (anss.length > 10000)
         anss = anss.filter(x => x.count > 5);
-    /**@type {{[x:number]: Answer}}*/
-    const ansMap = await DBfunc("getDetailMapOfIds", "answers", anss.mapToProp("key"), "id", "excerpt");
+    if (arts.length > 10000)
+        arts = arts.filter(x => x.count > 5);
+    chgLoaderState("tabloader", "收集回答文章数据");
+    /**@type {[Promise<{[x:number]: string}>, Promise<{[x:number]: string}>]}*/
+    const pmss1 = [DBfunc("getDetailMapOfIds", "answers", anss.mapToProp("key"), "id", "excerpt"), DBfunc("getDetailMapOfIds", "articles", arts.mapToProp("key"), "id", "excerpt")];
+    const [ansMap, artMap] = await Promise.all(pmss1);
+    chgLoaderState("tabloader", "收集问题数据");
     /**@type {{[x:number]: string}}*/
     const qstMap = await DBfunc("getPropMapOfIds", "questions", Object.values(ansMap).mapToProp("question"), "title");
+    chgLoaderState("tabloader", "收集账号数据");
     /**@type {{[x:string]: string}}*/
-    const usrMap = await DBfunc("getPropMapOfIds", "users", Object.values(ansMap).mapToProp("author"), "name");
+    const usrMap = await DBfunc("getPropMapOfIds", "users", Object.values(ansMap).concat(Object.values(artMap)).mapToProp("author"), "name");
     const data = [];
+    chgLoaderState("tabloader", "处理数据");
     for (let idx = 0; idx < anss.length; ++idx)
     {
         const cur = anss[idx];
         const ans = ansMap[cur.key];
         if (ans == null)
         {
-            data.push({ ansid: cur.key, qst: { qid: -1 }, author: { name: "", id: "" }, date: -1, zancnt: -1, count: cur.count });
+            data.push({ type: "answer", qid: -1, aid: cur.key, target: { aid: -1 }, author: { name: "", id: "" }, date: -1, zancnt: -1, count: cur.count });
             continue;
         }
         const qstid = ans.question;
         const title = qstMap[qstid] || qstid;
         const athname = usrMap[ans.author];
         const author = { name: athname == null ? ans.author : athname, id: ans.author };
-        const dat = { ansid: ans.id, qst: { title: title, aid: ans.id, qid: qstid }, author: author, date: ans.timeC, zancnt: ans.zancnt, count: cur.count };
+        const dat = { type: "answer", qid: qstid, aid: ans.id, target: { title: title, url:`https://www.zhihu.com/question/${qstid}/answer/${ans.id}`, aid: ans.id }, author: author, date: ans.timeC, zancnt: ans.zancnt, count: cur.count };
+        data.push(dat);
+    }
+    for (let idx = 0; idx < arts.length; ++idx)
+    {
+        const cur = arts[idx];
+        const art = artMap[cur.key];
+        if (art == null)
+        {
+            data.push({ aid: cur.key, target: { aid: -1 }, author: { name: "", id: "" }, date: -1, zancnt: -1, count: cur.count });
+            continue;
+        }
+        const title = art.title;
+        const athname = usrMap[art.author];
+        const author = { name: athname == null ? art.author : athname, id: art.author };
+        const dat = { type: "article", aid: art.id, target: { title: title, url:`https://zhuanlan.zhihu.com/p/${art.id}`, aid: art.id }, author: author, date: art.timeC, zancnt: art.zancnt, count: cur.count };
         data.push(dat);
     }
 
+    chgLoaderState("tabloader", "加载表格", false);
     mainTable = $("#maintable").DataTable(
         {
             paging: true,
@@ -66,23 +91,22 @@ async function AssocByAnswers(anss)
             columns:
             [
                 {
-                    data: "ansid",
+                    data: "aid",
                     orderable: false
                 },
                 {
-                    data: "qst",
+                    data: "target",
                     orderable: false,
-                    render: displayRender(dat => dat.qid == -1 ? "" : `<a class="bgopen" href="https://www.zhihu.com/question/${dat.qid}/answer/${dat.aid}">${dat.title}</a>`,
-                        dat => dat.qid),
+                    render: displayRender(dat => dat.aid === -1 ? "" : `<a class="bgopen" href="${dat.url}">${dat.title}</a>`, dat => dat.aid)
                 },
                 {
                     data: "author",
                     orderable: false,
-                    render: displayRender(dat => `<a class="bgopen" href="https://www.zhihu.com/people/${dat.id}">${dat.name}</a>`, dat => dat.name),
+                    render: displayRender(dat => `<a class="bgopen" href="https://www.zhihu.com/people/${dat.id}">${dat.name}</a>`, dat => dat.name)
                 },
                 {
                     data: "date",
-                    render: displayRender(dat => timeString(dat, "No record")),
+                    render: displayRender(dat => timeString(dat, "No record"))
                 },
                 { data: "zancnt" },
                 { data: "count" }
@@ -149,10 +173,16 @@ $(document).on("click", "#stat", e =>
 });
 $(document).on("click", "#export", e =>
 {
-    const head = "\uFEFF" + "answerId,questionId,标题,作者,authorId,日期,回答赞数,计数\n";
+    const head = "\uFEFF" + "answerId,questionId,articleId,标题,作者,authorId,日期,回答赞数,计数\n";
     let txt = head;
     const defDate = timeString(0);
-    finalData.forEach(dat => txt += `${dat.ansid},${dat.qst.qid},"${dat.qst.title}","${dat.author.name}",${dat.author.id},${timeString(dat.date, defDate)},${dat.zancnt},${dat.count}\n`);
+    for (let idx = 0; idx < arts.length; ++idx)
+    {
+        if(dat.type === "answer")
+            txt += `${dat.aid},${dat.qid},-1,"${dat.target.title}","${dat.author.name}",${dat.author.id},${timeString(dat.date, defDate)},${dat.zancnt},${dat.count}\n`;
+        else
+            txt += `-1,-1,${dat.aid},"${dat.target.title}","${dat.author.name}",${dat.author.id},${timeString(dat.date, defDate)},${dat.zancnt},${dat.count}\n`;
+    }
     const time = new Date().Format("yyyyMMdd-hhmm");
     DownloadMan.exportDownload(txt, "txt", `AssocAns-${time}.csv`);
 });
@@ -168,22 +198,27 @@ $(document).on("click", "#export", e =>
     if (qs.artid != null)
     {
         const artid = qs.artid.split("*").map(Number);
+        chgLoaderState("tabloader", "收集文章点赞人");
         voters = await DBfunc("getVoters", artid, "article");
     }
     else if (qs.ansid != null)
     {
         const ansid = qs.ansid.split("*").map(Number);
+        chgLoaderState("tabloader", "收集回答点赞人");
         voters = await DBfunc("getVoters", ansid, "answer");
     }
     else if (qs.qid != null)
     {
         const qid = qs.qid.split("*").map(Number);
+        chgLoaderState("tabloader", "收集回答");
         const ansid = await DBfunc("getAnsIdByQuestion", qid);
+        chgLoaderState("tabloader", "收集回答点赞人");
         voters = await DBfunc("getVoters", ansid, "answer");
     }
     else if (qs.athid != null)
     {
         const athid = qs.athid.split("*");
+        chgLoaderState("tabloader", "收集作者点赞人");
         voters = await DBfunc("getVotersByAuthor", athid);
     }
     else if (qs.uid != null)
@@ -196,8 +231,16 @@ $(document).on("click", "#export", e =>
     }
     else if (qs.ansblob != null)
     {
+        chgLoaderState("tabloader", "加载回答数据");
         const anss = await (await fetch(qs.ansblob)).json();
-        AssocByAnswers(anss);
+        AssocByAAs(anss, []);
+        return;
+    }
+    else if (qs.artblob != null)
+    {
+        chgLoaderState("tabloader", "加载文章数据");
+        const arts = await (await fetch(qs.artblob)).json();
+        AssocByAAs([], arts);
         return;
     }
     else if (qs.remotedb != null && qs.ranl != null)
@@ -205,8 +248,8 @@ $(document).on("click", "#export", e =>
         dbid = qs.remotedb;
         remotedb = true;
         await RemoteDB(dbid);
-        const anss = await RemoteDB(dbid, "someAnalyse", "assocans", qs.ranl.split("*"))
-        AssocByAnswers(anss);
+        const anss = await RemoteDB(dbid, "someAnalyse", "assocans", qs.ranl.split("*"));
+        AssocByAAs(anss);
         return;
     }
     if (voters != null)

@@ -41,11 +41,13 @@ async function StatVoters(...voters)
         bag = bag.above(1);
     const uids = bag.elements();
 
+    chgLoaderState("tabloader", "收集账号数据");
     /**@type {{[x:string]: User}}*/
     const usrMap = await DBfunc("getDetailMapOfIds", "users", uids, "id", "head");
 
     let bansum = 0, sum = 0;
 
+    chgLoaderState("tabloader", "处理数据");
     const data = bag.map((uid, count) =>
     {
         const user = usrMap[uid];
@@ -58,6 +60,7 @@ async function StatVoters(...voters)
     });
     $("#zansum").text(sum);
     $("#banzansum").text(bansum);
+    chgLoaderState("tabloader", "加载表格", false);
     $("#maintable").DataTable(
         {
             paging: true,
@@ -197,31 +200,38 @@ $("body").on("click", "button.Btn-Similarity", e =>
     if (qs.athid != null)
     {
         const athid = qs.athid.split("*");
+        chgLoaderState("tabloader", "收集作者点赞人");
         voters = [await DBfunc("getVotersByAuthor", athid)];
     }
     else if (qs.qid != null)
     {
         const qids = qs.qid.split("*").map(Number);
+        chgLoaderState("tabloader", "收集回答");
         const anss = await DBfunc("getAnswerByQuestion", qids);
+        chgLoaderState("tabloader", "收集回答点赞人");
         voters = [await DBfunc("getVoters", anss.mapToProp("id"), "answer")];
     }
     else if (qs.ansid != null)
     {
         const aids = qs.ansid.split("*").map(Number);
+        chgLoaderState("tabloader", "收集回答点赞人");
         voters = [await DBfunc("getVoters", aids, "answer")];
     }
     else if (qs.artid != null)
     {
         const aids = qs.artid.split("*").map(Number);
+        chgLoaderState("tabloader", "收集文章点赞人");
         voters = [await DBfunc("getVoters", aids, "article")];
     }
     else if (qs.vid != null)
     {
         const vid = qs.vid.split("*");
+        chgLoaderState("tabloader", "收集次级点赞人");
         voters = [await DBfunc("getVotersByVoter", vid)];
     }
     else if (qs.votblob != null)
     {
+        chgLoaderState("tabloader", "加载点赞人数据");
         voters = [await (await fetch(qs.votblob)).json()];
     }
     else if (qs.uid != null)
