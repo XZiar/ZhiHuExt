@@ -82,9 +82,9 @@ function showStat(newdat)
             scale: true,
         }],
         yAxis: [{
-            min: "dataMin",
-            max: "dataMax",
+            min: 1,
             type: 'log',
+            logBase: 10
         }],
         toolbox: saveOpt,
         series: series

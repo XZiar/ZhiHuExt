@@ -4,7 +4,7 @@
  *
  * By David Fahlander, david.fahlander@gmail.com
  *
- * Version 3.0.0-alpha.2, Sat Mar 03 2018
+ * Version 3.0.0-alpha.3, Sun Jun 03 2018
  *
  * http://dexie.org
  *
@@ -711,7 +711,8 @@ export declare module Dexie {
   // The "Dexie.Collection" interface. Same as named exported interface Collection.
   interface Collection<T=any,TKey=any> extends _Collection<T, TKey> {} // Because app-code may declare it.
 }
+/** Exporting 'Dexie' as the default export.
+ **/
+export default Dexie;
 
 export as namespace Dexie;
-
-export default Dexie;

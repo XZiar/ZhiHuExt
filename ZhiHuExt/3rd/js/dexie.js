@@ -4,7 +4,7 @@
  *
  * By David Fahlander, david.fahlander@gmail.com
  *
- * Version 3.0.0-alpha.2, Sat Mar 03 2018
+ * Version 3.0.0-alpha.3, Sun Jun 03 2018
  *
  * http://dexie.org
  *
@@ -1184,7 +1184,7 @@ function globalError(err, promise) {
                     }
                     catch (_) { }
             }
-            if (!event.defaultPrevented) {
+            if (event && !event.defaultPrevented) {
                 console.warn("Unhandled rejection: " + (err.stack || err));
             }
         }
@@ -1264,7 +1264,7 @@ function BulkErrorHandlerCatchAll(errorList, done, supportHooks) {
     });
 }
 
-var DEXIE_VERSION = '3.0.0-alpha.2';
+var DEXIE_VERSION = '3.0.0-alpha.3';
 var maxString = String.fromCharCode(65535);
 var minKey = -Infinity;
 var INVALID_KEY_ARGUMENT = "Invalid key provided. Keys must be of type string, number, Date or Array<string | number | Date>.";
@@ -1339,8 +1339,8 @@ var Table =               (function () {
     Table.prototype._idbstore = function (mode, fn, writeLocked) {
         var tableName = this.name;
         function supplyIdbStore(resolve, reject, trans) {
-            if (trans.storeNames.indexOf(tableName) === -1)
-                throw new exceptions.NotFound("Table" + tableName + " not part of transaction");
+            if (!trans.schema[tableName])
+                throw new exceptions.NotFound("Table " + tableName + " not part of transaction");
             return fn(resolve, reject, trans.idbtrans.objectStore(tableName), trans);
         }
         return this._trans(mode, supplyIdbStore, writeLocked);
@@ -1376,23 +1376,40 @@ var Table =               (function () {
             return this
                 .where(compoundIndex.name)
                 .equals(compoundIndex.keyPath.map(function (kp) { return indexOrCrit[kp]; }));
-        if (!compoundIndex)
+        if (!compoundIndex && debug)
             console.warn("The query " + JSON.stringify(indexOrCrit) + " on " + this.name + " would benefit of a " +
                 ("compound index [" + keyPaths.join('+') + "]"));
         var idxByName = this.schema.idxByName;
-        var simpleIndex = keyPaths.reduce(function (r, keyPath) { return [
-            r[0] || idxByName[keyPath],
-            r[0] || !idxByName[keyPath] ?
-                combine(r[1], function (x) { return '' + getByKeyPath(x, keyPath) ===
-                    '' + indexOrCrit[keyPath]; })
-                : r[1]
-        ]; }, [null, null]);
-        var idx = simpleIndex[0];
+        var idb = this.db._deps.indexedDB;
+        function equals(a, b) {
+            debugger;
+            try {
+                return idb.cmp(a, b) === 0;
+            }
+            catch (e) {
+                return false;
+            }
+        }
+        var _a = keyPaths.reduce(function (_a, keyPath) {
+            var prevIndex = _a[0], prevFilterFn = _a[1];
+            var index = idxByName[keyPath];
+            var value = indexOrCrit[keyPath];
+            return [
+                prevIndex || index,
+                prevIndex || !index ?
+                    combine(prevFilterFn, index && index.multi ?
+                        function (x) {
+                            var prop = getByKeyPath(x, keyPath);
+                            return isArray(prop) && prop.some(function (item) { return equals(value, item); });
+                        } : function (x) { return equals(value, getByKeyPath(x, keyPath)); })
+                    : prevFilterFn
+            ];
+        }, [null, null]), idx = _a[0], filterFunction = _a[1];
         return idx ?
             this.where(idx.name).equals(indexOrCrit[idx.keyPath])
-                .filter(simpleIndex[1]) :
+                .filter(filterFunction) :
             compoundIndex ?
-                this.filter(simpleIndex[1]) :
+                this.filter(filterFunction) :
                 this.where(keyPaths).equals('');
     };
     Table.prototype.filter = function (filterFunction) {
@@ -2269,7 +2286,8 @@ var Collection =               (function () {
         var ctx = this._ctx, range = ctx.range, deletingHook = ctx.table.hook.deleting.fire, hasDeleteHook = deletingHook !== nop;
         if (!hasDeleteHook &&
             isPlainKeyRange(ctx) &&
-            ((ctx.isPrimKey && !hangsOnDeleteLargeKeyRange) || !range)) {
+            ((ctx.isPrimKey && !hangsOnDeleteLargeKeyRange) || !range))
+         {
             return this._write(function (resolve, reject, idbstore) {
                 var onerror = eventRejectHandler(reject), countReq = (range ? idbstore.count(range) : idbstore.count());
                 countReq.onerror = onerror;
@@ -2366,7 +2384,7 @@ function fail(collectionOrWhereClause, err, T) {
     return collection;
 }
 function emptyCollection(whereClause) {
-    return new whereClause.Collection(whereClause, function () { return whereClause.db._deps.IDBKeyRange.only(""); }).limit(0);
+    return new whereClause.Collection(whereClause, function () { return whereClause._IDBKeyRange.only(""); }).limit(0);
 }
 function upperFactory(dir) {
     return dir === "next" ?
@@ -2422,7 +2440,7 @@ function addIgnoreCaseAlgorithm(whereClause, match, needles, suffix) {
     }
     initDirection("next");
     var c = new whereClause.Collection(whereClause, function () {
-        return whereClause.db._deps.IDBKeyRange.bound(upperNeedles[0], lowerNeedles[needlesLen - 1] + suffix);
+        return whereClause._IDBKeyRange.bound(upperNeedles[0], lowerNeedles[needlesLen - 1] + suffix);
     });
     c._ondirectionchange = function (direction) {
         initDirection(direction);
@@ -2469,32 +2487,38 @@ var WhereClause =               (function () {
         configurable: true
     });
     WhereClause.prototype.between = function (lower, upper, includeLower, includeUpper) {
+        var _this = this;
         includeLower = includeLower !== false;
         includeUpper = includeUpper === true;
         try {
             if ((this._cmp(lower, upper) > 0) ||
                 (this._cmp(lower, upper) === 0 && (includeLower || includeUpper) && !(includeLower && includeUpper)))
                 return emptyCollection(this);
-            return new this.Collection(this, function () { return IDBKeyRange.bound(lower, upper, !includeLower, !includeUpper); });
+            return new this.Collection(this, function () { return _this._IDBKeyRange.bound(lower, upper, !includeLower, !includeUpper); });
         }
         catch (e) {
             return fail(this, INVALID_KEY_ARGUMENT);
         }
     };
     WhereClause.prototype.equals = function (value) {
-        return new this.Collection(this, function () { return IDBKeyRange.only(value); });
+        var _this = this;
+        return new this.Collection(this, function () { return _this._IDBKeyRange.only(value); });
     };
     WhereClause.prototype.above = function (value) {
-        return new this.Collection(this, function () { return IDBKeyRange.lowerBound(value, true); });
+        var _this = this;
+        return new this.Collection(this, function () { return _this._IDBKeyRange.lowerBound(value, true); });
     };
     WhereClause.prototype.aboveOrEqual = function (value) {
-        return new this.Collection(this, function () { return IDBKeyRange.lowerBound(value); });
+        var _this = this;
+        return new this.Collection(this, function () { return _this._IDBKeyRange.lowerBound(value); });
     };
     WhereClause.prototype.below = function (value) {
-        return new this.Collection(this, function () { return IDBKeyRange.upperBound(value, true); });
+        var _this = this;
+        return new this.Collection(this, function () { return _this._IDBKeyRange.upperBound(value, true); });
     };
     WhereClause.prototype.belowOrEqual = function (value) {
-        return new this.Collection(this, function () { return IDBKeyRange.upperBound(value); });
+        var _this = this;
+        return new this.Collection(this, function () { return _this._IDBKeyRange.upperBound(value); });
     };
     WhereClause.prototype.startsWith = function (str) {
         if (typeof str !== 'string')
@@ -2533,7 +2557,7 @@ var WhereClause =               (function () {
         }
         if (set.length === 0)
             return emptyCollection(this);
-        var c = new this.Collection(this, function () { return IDBKeyRange.bound(set[0], set[set.length - 1]); });
+        var c = new this.Collection(this, function () { return _this._IDBKeyRange.bound(set[0], set[set.length - 1]); });
         c._ondirectionchange = function (direction) {
             compare = (direction === "next" ?
                 _this._ascending :
@@ -2628,7 +2652,7 @@ var WhereClause =               (function () {
             return !keyIsBeyondCurrentEntry(key) && !keyIsBeforeCurrentEntry(key);
         }
         var checkKey = keyIsBeyondCurrentEntry;
-        var c = new this.Collection(this, function () { return IDBKeyRange.bound(set[0][0], set[set.length - 1][1], !includeLowers, !includeUppers); });
+        var c = new this.Collection(this, function () { return _this._IDBKeyRange.bound(set[0][0], set[set.length - 1][1], !includeLowers, !includeUppers); });
         c._ondirectionchange = function (direction) {
             if (direction === "next") {
                 checkKey = keyIsBeyondCurrentEntry;
@@ -2694,6 +2718,7 @@ function createWhereClauseConstructor(db) {
         this._descending = function (a, b) { return indexedDB.cmp(b, a); };
         this._max = function (a, b) { return indexedDB.cmp(a, b) > 0 ? a : b; };
         this._min = function (a, b) { return indexedDB.cmp(a, b) < 0 ? a : b; };
+        this._IDBKeyRange = db._deps.IDBKeyRange;
     });
 }
 
@@ -2850,8 +2875,11 @@ var Transaction =               (function () {
         var memoizedTables = (this._memoizedTables || (this._memoizedTables = {}));
         if (hasOwn(memoizedTables, tableName))
             return memoizedTables[tableName];
-        var table = this.db.table(tableName);
-        var transactionBoundTable = new this.db.Table(table.name, table.schema, this);
+        var tableSchema = this.schema[tableName];
+        if (!tableSchema) {
+            throw new exceptions.NotFound("Table " + tableName + " not part of transaction");
+        }
+        var transactionBoundTable = new this.db.Table(tableName, tableSchema, this);
         memoizedTables[tableName] = transactionBoundTable;
         return transactionBoundTable;
     };
@@ -2864,6 +2892,7 @@ function createTransactionConstructor(db) {
         this.db = db;
         this.mode = mode;
         this.storeNames = storeNames;
+        this.schema = dbschema;
         this.idbtrans = null;
         this.on = Events(this, "complete", "error", "abort");
         this.parent = parent || null;
@@ -2894,7 +2923,7 @@ function createTransactionConstructor(db) {
     });
 }
 
-function createIndexSpec(name, keyPath, unique, multi, auto, compound, dotted) {
+function createIndexSpec(name, keyPath, unique, multi, auto, compound) {
     return {
         name: name,
         keyPath: keyPath,
@@ -2947,25 +2976,25 @@ function removeTablesApi(db, objs) {
 function lowerVersionFirst(a, b) {
     return a._cfg.version - b._cfg.version;
 }
-function runUpgraders(db, oldVersion, idbtrans, reject) {
+function runUpgraders(db, oldVersion, idbUpgradeTrans, reject) {
     var globalSchema = db._dbSchema;
     var trans = db._createTransaction('readwrite', db._storeNames, globalSchema);
-    trans.create(idbtrans);
+    trans.create(idbUpgradeTrans);
     trans._completion.catch(reject);
     var rejectTransaction = trans._reject.bind(trans);
     newScope(function () {
         PSD.trans = trans;
         if (oldVersion === 0) {
             keys(globalSchema).forEach(function (tableName) {
-                createTable(idbtrans, tableName, globalSchema[tableName].primKey, globalSchema[tableName].indexes);
+                createTable(idbUpgradeTrans, tableName, globalSchema[tableName].primKey, globalSchema[tableName].indexes);
             });
             Promise$1.follow(function () { return db.on.populate.fire(trans); }).catch(rejectTransaction);
         }
         else
-            updateTablesAndIndexes(db, oldVersion, trans, idbtrans).catch(rejectTransaction);
+            updateTablesAndIndexes(db, oldVersion, trans, idbUpgradeTrans).catch(rejectTransaction);
     });
 }
-function updateTablesAndIndexes(db, oldVersion, trans, idbtrans) {
+function updateTablesAndIndexes(db, oldVersion, trans, idbUpgradeTrans) {
     var queue = [];
     var versions = db._versions;
     var oldVersionStruct = versions.filter(function (version) { return version._cfg.version === oldVersion; })[0];
@@ -2978,19 +3007,19 @@ function updateTablesAndIndexes(db, oldVersion, trans, idbtrans) {
         queue.push(function () {
             var oldSchema = globalSchema;
             var newSchema = version._cfg.dbschema;
-            adjustToExistingIndexNames(db, oldSchema, idbtrans);
-            adjustToExistingIndexNames(db, newSchema, idbtrans);
+            adjustToExistingIndexNames(db, oldSchema, idbUpgradeTrans);
+            adjustToExistingIndexNames(db, newSchema, idbUpgradeTrans);
             globalSchema = db._dbSchema = newSchema;
             var diff = getSchemaDiff(oldSchema, newSchema);
             diff.add.forEach(function (tuple) {
-                createTable(idbtrans, tuple[0], tuple[1].primKey, tuple[1].indexes);
+                createTable(idbUpgradeTrans, tuple[0], tuple[1].primKey, tuple[1].indexes);
             });
             diff.change.forEach(function (change) {
                 if (change.recreate) {
                     throw new exceptions.Upgrade("Not yet support for changing primary key");
                 }
                 else {
-                    var store_1 = idbtrans.objectStore(change.name);
+                    var store_1 = idbUpgradeTrans.objectStore(change.name);
                     change.add.forEach(function (idx) { return addIndex(store_1, idx); });
                     change.change.forEach(function (idx) {
                         store_1.deleteIndex(idx.name);
@@ -3002,6 +3031,9 @@ function updateTablesAndIndexes(db, oldVersion, trans, idbtrans) {
             var contentUpgrade = version._cfg.contentUpgrade;
             if (contentUpgrade) {
                 anyContentUpgraderHasRun = true;
+                removeTablesApi(db, [db.Transaction.prototype]);
+                setApiOnPlace(db, [db.Transaction.prototype], keys(newSchema), newSchema);
+                trans.schema = newSchema;
                 return Promise$1.follow(function () {
                     contentUpgrade(trans);
                 });
@@ -3012,6 +3044,9 @@ function updateTablesAndIndexes(db, oldVersion, trans, idbtrans) {
                 var newSchema = version._cfg.dbschema;
                 deleteRemovedTables(newSchema, idbtrans);
             }
+            removeTablesApi(db, [db.Transaction.prototype]);
+            setApiOnPlace(db, [db.Transaction.prototype], db._storeNames, db._dbSchema);
+            trans.schema = db._dbSchema;
         });
     });
     function runQueue() {
@@ -3019,7 +3054,7 @@ function updateTablesAndIndexes(db, oldVersion, trans, idbtrans) {
             Promise$1.resolve();
     }
     return runQueue().then(function () {
-        createMissingTables(globalSchema, idbtrans);
+        createMissingTables(globalSchema, idbUpgradeTrans);
     });
 }
 function getSchemaDiff(oldSchema, newSchema) {
@@ -3109,14 +3144,12 @@ function readGlobalSchema(db, idbdb) {
     dbStoreNames.forEach(function (storeName) {
         var store = trans.objectStore(storeName);
         var keyPath = store.keyPath;
-        var dotted = keyPath && typeof keyPath === 'string' && keyPath.indexOf('.') !== -1;
-        var primKey = createIndexSpec(nameFromKeyPath(keyPath), keyPath || "", false, false, !!store.autoIncrement, keyPath && typeof keyPath !== 'string', dotted);
+        var primKey = createIndexSpec(nameFromKeyPath(keyPath), keyPath || "", false, false, !!store.autoIncrement, keyPath && typeof keyPath !== 'string');
         var indexes = [];
         for (var j = 0; j < store.indexNames.length; ++j) {
             var idbindex = store.index(store.indexNames[j]);
             keyPath = idbindex.keyPath;
-            dotted = keyPath && typeof keyPath === 'string' && keyPath.indexOf('.') !== -1;
-            var index = createIndexSpec(idbindex.name, keyPath, !!idbindex.unique, !!idbindex.multiEntry, false, keyPath && typeof keyPath !== 'string', dotted);
+            var index = createIndexSpec(idbindex.name, keyPath, !!idbindex.unique, !!idbindex.multiEntry, false, keyPath && typeof keyPath !== 'string');
             indexes.push(index);
         }
         globalSchema[storeName] = createTableSchema(storeName, primKey, indexes);
@@ -3140,7 +3173,7 @@ function adjustToExistingIndexNames(db, schema, idbtrans) {
             }
         }
     }
-    if (/Safari/.test(navigator.userAgent) &&
+    if (typeof navigator !== 'undefined' && /Safari/.test(navigator.userAgent) &&
         !/(Chrome\/|Edge\/)/.test(navigator.userAgent) &&
         _global.WorkerGlobalScope && _global instanceof _global.WorkerGlobalScope &&
         [].concat(navigator.userAgent.match(/Safari\/(\d*)/))[1] < 604) {
@@ -3153,7 +3186,7 @@ function parseIndexSyntax(indexes) {
         index = index.trim();
         var name = index.replace(/([&*]|\+\+)/g, "");
         var keyPath = /^\[/.test(name) ? name.match(/^\[(.*)\]$/)[1].split('+') : name;
-        rv.push(createIndexSpec(name, keyPath || null, /\&/.test(index), /\*/.test(index), /\+\+/.test(index), isArray(keyPath), /\./.test(index)));
+        rv.push(createIndexSpec(name, keyPath || null, /\&/.test(index), /\*/.test(index), /\+\+/.test(index), isArray(keyPath)));
     });
     return rv;
 }
@@ -3570,7 +3603,7 @@ var Dexie =               (function () {
         return new Promise$1(function (resolve, reject) {
             var doDelete = function () {
                 _this.close();
-                var req = indexedDB.deleteDatabase(_this.name);
+                var req = _this._deps.indexedDB.deleteDatabase(_this.name);
                 req.onsuccess = wrap(function () {
                     databaseEnumerator.remove(_this.name);
                     resolve();
@@ -3759,10 +3792,17 @@ props(Dexie$1, __assign({}, fullNameExceptions, {
     addons: [],
     connections: connections,
     errnames: errnames,
-    dependencies: {
-        indexedDB: _global.indexedDB || _global.mozIndexedDB || _global.webkitIndexedDB || _global.msIndexedDB,
-        IDBKeyRange: _global.IDBKeyRange || _global.webkitIDBKeyRange
-    },
+    dependencies: (function () {
+        try {
+            return {
+                indexedDB: _global.indexedDB || _global.mozIndexedDB || _global.webkitIndexedDB || _global.msIndexedDB,
+                IDBKeyRange: _global.IDBKeyRange || _global.webkitIDBKeyRange
+            };
+        }
+        catch (e) {
+            return { indexedDB: null, IDBKeyRange: null };
+        }
+    })(),
     semVer: DEXIE_VERSION, version: DEXIE_VERSION.split('.')
         .map(function (n) { return parseInt(n); })
         .reduce(function (p, c, i) { return p + (c / Math.pow(10, i * 2)); }),

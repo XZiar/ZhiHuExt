@@ -65,6 +65,7 @@
  * [clipboard.js](https://clipboardjs.com/) Modern copy to clipboard [MIT License](https://zenorocha.mit-license.org/)
  * [DataTables](https://datatables.net/) Table plug-in for jQuery [MIT License](https://datatables.net/license/mit)
  * [echarts](http://echarts.baidu.com/) A powerful, interactive charting and visualization library for browser [BSD-3 License](./License/echarts.license)
+ * [noUiSlider](https://refreshless.com/nouislider/) A lightweight JavaScript range slider library [WTFPL License](https://github.com/leongersen/noUiSlider/blob/master/LICENSE)
  * [css-loader](https://github.com/raphaelfabeni/css-loader) Simple loaders for your web applications using only one div and pure CSS [MIT License](https://github.com/raphaelfabeni/css-loader)
 
 ## License

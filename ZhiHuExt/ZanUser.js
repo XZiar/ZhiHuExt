@@ -11,8 +11,10 @@ let yidx = 11, xidx = 0;
 const selUser = $("#selUser")[0], selObj = $("#selObj")[0];
 
 const saveOpt = ({ show: true, feature: { saveAsImage: { show: true, excludeComponents: ["toolbox"], pixelRatio: 2 } } });
-const yAxis = ({
+const yax = ({
     type: 'log',
+    logBase: 10,
+    min: 1,
     name: "计数"
 });
 
@@ -54,7 +56,7 @@ function showAct()
         toolbox: saveOpt,
         legend: getLegend(wholeData),
         xAxis: xax,
-        yAxis: yAxis,
+        yAxis: yax,
         series: series,
         dataZoom: [{
             id: "dataZoomX",
@@ -249,13 +251,13 @@ async function fetchAActs(ansids, artids)
     }
     else if (qs.artid != null)
     {
-        const ansids = qs.ansid.split("*").map(Number);
+        const artids = qs.artid.split("*").map(Number);
 
-        const aas = await fetchAActs(ansids, []);
-        zananss = aas[0], anss = aas[2];
+        const aas = await fetchAActs([], artids);
+        zanarts = aas[1], arts = aas[3];
 
-        const as = Object.values(anss);
-        additionTitle = as.length == 1 ? "[回答]-" + as[0].id : "多个回答";
+        const as = Object.values(arts);
+        additionTitle = as.length == 1 ? "[文章]-" + as[0].title : "多篇文章";
         groupidx = 2;
     }
     else if (qs.qfid != null)

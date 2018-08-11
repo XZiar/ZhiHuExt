@@ -542,7 +542,7 @@ chrome.runtime.onMessageExternal.addListener(
 {
     $(document).ready(() =>
     {
-        new Clipboard('#copyBtn');
+        new ClipboardJS('#copyBtn');
     });
     const verinfo = await getVersion();
     if (verinfo.curver < verinfo.newver)
