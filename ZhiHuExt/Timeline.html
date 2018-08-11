@@ -10,6 +10,7 @@
     <script src="AnalysePage.js"></script>
     <script src="DownloadMan.js"></script>
     <link rel="stylesheet" href="3rd/css/jquery.dataTables.min.css">
+    <link rel="stylesheet" href="3rd/css/loader-default.css">
     <script src="3rd/js/jquery.dataTables.min.js"></script>
     <script src="3rd/js/echarts.js"></script>
     <title>时间分析</title>
@@ -24,6 +25,7 @@
 </head>
 <body>
     <div>
+        <div id="graphloader" class="loader loader-default is-active" data-text="Loading" data-blink></div>
         <h3 style="text-align:center">
             <button id="changeonly">切换分时</button>
             <button id="changestack">累积堆栈</button>

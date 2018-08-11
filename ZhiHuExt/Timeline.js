@@ -7,6 +7,7 @@ let allDates = [];
 /**@type {string}*/
 let additionTitle, baseTitle = "点赞";
 let stackX;
+let limitCount = 0;
 
 const selUser = $("#selUser")[0], selObj = $("#selObj")[0];
 
@@ -33,6 +34,7 @@ function getLegend(dat)
 
 function showOnlyAct()
 {
+    chgLoaderState("graphloader", "加载图表", false);
     const series = Array.from(wholeData.entries()).map(entry =>
         ({
             name: entry[0],
@@ -58,7 +60,13 @@ function showOnlyAct()
 
 function showStack()
 {
-    const series = Array.from(wholeData.entries()).map(entry =>
+    chgLoaderState("graphloader", "加载图表", false);
+    let objData = wholeData;
+    if (limitCount != 0)
+        objData = new Map(Array.from(wholeData.entries())
+            .sort((a,b) => b[1].last() - a[1].last())
+            .slice(0, limitCount));
+    const series = Array.from(objData.entries()).map(entry =>
         ({
             name: entry[0],
             data: entry[1],
@@ -76,7 +84,7 @@ function showStack()
             }
         },
         toolbox: saveOpt,
-        legend: getLegend(wholeData),
+        legend: getLegend(objData),
         xAxis: {
             type: "category",
             boundaryGap: false,
@@ -98,6 +106,7 @@ function showStack()
 
 function showAct()
 {
+    chgLoaderState("graphloader", "加载图表", false);
     const series = Array.from(wholeData.entries()).map(entry =>
         ({
             name: entry[0],
@@ -232,6 +241,20 @@ function encodeObj(objs, umapper)
     });
 }
 
+/**
+ * @param {number[]} ansids
+ * @param {number[]} artids
+ * @returns {Promise<[Zan[], Zan[], Answer[], Article[]]>}
+ */
+async function fetchAActs(ansids, artids)
+{
+    chgLoaderState("graphloader", "收集点赞信息");
+    const [zananss, zanarts] = await Promise.all([DBfunc("getAny", "zans", "to", ansids), DBfunc("getAny", "zanarts", "to", artids)]);
+    chgLoaderState("graphloader", "收集作品信息");
+    const [anss, arts] = await Promise.all([DBfunc("getDetailMapOfIds", "answers", ansids, "id"), DBfunc("getDetailMapOfIds", "articles", artids, "id")]);
+    return [zananss, zanarts, anss, arts];
+}
+
 !async function()
 {
     /**@type {{[x: string]: string}}*/
@@ -251,8 +274,14 @@ function encodeObj(objs, umapper)
     if (qs.uid != null)
     {
         const uids = qs.uid.split("*");
-        const ret = await doAnalyse("outputUserActs", uids, true);
-        zananss = ret.zananss, zanarts = ret.zanarts, usrs = ret.users;
+
+        chgLoaderState("graphloader", "收集点赞人点赞对象");
+        const pmszanans = DBfunc("getAny", "zans", "from", uids);
+        const pmszanart = DBfunc("getAny", "zanarts", "from", uids);
+        zananss = await pmszanans; zanarts = await pmszanart;
+        chgLoaderState("graphloader", "收集点赞人信息");
+        usrs = await DBfunc("getDetailMapOfIds", "users", uids, "id");
+
         const us = Object.values(usrs);
         additionTitle = us.length == 1 ? "[用户]-" + us[0].name : "多个用户";
         groupidx = 1;
@@ -260,8 +289,14 @@ function encodeObj(objs, umapper)
     else if (qs.athid != null)
     {
         const athids = qs.athid.split("*");
-        const ret = await doAnalyse("outputAuthorActs", athids, true);
-        zananss = ret.zananss, zanarts = ret.zanarts, anss = ret.anss, arts = ret.arts, usrs = ret.users;
+        
+        chgLoaderState("graphloader", "收集作者作品");
+        const [ansids, artids] = await Promise.all([DBfunc("getIdByAuthor", athids, "answer"), DBfunc("getIdByAuthor", athids, "article")]);
+        const aas = await fetchAActs(ansids, artids);
+        zananss = aas[0], zanarts = aas[1], anss = aas[2], arts = aas[3];
+        chgLoaderState("graphloader", "收集作者信息");
+        usrs = await DBfunc("getDetailMapOfIds", "users", athids, "id");
+
         const us = Object.values(usrs);
         additionTitle = us.length == 1 ? "[作者]-" + us[0].name : "多个作者";
         groupidx = 2;
@@ -269,34 +304,45 @@ function encodeObj(objs, umapper)
     else if (qs.qid != null)
     {
         const qids = qs.qid.split("*").map(Number);
-        const ret = await doAnalyse("outputQuestActs", qids, true);
-        zananss = ret.zans, anss = ret.anss;
-        qsts = ret.qsts;
+
+        chgLoaderState("graphloader", "收集问题回答");
+        const ansids = await DBfunc("getAnsIdByQuestion", qids);
+        const aas = await fetchAActs(ansids, []);
+        zananss = aas[0], anss = aas[2];
+        chgLoaderState("graphloader", "收集问题信息");
+        qsts = await DBfunc("getDetailMapOfIds", "questions", qids, "id");
+
         const qstvals = Object.values(qsts);
         additionTitle = qstvals.length == 1 ? "[问题]-" + qstvals[0].title : "多个问题";
         groupidx = 2;
     }
     else if (qs.ansid != null)
     {
-        const aids = qs.ansid.split("*").map(Number);
-        const ret = await doAnalyse("outputAActs", aids, "answer", true);
-        zananss = ret.zans, anss = ret.objs;
+        const ansids = qs.ansid.split("*").map(Number);
+
+        const aas = await fetchAActs(ansids, []);
+        zananss = aas[0], anss = aas[2];
+
         const as = Object.values(anss);
         additionTitle = as.length == 1 ? "[回答]-" + as[0].id : "多个回答";
         groupidx = 2;
     }
     else if (qs.artid != null)
     {
-        const aids = qs.artid.split("*").map(Number);
-        const ret = await doAnalyse("outputAActs", aids, "article", true);
-        zanarts = ret.zans, arts = ret.objs;
+        const artids = qs.artid.split("*").map(Number);
+
+        const aas = await fetchAActs([], artids);
+        zanarts = aas[1], arts = aas[3];
+
         const as = Object.values(arts);
-        additionTitle = as.length == 1 ? as[0].title : "多篇文章";
+        additionTitle = as.length == 1 ? "[文章]-" + as[0].title : "多篇文章";
         groupidx = 2;
     }
     else if (qs.qfid != null)
     {
         const qids = qs.qfid.split("*").map(Number);
+
+        chgLoaderState("graphloader", "收集关注记录");
         const pmss = [DBfunc("getAny", "followqsts", "to", qids), DBfunc("getDetailMapOfIds", "questions", qids, "id")];
         /**@type {[Zan[], {[x:number]: Question}]}*/
         const ret = await Promise.all(pmss);
@@ -308,8 +354,13 @@ function encodeObj(objs, umapper)
         groupidx = 2;
     }
 
+    if(qs.limit != null)
+        limitCount = Number(qs.limit);
+
     if (zananss.length + zanarts.length + folqsts.length > 0)
     {
+        chgLoaderState("graphloader", "统计数据");
+
         const ansdat = encodeZan(zananss, usrs, anss, "answer");
         const artdat = encodeZan(zanarts, usrs, arts, "article");
         const qstdat = encodeZan(folqsts, usrs, qsts, "question");
@@ -320,6 +371,7 @@ function encodeObj(objs, umapper)
         wholeData = wholeData2.groupBy(groupidx);
         if (qs.stack === "true")
         {
+            chgLoaderState("graphloader", "构建堆栈数据");
             $("#export").remove();
             const step = Number(qs.step || 1800);
             const wmap = {};

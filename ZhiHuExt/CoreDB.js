@@ -595,7 +595,7 @@ class ZhiHuDB
         const qids = await toPureArray(qsts);
         console.log("here [" + qids.length + "] qids");
         const ansids = await this.db.answers.where("question").anyOf(qids).primaryKeys();
-        console.log("get [" + ansids.length + "] questions");
+        console.log("get [" + ansids.length + "] answers");
         return ansids;
     }
     async getQuestIdByAnswer(anss)
