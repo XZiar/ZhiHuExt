@@ -1,7 +1,9 @@
 "use strict"
 
-/**@type {Map<string|number, [string,number,string,string,number][]>}*/
+/**@type {Map<string|number, [number, string, string, number, string, string, string|number, string, number, number, string, number][]>}*/
 let wholeData;
+/**@type {Map<string|number, number[]>}*/
+let stackData;
 /**@type {string[]}*/
 let allDates = [];
 /**@type {string}*/
@@ -61,9 +63,9 @@ function showOnlyAct()
 function showStack()
 {
     chgLoaderState("graphloader", "加载图表", false);
-    let objData = wholeData;
+    let objData = stackData;
     if (limitCount != 0)
-        objData = new Map(Array.from(wholeData.entries())
+        objData = new Map(Array.from(stackData.entries())
             .sort((a,b) => b[1].last() - a[1].last())
             .slice(0, limitCount));
     const series = Array.from(objData.entries()).map(entry =>
@@ -138,6 +140,37 @@ function showAct()
     myChart.setOption(option);
 }
 
+function outputJQ()
+{
+    const origin = [].concat.apply([], Array.from(wholeData.values())).sort((a,b)=>a[0] - b[0]);
+    let str = "name,type,value,date\n";
+    let zancnt = new Map();
+    for(let i=0; i < origin.length; ++i)
+    {
+        const arr = origin[i];
+        const oid = arr[2];
+        const cnt = zancnt.get(oid) | 0;
+        str += `${oid},empty,${cnt},"${arr[10]}"\n`;
+        zancnt.set(oid, cnt + 1);
+    }
+    DownloadMan.exportDownload(str, "txt", `acts#${additionTitle}#${new Date().Format("yyMMdd-hhmm")}.csv`);
+}
+
+function outputJQ2()
+{
+    let str = "name,type,value,date\n";
+    stackX.forEach((time, idx) =>
+        {
+            Array.from(stackData.entries())
+                .forEach(entry => 
+                    {
+                        if(entry[1][idx] == 0) return;
+                        const auth = wholeData.get(entry[0])[0][5];
+                        str += `${entry[0]},${auth},${entry[1][idx]},${time}\n`;
+                    });
+        });
+    DownloadMan.exportDownload(str, "txt", `acts#${additionTitle}#${new Date().Format("yyMMdd-hhmm")}.csv`);
+}
 
 $(selUser).change(ev => { window.location = `/Timeline.html?uid=${ev.target.value}&only=true`; });
 $(selObj).change(ev => { window.location = `/Timeline.html?ansid=${ev.target.value}&only=true`; });
@@ -260,7 +293,11 @@ async function fetchAActs(ansids, artids)
     /**@type {{[x: string]: string}}*/
     const qs = _getQueryString();
     /**@type {Zan[]}*/
-    let zananss = [], zanarts = [], folqsts = [];
+    let zananss = [];
+    /**@type {Zan[]}*/
+    let zanarts = [];
+    /**@type {Zan[]}*/
+    let folqsts = [];
     /**@type {{[x:number]:Answer}}*/
     let anss = {};
     /**@type {{[x:number]:Article}}*/
@@ -279,11 +316,8 @@ async function fetchAActs(ansids, artids)
         const pmszanans = DBfunc("getAny", "zans", "from", uids);
         const pmszanart = DBfunc("getAny", "zanarts", "from", uids);
         zananss = await pmszanans; zanarts = await pmszanart;
-        chgLoaderState("graphloader", "收集点赞人信息");
-        usrs = await DBfunc("getDetailMapOfIds", "users", uids, "id");
 
-        const us = Object.values(usrs);
-        additionTitle = us.length == 1 ? "[用户]-" + us[0].name : "多个用户";
+        additionTitle = uids.length == 1 ? "[用户]-" + uids[0] : "多个用户";
         groupidx = 1;
     }
     else if (qs.athid != null)
@@ -353,7 +387,12 @@ async function fetchAActs(ansids, artids)
         additionTitle = qstvals.length == 1 ? "[问题]-" + qstvals[0].title : "多个问题";
         groupidx = 2;
     }
-
+    {
+        chgLoaderState("graphloader", "收集点赞人信息");
+        const voters = new Set(zananss.concat(zanarts).mapToProp("from")).toArray();
+        const usrs2 = await DBfunc("getDetailMapOfIds", "users", voters, "id");
+        Object.assign(usrs, usrs2);
+    }
     if(qs.limit != null)
         limitCount = Number(qs.limit);
 
@@ -365,7 +404,7 @@ async function fetchAActs(ansids, artids)
         const artdat = encodeZan(zanarts, usrs, arts, "article");
         const qstdat = encodeZan(folqsts, usrs, qsts, "question");
         const objdat = encodeObj(Object.values(anss).concat(Object.values(arts)), usrs);
-        /**@type {[number,number,string,string,string][]}*/
+        /**@type {[number, string, string, number, string, string, string|number, string, number, number, string, number][]}*/
         const wholeData2 = ansdat.concat(artdat).concat(qstdat).concat(objdat).sort((a, b) => a[3] - b[3]);
         wholeData2.forEach((x, idx) => x[0] = idx);
         wholeData = wholeData2.groupBy(groupidx);
@@ -373,12 +412,13 @@ async function fetchAActs(ansids, artids)
         {
             chgLoaderState("graphloader", "构建堆栈数据");
             $("#export").remove();
+            stackData = new Map();
             const step = Number(qs.step || 1800);
             const wmap = {};
             for (const k of wholeData.keys())
             {
                 wmap[k] = 0;
-                wholeData.set(k, [0]);
+                stackData.set(k, [0]);
             }
             const tmin = wholeData2[0][3], tmax = wholeData2.last()[3];
             let t1 = tmin, t2 = tmin + step, idx = 0;
@@ -392,7 +432,7 @@ async function fetchAActs(ansids, artids)
                 {
                     Array.from(Object.entries(wmap)).forEach(en =>
                     {
-                        const va = wholeData.get(en[0]);
+                        const va = stackData.get(en[0]);
                         va.push(en[1]);
                     });
                     const [, mon, day, hour, minu, ,] = Date.getDetailCHN(t2);
@@ -405,7 +445,7 @@ async function fetchAActs(ansids, artids)
             }
             Array.from(Object.entries(wmap)).forEach(en =>
             {
-                const va = wholeData.get(en[0]);
+                const va = stackData.get(en[0]);
                 va.push(en[1]);
             });
             {

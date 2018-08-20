@@ -551,7 +551,7 @@ chrome.runtime.onMessageExternal.addListener(
             {
                 type: "basic",
                 title: `【知乎疯牛病】更新提示[${verToStr(verinfo.newver)}]`,
-                message: "插件似乎发布新版本了，快去看看作者又加了什么华而不实的功能吧？！\n" + verinfo.text,
+                message: "插件似乎发布新版本了哦，快去看看吧！\n" + verinfo.text,
                 iconUrl: "icon.png"
             });
     }

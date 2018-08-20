@@ -90,6 +90,11 @@ Set.prototype.toArray = function ()
     return Array.from(this);
 };
 
+Map.prototype.toObject = function ()
+{
+    return [...this.entries()].reduce((obj, [k,v]) => (obj[k] = v, obj), {});
+}
+
 String.prototype.removeSuffix = function (count)
 {
     const del = Math.min(this.length, count);

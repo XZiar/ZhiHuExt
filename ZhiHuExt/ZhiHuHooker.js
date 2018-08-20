@@ -75,21 +75,126 @@
             });
         }
         const oldfetch = fetch;
+        const oldxhr = XMLHttpRequest;
         if (window)
             window.oldfetch = fetch;
+            window.oldxhr = oldxhr;
+
+        class NewXHR
+        {
+            constructor()
+            {
+                this.state = 0;
+                this.xhr = new oldxhr();
+                this.dat = { headers: new Map(), url: "", method: "" };
+                this.timeouter = [];
+                this.statechanger = [];
+                this.loader = null;
+                this.fetcher = null;
+                this.status_ = 0;
+                this.statusText_ = "";
+                this.resp = null;
+                this.respdata = null;
+            }
+            get readyState() { return this.fetcher ? this.state : this.xhr.readyState; }
+            get response() { return this.fetcher ? this.respdata : this.xhr.response; }
+            get responseText() { return this.fetcher ? this.respdata : this.xhr.responseText; }
+            get responseType() { return this.xhr.responseType; }
+            set responseType(val) { this.xhr.responseType = val; }
+            get responseURL() { return this.resp ? this.resp.url : this.xhr.responseURL; }
+            get status() { return this.fetcher ? this.status_ : this.xhr.status; }
+            get statusText() { return this.fetcher ? this.statusText_ : this.xhr.statusText; }
+            get timeout() { return this.xhr.timeout; }
+            set timeout(val) { this.xhr.timeout = val; }
+            get ontimeout() { return this.xhr.ontimeout; }
+            set ontimeout(val) { this.xhr.ontimeout = val; }
+            get onload() { return this.loader; }
+            set onload(val) { this.loader = val; }
+            get upload() { return this.xhr.upload; }
+            get withCredentials() { return this.xhr.withCredentials; }
+            set withCredentials(val) { this.xhr.withCredentials = val; }
+            get onreadystatechange() { return this.xhr.onreadystatechange; }
+            set onreadystatechange(val) { this.xhr.onreadystatechange = val; }
+            open(method, url, async, user, password)
+            {
+                //console.log("[NewXHR]", url, async);
+                this.dat.method = arguments[0];
+                this.dat.url = arguments[1];
+                this.dat.open = arguments;
+            }
+            send(dat)
+            {
+                if (this.dat.method === "GET" && this.dat.url.includes("/api/v"))
+                {
+                    const header = [...this.dat.headers.entries()].reduce((obj, [key, value]) => (obj[key] = value, obj), {});
+                    const initer = { method: this.dat.method, headers: header, body: dat, mode: 'cors', credentials: 'include' };
+                    console.log("[NewXHR]bypass", this.dat.url, initer);
+                    this.fetcher = innerfetch(this.dat.url, initer);
+                    this.state = 1;
+                    this.fetcher.then(async resp => 
+                        {
+                            this.status_ = resp.status;
+                            this,this.statusText_ = resp.statusText;
+                            this.state = 4;
+                            // const ctype = resp.headers.get("content-type");
+                            // if (ctype.includes("/json"))
+                            //     this.respdata = await resp.json();
+                            // else if (ctype.includes("text/"))
+                            //     this.respdata = await resp.text();
+                            // else// if (ctype.includes("application/"))
+                                this.respdata = await resp.blob();
+                            this.resp = resp;
+                            this.loader({currentTarget: this, srcElement: this, target: this});
+                        });
+                }
+                else
+                {
+                    this.xhr.open(...this.dat.open);
+                    this.dat.headers.forEach((v,k) => this.xhr.setRequestHeader(k, v));
+                    this.xhr.onload = this.loader;
+                    this.xhr.send(dat);
+                }
+            }
+            addEventListener(type, listener)
+            {
+                switch(type)
+                {
+                    case "load": this.onload = listener;
+                }
+            }
+            setRequestHeader(header, value)
+            {
+                this.dat.headers.set(header, value);
+            }
+            overrideMimeType(mimetype)
+            {
+                this.xhr.overrideMimeType(mimetype);
+            }
+            getResponseHeader(header)
+            {
+                if (this.resp)
+                    return this.resp.headers.get(header);
+                return this.xhr.getResponseHeader(header);
+            }
+            getAllResponseHeaders()
+            {
+                if (this.resp)
+                    return [...this.resp.headers].reduce((acc,[k,v]) => acc + k + ": " + v + "\r\n", "");
+                return this.xhr.getAllResponseHeaders();
+            }
+            abort()
+            {
+                this.xhr.abort();
+            }
+        }
+
         /**
          * @param {string} req
          * @param {RequestInit} [init]
          * @returns {Promise<Response>}
          */
-        async function newfetch(req, init)
+        async function innerfetch(req, init)
         {
-            // if (init && init.headers && init.headers.hasOwnProperty("X-UDID") && selfDom)
-            // {
-            //     selfDom.dispatchEvent(new CustomEvent("ZHHookerNotify", {detail: {udid: init.headers["X-UDID"], type: "udid"}}));
-            // }
-            if (!req.includes("www.zhihu.com/api/v"))
-                return oldfetch(req, init);
             const apiparts = req.substring(req.indexOf("/api/v") + 8, req.indexOf("?")).split("/");
             let newreq = req;
             {
@@ -154,9 +259,9 @@
             {
                 return shouldBlock ? blockVoter("answer", apiparts[1]) : sendData(req, pms, "answers", "voters", { id: apiparts[1] });
             }
-            else if (apiparts[0] === "articles" && apiparts[2] === "likers")
+            else if (apiparts[0] === "articles" && (apiparts[2] === "likers" || apiparts[2] === "voters"))
             {
-                return shouldBlock ? blockVoter("article", apiparts[1]) : sendData(req, pms, "articles", "voters", { id: apiparts[1] });
+                return shouldBlock ? blockVoter("article", apiparts[1]) : sendData(req, pms, "articles", apiparts[2], { id: apiparts[1] });
             }
             else if (apiparts[0] === "articles" && apiparts[2] === "recommendation")
             {
@@ -186,8 +291,17 @@
             else
                 return pms;
         }
+        async function newfetch(req, init)
+        {
+            if (!req.includes("www.zhihu.com/api/v"))
+                return oldfetch(req, init);
+            else
+                return innerfetch(req, init);
+        }
         fetch = newfetch;
         console.log("[fetch] hooked");
+        XMLHttpRequest = NewXHR;
+        console.log("[xhr] hooked");
 
         const mth = window.location.pathname.match(/\/people\/([^\/]+)/i);
         const oldJParse = JSON.parse;

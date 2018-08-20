@@ -161,9 +161,12 @@ class Analyse
         const artzans = await db.getAny("zanarts", "to", artid);
         const ansvot = anszans.filter(x => x.time < 0).mapToProp("from");
         const artvot = artzans.filter(x => x.time < 0).mapToProp("from");
-        $("#copyData").val(JSON.stringify(ansvot.concat(artvot)));
+        const vot = new Set(ansvot.concat(artvot)).toArray().sort();
+        console.log(`total ${ansvot.length} ansvoter, ${artvot.length} artvoter, reduce to ${vot.length} voters`)
+        $("#copyData").val(JSON.stringify(vot));
         $("#copyBtn")[0].click();
         console.log("copied");
+        return vot;
     }
 
     /**

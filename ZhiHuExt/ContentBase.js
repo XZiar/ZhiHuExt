@@ -453,7 +453,7 @@ class ContentBase
                     if (bypass) bypass();
                     return;
                 }
-                const user = User.fromRawJson(theuser);
+                const user = User.fromRawJson(theuser, uid);
                 if (!waitAll)
                     pms.resolve(user);
                 tail(state, user);

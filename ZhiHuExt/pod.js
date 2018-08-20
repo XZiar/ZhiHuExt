@@ -56,16 +56,18 @@ class User
         this.des = null;
     }
 
-    /**@param {UserType} theuser*/
-    static fromRawJson(theuser)
+    /**@param {UserType} theuser
+     * @param {string} [theid]
+     */
+    static fromRawJson(theuser, theid)
     {
         const user = new User();
-        user.id = _any(theuser.urlToken, theuser.url_token, theuser.slug, "");//empty=>anomonyous
+        user.id = _any(theuser.urlToken, theuser.url_token, theuser.slug, theid, "");//empty=>anomonyous
         user.name = theuser.name;
         if (theuser.avatar)
             user.head = theuser.avatar.id;
         else
-            user.head = _any(theuser.avatarUrl, theuser.avatar_url).split("/").pop().replace(/_[\w]*.[\w]*$/, "");
+            user.head = _any(theuser.avatarUrl, theuser.avatar_url, "").split("/").pop().replace(/_[\w]*.[\w]*$/, "");
         user.anscnt = _any(theuser.answerCount, theuser.answer_count, -1);
         user.follower = _any(theuser.followerCount, theuser.follower_count, -1);
         user.artcnt = _any(theuser.articlesCount, theuser.articles_count, -1);
