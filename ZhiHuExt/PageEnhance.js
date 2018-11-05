@@ -30,9 +30,8 @@ function rootFinder(records)
     return null;
 }
 
-function onObjFound(obj)
+function onObjFound(state)
 {
-    const state = JSON.parse(obj.dataset.state);
     console.log(state);
     const entities = APIParser.parseEntities(state.entities);
     ContentBase._report("batch", entities);
@@ -351,24 +350,30 @@ function reportEnhance()
 
     console.log(pageType + " page");
     
+    function FinishObj(theObs, obj)
+    {
+        theObs.disconnect();
+        onObjFound(obj);
+    }
     const obs = new MutationObserver(records =>
     {
         if (document.body == null)
             return;
-        const obj = rootFinder(records);
-        if (!obj)
+        let obj = document.querySelector("#js-initialData");
+        if (obj)
+            FinishObj(obs, JSON.parse(obj.innerHTML).initialState);
+        obj = rootFinder(records);
+        if (obj)
+            FinishObj(obs, JSON.parse(obj.dataset.state));
+        if (pageType === "article")
         {
-            const oldobj = document.querySelector("#preloadedState");
-            if (pageType === "article" && oldobj)
-            {
+            obj = document.querySelector("#preloadedState");
+            if (obj)
+            {   
                 obs.disconnect();
                 processArticleOld(obj);
             }
-            else
-                return;
         }
-        obs.disconnect();
-        onObjFound(obj);
     });
     obs.observe(document, { "childList": true, "subtree": true });
    

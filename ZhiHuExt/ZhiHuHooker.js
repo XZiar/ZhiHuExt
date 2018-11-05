@@ -293,7 +293,7 @@
         }
         async function newfetch(req, init)
         {
-            if (!req.includes("www.zhihu.com/api/v"))
+            if (!req.includes("/api/v"))
                 return oldfetch(req, init);
             else
                 return innerfetch(req, init);

@@ -33,8 +33,6 @@ namespace DBExportor.Controllers
 
         protected string ObjName { get => HttpContext.Request.Headers["objid"].FirstOrDefault(); }
 
-        protected bool CheckAuth() => HttpContext.Request.Headers["authval"].Contains(Program.Auth);
-
         protected bool TryGetDB(out StandardDB ret) => DBList.TryGetValue(ObjName, out ret);
         protected bool TryGetCache(out Dictionary<string, object> ret) => CacheList.TryGetValue(ObjName, out ret);
         protected bool NewDB(StandardDB db)

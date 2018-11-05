@@ -209,9 +209,25 @@ class ContentBase
 
 
     /**@param {string} rawhtml*/
-    static keepOnlyDataDiv(rawhtml)
+    static processHTMLData(rawhtml)
     {
-        return rawhtml.substring(rawhtml.indexOf('<div id="data"'), rawhtml.lastIndexOf('</div><script'));
+        const scriptIdx = rawhtml.indexOf("js-initialData");
+        if (scriptIdx === -1)
+        {
+            const rawDiv = rawhtml.substring(rawhtml.indexOf('<div id="data"'), rawhtml.lastIndexOf('</div><script'));
+            const div = document.createElement("div");
+            div.innerHTML = rawDiv;
+            const dataElement = div.querySelector("#data");
+            if (dataElement && dataElement.dataset.state)
+                return JSON.parse(dataElement.dataset.state);
+        }
+        else
+        {
+            const begin = rawhtml.indexOf(">", scriptIdx);
+            const end = rawhtml.indexOf("</script>", scriptIdx);
+            if (begin != -1 && end != -1)
+                return JSON.parse(rawhtml.substring(begin + 1, end)).initialState;
+        }
     }
 
     /**
@@ -433,17 +449,13 @@ class ContentBase
         ContentBase._get("https://www.zhihu.com/people/" + uid + "/activities")
             .then(data =>
             {
-                const newData = ContentBase.keepOnlyDataDiv(data);
-                const div = document.createElement("div");
-                div.innerHTML = newData;
-                const dataElement = div.querySelector("#data");
-                if (!dataElement)
+                const state = ContentBase.processHTMLData(data);
+                if (!state)
                 {
                     pms.resolve(null);
                     if (bypass) bypass();
                     return;
                 }
-                const state = JSON.parse(dataElement.dataset.state);
                 if(state.token)
                     ContentBase.CUR_TOKEN = new UserToken(state.token);
                 const theuser = state.entities.users[uid];

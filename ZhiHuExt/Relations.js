@@ -214,7 +214,22 @@ $(document).on("click", "#export", e =>
         DownloadMan.exportDownload(nodetxt, "txt", `Relations-node-${time}.csv`);
     }
 });
-!async function()
+
+/**
+ * @param {number[]} ansids
+ * @param {number[]} artids
+ * @returns {Promise<[Zan[], Zan[], {[x:number]: Answer}, {[x:number]: Article}]>}
+ */
+async function fetchAActs(ansids, artids)
+{
+    chgLoaderState("graphloader", "收集点赞信息");
+    const [zananss, zanarts] = await Promise.all([DBfunc("getAny", "zans", "to", ansids), DBfunc("getAny", "zanarts", "to", artids)]);
+    chgLoaderState("graphloader", "收集作品信息");
+    const [anss, arts] = await Promise.all([DBfunc("getDetailMapOfIds", "answers", ansids, "id"), DBfunc("getDetailMapOfIds", "articles", artids, "id")]);
+    return [zananss, zanarts, anss, arts];
+}
+
+!async function ()
 {
     const qs = _getQueryString();
     if (qs.dim === "2d")
@@ -253,8 +268,28 @@ $(document).on("click", "#export", e =>
         })
         FGraph.graphData({ links: links, nodes: nodes });
     }
+    else if (qs.qid != null)
+    {
+        const qids = qs.qid.split("*").map(Number);
+        const limzan = qs.limzan;
+
+        chgLoaderState("graphloader", "收集问题回答");
+        const ansids = await DBfunc("getAnsIdByQuestion", qids);
+        const aas = await fetchAActs(ansids, []);
+        const zananss = aas[0], anss = aas[2];
+        chgLoaderState("graphloader", "收集点赞人信息");
+        const aths = Object.values(anss).mapToProp("author");
+        const athsset = new Set(aths);
+        const voters = new Set(zananss.mapToProp("from").concat(aths)).toArray();
+        const usrs = await DBfunc("getDetailMapOfIds", "users", voters, "id");
+
+        nodes = Object.values(usrs).filter(usr => athsset.has(usr.id) || usr.zancnt >= limzan).map(usr => new UserNode(usr));
+        const usrset = new Set(nodes.mapToProp("id"));
+        links = zananss.filter(zan => usrset.has(zan.from)).map(zan => ({ source: zan.from, target: anss[zan.to].author }));
+        FGraph.graphData({ links: links, nodes: nodes });
+    }
 
     $("#athcnt").text(athWait.size); $("#votcnt").text(votWait.size);
 
-}()
+}();
 

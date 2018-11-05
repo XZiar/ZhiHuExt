@@ -23,8 +23,6 @@ namespace DBExportor.Controllers
         [HttpGet("begin")]
         public IActionResult BeginDB()
         {
-            if (!CheckAuth())
-                return StatusCode(401);
             if (!NewDB(new StandardDB()))
                 return StatusCode(500);
             return Ok("ok");
@@ -33,8 +31,6 @@ namespace DBExportor.Controllers
         [HttpGet("finish")]
         public IActionResult OutputDB([FromQuery]bool noexcerpt = false, [FromQuery]bool notime = false, [FromQuery]bool shouldKeep = false)
         {
-            if (!CheckAuth())
-                return StatusCode(401);
             if (!TryGetDB(out var obj))
                 return StatusCode(404);
             var fname = $"{Program.DBFolder}/ZhiHuExtDB-{ObjName}.json";
@@ -59,8 +55,6 @@ namespace DBExportor.Controllers
         [RequestSizeLimit(200_000_000)]
         public IActionResult AcceptRecords([FromQuery]string table)
         {
-            if (!CheckAuth())
-                return StatusCode(401);
             if (!TryGetDB(out var db))
                 return StatusCode(404);
             if (!DBExtensions.PodTypeMap.TryGetValue(table, out var tableinfo))

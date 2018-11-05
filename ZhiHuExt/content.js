@@ -245,8 +245,12 @@ function getAAInfo(node)
         const oldInfo = node.dataset.zaModuleInfo || node.dataset.zaExtraModule;
         if (oldInfo)
             return JSON.parse(oldInfo).card.content;
-        else
-            return JSON.parse(node.dataset.zop);
+        const info = node.dataset.zop;
+        if (info)
+            return JSON.parse(info);
+        if (Object.keys(node.dataset).length !== 0)
+            throw node.dataset;
+        return null;
     }
     catch (e)
     {
