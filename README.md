@@ -57,7 +57,7 @@
    多机爬取可勾选“单独记录数据”，数据将不会被记录到本地数据库，可通过导入/导出按钮导入/导出数据。数据冗余大，传输时建议压缩一下。
 
  * 本地数据库过大时，导入导出页面的`快速导入`/`快速导出`功能将不可靠（容易导致插件崩溃），需要用[自带工具](./DBExportor/)进行导出。
-   工具基于Asp.net core 2.0，请自行准备编译环境。
+   工具基于Asp.net core 2.1，请自行准备编译环境。
 
 ## Dependency
  * [Dexie.js](http://dexie.org/) A Minimalistic Wrapper for IndexedDB [Apache License 2.0](./License/Dexie.license)
@@ -65,9 +65,10 @@
  * [clipboard.js](https://clipboardjs.com/) Modern copy to clipboard [MIT License](https://zenorocha.mit-license.org/)
  * [DataTables](https://datatables.net/) Table plug-in for jQuery [MIT License](https://datatables.net/license/mit)
  * [echarts](http://echarts.baidu.com/) A powerful, interactive charting and visualization library for browser [BSD-3 License](./License/echarts.license)
- * [noUiSlider](https://refreshless.com/nouislider/) A lightweight JavaScript range slider library [WTFPL License](https://github.com/leongersen/noUiSlider/blob/master/LICENSE)
+ * [noUiSlider](https://refreshless.com/nouislider/) A lightweight JavaScript range slider library [MIT License](https://github.com/leongersen/noUiSlider/blob/master/LICENSE)
  * [css-loader](https://github.com/raphaelfabeni/css-loader) Simple loaders for your web applications using only one div and pure CSS [MIT License](https://github.com/raphaelfabeni/css-loader)
-
+ * [3d-force-graph](https://github.com/vasturiano/3d-force-graph) 3D force-directed graph component using ThreeJS/WebGL [MIT License](https://github.com/vasturiano/3d-force-graph/blob/master/LICENSE)
+ * 
 ## License
 
 知乎疯牛病 (including its component) is licensed under the [MIT license](License.txt).

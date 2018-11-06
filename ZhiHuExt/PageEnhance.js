@@ -360,7 +360,7 @@ function reportEnhance()
         if (document.body == null)
             return;
         let obj = document.querySelector("#js-initialData");
-        if (obj)
+        if (obj && obj.innerHTML)
             FinishObj(obs, JSON.parse(obj.innerHTML).initialState);
         obj = rootFinder(records);
         if (obj)

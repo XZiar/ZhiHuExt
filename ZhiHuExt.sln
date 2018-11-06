@@ -72,7 +72,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "template", "template", "{D3
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "3rd", "3rd", "{30046561-6196-4231-96CA-494F6AD31CDB}"
 	ProjectSection(SolutionItems) = preProject
-		ZhiHuExt\3rd\js\3d-force-graph-1.10.1.js = ZhiHuExt\3rd\js\3d-force-graph-1.10.1.js
+		ZhiHuExt\3rd\js\3d-force-graph-1.41.1.js = ZhiHuExt\3rd\js\3d-force-graph-1.41.1.js
 		ZhiHuExt\3rd\js\clipboard.js = ZhiHuExt\3rd\js\clipboard.js
 		ZhiHuExt\3rd\js\dexie.d.ts = ZhiHuExt\3rd\js\dexie.d.ts
 		ZhiHuExt\3rd\js\dexie.js = ZhiHuExt\3rd\js\dexie.js
@@ -80,8 +80,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "3rd", "3rd", "{30046561-619
 		ZhiHuExt\3rd\js\echarts-wordcloud.js = ZhiHuExt\3rd\js\echarts-wordcloud.js
 		ZhiHuExt\3rd\js\echarts.js = ZhiHuExt\3rd\js\echarts.js
 		ZhiHuExt\3rd\js\ecStat.js = ZhiHuExt\3rd\js\ecStat.js
-		ZhiHuExt\3rd\js\jquery-3.2.1.min.js = ZhiHuExt\3rd\js\jquery-3.2.1.min.js
-		ZhiHuExt\3rd\js\jquery-3.2.1.min.map = ZhiHuExt\3rd\js\jquery-3.2.1.min.map
+		ZhiHuExt\3rd\js\jquery-3.3.1.min.js = ZhiHuExt\3rd\js\jquery-3.3.1.min.js
+		ZhiHuExt\3rd\js\jquery-3.3.1.min.map = ZhiHuExt\3rd\js\jquery-3.3.1.min.map
 		ZhiHuExt\3rd\js\jquery.dataTables.min.js = ZhiHuExt\3rd\js\jquery.dataTables.min.js
 		ZhiHuExt\3rd\js\nouislider.min.js = ZhiHuExt\3rd\js\nouislider.min.js
 	EndProjectSection
