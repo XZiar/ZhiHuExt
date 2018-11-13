@@ -68,7 +68,7 @@
  * [noUiSlider](https://refreshless.com/nouislider/) A lightweight JavaScript range slider library [MIT License](https://github.com/leongersen/noUiSlider/blob/master/LICENSE)
  * [css-loader](https://github.com/raphaelfabeni/css-loader) Simple loaders for your web applications using only one div and pure CSS [MIT License](https://github.com/raphaelfabeni/css-loader)
  * [3d-force-graph](https://github.com/vasturiano/3d-force-graph) 3D force-directed graph component using ThreeJS/WebGL [MIT License](https://github.com/vasturiano/3d-force-graph/blob/master/LICENSE)
- * 
+
 ## License
 
 知乎疯牛病 (including its component) is licensed under the [MIT license](License.txt).

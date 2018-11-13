@@ -413,7 +413,7 @@ class APIParser
      */
     static parseByType(output, obj)
     {
-        if (!obj.type)
+        if (!obj || !obj.type)
             return null;
         switch (obj.type)
         {
@@ -624,7 +624,8 @@ class APIParser
                         output.zanarts.push(new Zan(_any(actor.url_token, actor.urlToken), art, _any(act.created_time, act.createdTime)));
                     } break;
                 default:
-                    console.log("unknown verb", act.verb, act);
+                    if (act.type !== "feed_advert" && act.type != "action_card") // bypass advertisements and recommendations
+                        console.log("unknown verb", act.verb, act);
             }
             if (act.uninterest_reasons instanceof Array)
                 APIParser.parseReasons(output, act.uninterest_reasons);

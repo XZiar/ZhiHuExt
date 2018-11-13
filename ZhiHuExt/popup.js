@@ -40,7 +40,7 @@ $(document).ready(() =>
 
 function verToStr(ver)
 {
-    return `v${Math.floor(ver / 10000)}.${Math.floor((ver % 10000) / 10)}.${ver % 10}`;
+    return `v${Math.floor(ver / 10000)}.${Math.floor((ver % 10000) / 100)}.${ver % 100}`;
 }
 chrome.runtime.sendMessage({ action: "chkver" }, resp =>
 {

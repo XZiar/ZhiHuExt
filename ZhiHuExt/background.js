@@ -461,6 +461,7 @@ chrome.runtime.onMessageExternal.addListener(
             case "answers":
             case "articles":
             case "questions":
+                if (data.data)
                 {
                     const res = new StandardDB();
                     data.data.forEach(act => APIParser.parseByType(res, act));
@@ -503,8 +504,6 @@ chrome.runtime.onMessageExternal.addListener(
                     db.insert("batch", res, putBadge);
                     console.log("recommends", res);
                 } break;
-            case "publications":
-                break;
             case "qstfollows":
                 {
                     const uqst = request.extra.qid;
@@ -533,6 +532,10 @@ chrome.runtime.onMessageExternal.addListener(
                 {
                     blocking(request.api, request.id).then(x => sendResponse(JSON.stringify(x)));
                 } return true;
+            case "column-contributions":
+            case "favlists":
+            case "publications":
+                break;
             default:
                 console.log("unknown-extern", request.target, request.url, data);
         }

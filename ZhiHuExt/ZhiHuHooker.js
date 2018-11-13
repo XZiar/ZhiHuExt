@@ -305,21 +305,32 @@
 
         const mth = window.location.pathname.match(/\/people\/([^\/]+)/i);
         const oldJParse = JSON.parse;
+        function hookHang(users)
+        {
+            console.log("reach user!", users);
+            if (users[mth[1]])
+            {
+                JSON.parse = oldJParse;
+                console.log("[JSON.parse] unhooked");
+            }
+            for (const user of Object.values(users))
+            {
+                if (user.accountStatus)
+                    user.accountStatus.forEach(status =>
+                        {
+                            if (status.name === "lock")
+                                status.name = "hang";
+                        });
+            }
+        }
         /**@param {string} txt*/
         function newParse(txt)
         {
             const obj = oldJParse(txt);
-            if (obj.entities && obj.entities.users && obj.entities.users[mth[1]])
-            {
-                console.log("reach user!", obj);
-                JSON.parse = oldJParse;
-                console.log("[JSON.parse] unhooked");
-                obj.entities.users[mth[1]].accountStatus.forEach(status =>
-                {
-                    if (status.name === "lock")
-                        status.name = "hang";
-                });
-            }
+            if (obj.entities && obj.entities.users)
+                hookHang(obj.entities.users);
+            else if (obj.initialState && obj.initialState.entities && obj.initialState.entities.users)
+                hookHang(obj.initialState.entities.users);
             return obj;
         }
         if (mth)
@@ -328,6 +339,18 @@
             console.log("[JSON.parse] hooked");
         }
         
+        const oldSetInterval = setInterval;
+        function hookSetInterval(handler, timeout, ...args)
+        {
+            if (timeout == 1000 && handler.toString().includes('location.href="/"'))
+            {
+                console.log("[interval]Detect 1s time-interval with jump", handler);
+                return null;
+            }    
+            return oldSetInterval(handler, timeout, ...args);
+        }
+        setInterval = hookSetInterval;
+        console.log("[setInterval] hooked");
     }
     
 
