@@ -1,4 +1,4 @@
-"use strict"
+"use strict";
 
 //common operations on ZhiHu pages
 
@@ -6,7 +6,7 @@ class PageBase
 {
     /**
      * @param { {banned: Set<string>, spamed: Set<string>, total: number, normal: string[]} } status
-     * @param { HTMLElement | Map<string, HTMLElement> } node
+     * @param { HTMLElement | Map<string, HTMLElement> | Map<string, Set<HTMLElement>> } node
      * @param { string } [uid]
      */
     static setUserStatusColor(status, node, uid)
@@ -16,25 +16,27 @@ class PageBase
             for (const id of status.banned)
             {
                 const ele = node.get(id);
-                ele.style.backgroundColor = ele instanceof HTMLDivElement ? "#a0a0a0" : "black";
+                if (ele)
+                    PageBase.setChkStatusColor(ele, "ban");
             }
             for (const id of status.spamed)
             {
                 const ele = node.get(id);
-                ele.style.backgroundColor = "cornsilk";
+                if (ele)
+                    PageBase.setChkStatusColor(ele, "spam");
             }
         }
-        else
+        else if (node)
         {
             if (status.banned.has(uid))
-                node.style.backgroundColor = node instanceof HTMLDivElement ? "#a0a0a0" : "black";
+                PageBase.setChkStatusColor(node, "ban");
             else if (status.spamed.has(uid))
-                node.style.backgroundColor = "cornsilk";
+                PageBase.setChkStatusColor(node, "spam");
         }
     }
 
     /**
-     * @param { HTMLElement } node
+     * @param { HTMLElement | Set<HTMLElement> } node
      * @param { "ban" | "spam" | "fail" | "succ" | "verify" | "repeat" | "clear" } status
      */
     static setChkStatusColor(node, status)
@@ -44,10 +46,16 @@ class PageBase
             console.warn("element that demanded tobe colored does not exists.");
             return;
         }
+        if (node instanceof Set)
+        {
+            for (const ele of node)
+                PageBase.setChkStatusColor(ele, status);
+            return;
+        }
         switch (status)
         {
             case "ban":
-                node.style.backgroundColor = "black"; break;
+                node.style.backgroundColor = node instanceof HTMLDivElement ? "#a0a0a0" : "black"; break;
             case "succ":
                 node.style.backgroundColor = "rgb(0,224,32)"; break;
             case "fail":

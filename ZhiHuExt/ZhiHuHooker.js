@@ -1,4 +1,4 @@
-"use strict"
+"use strict";
 
 !function ()
 {
@@ -15,7 +15,7 @@
         /**
          * @description parse query string to key-value object
          * @param {string} qurl URL's query string
-         * @returns {{[x:string]: string}} key-value object
+         * @returns {Object.<string,string>} key-value object
          */
         function _getQueryString(qurl)
         {
@@ -24,7 +24,7 @@
             for (let i = 0; i < querys.length; ++i)
             {
                 const p = querys[i].split('=');
-                if (p.length != 2) continue;
+                if (p.length !== 2) continue;
                 ret[p[0]] = decodeURIComponent(p[1].replace(/\+/g, " "));
             }
             return ret;

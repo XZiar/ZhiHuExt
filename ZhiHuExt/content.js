@@ -1,4 +1,4 @@
-"use strict"
+"use strict";
 
 // for common injects
 
@@ -53,7 +53,7 @@ async function autoReportAll(ev)
         return;
     ContentBase._report("spams", report);
     const result = await ContentBase.checkSpam(type, report.id);
-    const uids = result.normal.filter(u => u != "");
+    const uids = result.normal.filter(u => u);
     thisbtn.textContent = `${uids.length}/${result.total}`;
     let cnt = 0;
     let alldone = true;
@@ -98,7 +98,7 @@ function setDraggable(element)
     element.ondragstart = (ev) =>
     {
         ev.dataTransfer.setData("text", JSON.stringify(ev.target.dataset));
-    }
+    };
     if (element.classList.contains("Btn-ReportSpam"))
     {
         element.ondragover = ev => ev.preventDefault();
@@ -122,7 +122,7 @@ async function addSpamVoterBtns(voterNodes)
         const moduleNode = node.children[0];
         const dset = JSON.parse(moduleNode.dataset.zaModuleInfo || moduleNode.dataset.zaExtraModule);
         const hashid = dset.card.content.member_hash_id;
-        if (hashid[0] === "#" && hashid != "#-1")
+        if (hashid[0] === "#" && hashid !== "#-1")
         {
             const votedate = Number(hashid.substr(1));
             const [, , , hour, minu, ,] = new Date(votedate * 1000).getDetailCHN();
@@ -151,15 +151,15 @@ async function addSpamVoterBtns(voterNodes)
     if (AUTO_SPIDE_ZAN)
     {
         if (NOW_SPIDE)
-            SPIDE_LIST.push(...normalList)
+            SPIDE_LIST.push(...normalList);
         else
             $(".Btn-CheckAllStatus").click();// assume we can find this button
     }
-};
+}
 const voterObserver = new MutationObserver(records =>
 {
     const voterNodes = Array.fromArray(
-        records.filter(record => (record.type == "childList" && record.target.nodeName == "DIV"))
+        records.filter(record => (record.type === "childList" && record.target.nodeName === "DIV"))
             .map(record => $.makeArray(record.addedNodes)))
         .filter(node => node.hasClass("List-item") && !node.hasChild(".Btn-ReportSpam"));
     addSpamVoterBtns(voterNodes);
@@ -184,15 +184,16 @@ function monitorVoter(voterPopup)
             const thisbtn = ev.target;
             /**@type {{uid:string}}*/
             const ds = JSON.parse(ev.dataTransfer.getData("text"));
+            /**@type {HTMLButtonElement[]}*/
             const btns = $(".Btn-CheckStatus", voterPopup).toArray();
             for (let i = 0; i < btns.length; ++i)
             {
-                if (btns[i].dataset.id == ds.id)
+                if (btns[i].dataset.id === ds.id)
                     break;
-                if (btns[i].style.backgroundColor == "")
+                if (!btns[i].style.backgroundColor)
                     PageBase.setChkStatusColor(btns[i], "succ");
             }
-        }
+        };
         const btn2 = createButton(["Btn-AssocAns", "Button--primary"], "启发");
         const btn3 = createButton(["Btn-Similarity", "Button--primary"], "相似性");
         const btn4 = createButton(["Btn-ShowTime", "Button--primary"], "时间图");
@@ -265,7 +266,7 @@ function getAAInfo(node)
  */
 async function addAASpamBtns(answerNodes)
 {
-    /**@type {Map<string, HTMLDivElement>}*/
+    /**@type {Map<string, Set<HTMLDivElement>>}*/
     const athMap = new Map();
     answerNodes.filter(node => !node.hasChild(".Btn-ReportSpam"))
         .forEach(node =>
@@ -302,7 +303,13 @@ async function addAASpamBtns(answerNodes)
             const urlMeta = aArea.querySelector("meta[itemprop=url]").content || "";
             const athMth = urlMeta.match(/www.zhihu.com\/people\/([^\/]*)/i);
             if (athMth && athMth[1])
-                athMap.set(athMth[1], aArea.querySelector("div.AuthorInfo-head"));
+            {
+                var div = aArea.querySelector("div.AuthorInfo-head");
+                if (athMap.has(athMth[1]))
+                    athMap.get(athMth[1]).add(div);
+                else
+                    athMap.set(athMth[1], new Set(div));
+            }
         });
     const result = await ContentBase.checkSpam("users", Array.from(athMap.keys()));
     PageBase.setUserStatusColor(result, athMap);
@@ -483,12 +490,15 @@ $("body").on("click", "button.Btn-CheckAllStatus", async function (e)
     SPIDE_LIST = [];
     $(voterList).find(".ContentItem-extra").each((idx, extraArea) =>
     {
-        const btnChk = extraArea.children[0], btnSpam = extraArea.children[1];
-        if (btnChk.style.backgroundColor != "")//has result
+        /**@type {HTMLButtonElement}*/
+        const btnChk = extraArea.children[0];
+        /**@type {HTMLButtonElement}*/
+        const btnSpam = extraArea.children[1];
+        if (btnChk.style.backgroundColor)//has result
             return;
-        if (!isShift && btnSpam.style.backgroundColor == "black")
+        if (!isShift && btnSpam.style.backgroundColor === "black")
             return;
-        if (!isCtrl && btnSpam.style.backgroundColor != "")
+        if (!isCtrl && btnSpam.style.backgroundColor)
             return;
         SPIDE_LIST.push({ name: btnChk.dataset.id, btn: btnChk });
     });
@@ -615,7 +625,7 @@ $("body").on("drop", ".RichContent-inner", ev =>
     ev.preventDefault();
     /**@type {string}*/
     const txt = ev.originalEvent.dataTransfer.getData("text");
-    if (txt != "MarkBtn") return;
+    if (txt !== "MarkBtn") return;
     const wrapper = ev.currentTarget.parentElement.parentElement;
     let target;
     if (wrapper.className.includes("AnswerItem"))
@@ -648,8 +658,8 @@ async function ZhiBtnDropper(ev)
     const dat = JSON.parse(txt);
     if (dat.type !== "answer" && dat.type !== "article")
         return;
-    let args = []
-    if (dat.type == "answer")
+    let args = [];
+    if (dat.type === "answer")
         args = [Number(dat.id), []];
     else
         args = [[], Number(dat.id)];
@@ -712,7 +722,7 @@ async function TrashDropper(ev)
     btndiv1.ondragstart = (ev) =>
     {
         ev.dataTransfer.setData("text", "MarkBtn");
-    }
+    };
     btndiv1.ondragover = ev => ev.preventDefault();
     btndiv1.ondrop = ZhiBtnDropper;
 

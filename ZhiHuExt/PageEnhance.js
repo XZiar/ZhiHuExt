@@ -1,4 +1,4 @@
-"use strict"
+"use strict";
 
 //enhances on each type of ZhiHu pages
 
@@ -12,7 +12,7 @@ function rootFinder(records)
     for (let i = 0; i < records.length; ++i)
     {
         const record = records[i];
-        if (record.type != "childList")
+        if (record.type !== "childList")
             continue;
         const nodes = record.addedNodes;
         for (let j = 0; j < nodes.length; ++j)
@@ -157,14 +157,14 @@ async function peopleEnhance()
     btn4.ondragstart = (ev) =>
     {
         ev.dataTransfer.setData("text", "spider");
-    }
+    };
     $("body").on("dragover", "a.NumberBoard-item", ev => ev.preventDefault());
     $("body").on("drop", "a.NumberBoard-item", async ev =>
     {
         ev.preventDefault();
         /**@type {string}*/
         const txt = ev.originalEvent.dataTransfer.getData("text");
-        if (txt != "spider" && !Number(txt)) return;
+        if (txt !== "spider" && !Number(txt)) return;
         let cnt = Number(txt) || Number(ev.currentTarget.innerText.split('\n')[1].replace(',', ''));
         console.log("spider for follow", ev);
         const suffix = ev.currentTarget.href.split("/").pop();
@@ -183,7 +183,7 @@ async function peopleEnhance()
 
 async function qstEnhance()
 {
-    const qstArea = $("div.QuestionHeader-footer-inner").find("div.QuestionButtonGroup")
+    const qstArea = $("div.QuestionHeader-footer-inner").find("div.QuestionButtonGroup");
     if (qstArea.length > 0)
     {
         const qid = ContentBase.CUR_QUESTION;
@@ -323,7 +323,7 @@ function reportEnhance()
     bodyObserver.observe(document.body, { "childList": true, "subtree": true });
 }
 
-!function ()
+function Main()
 {
     const url = window.location.href;
     const mthResp = url.match(/www.zhihu.com\/inbox\/\8912224000/i);
@@ -357,7 +357,7 @@ function reportEnhance()
     }
     const obs = new MutationObserver(records =>
     {
-        if (document.body == null)
+        if (!document.body)
             return;
         let obj = document.querySelector("#js-initialData");
         if (obj && obj.innerHTML)
@@ -377,7 +377,8 @@ function reportEnhance()
     });
     obs.observe(document, { "childList": true, "subtree": true });
    
-}()
+}
+Main();
 
 
 async function saveQuestion(ev)
@@ -385,11 +386,11 @@ async function saveQuestion(ev)
     ev.preventDefault();
     /**@type {string}*/
     const txt = ev.dataTransfer.getData("text");
-    if (txt != "MarkBtn") return;
+    if (txt !== "MarkBtn") return;
     const qid = document.location.pathname.split("/")[2];
     if (!qid)
         return;
-    const qsturl = `https://www.zhihu.com/api/v4/questions/${qid}?include=excerpt,content,author,answer_count,topics,comment_count,follower_count;data[*].author.voteup_count,answer_count,articles_count,follower_count,badge[?(type=best_answerer)].topics`
+    const qsturl = `https://www.zhihu.com/api/v4/questions/${qid}?include=excerpt,content,author,answer_count,topics,comment_count,follower_count;data[*].author.voteup_count,answer_count,articles_count,follower_count,badge[?(type=best_answerer)].topics`;
     const anspms = ContentBase.fetchAnswers(qid, 100);
     const qst = await ContentBase._get(qsturl);
     qst.answers = await anspms;
@@ -421,7 +422,7 @@ async function saveQuestion(ev)
 
 async function saveADetail(target, id)
 {
-    const adeturl = `https://www.zhihu.com/api/v4/${target}s/${id}?include=excerpt,content,author,comment_count,voteup_count;data[*].question.answer_count,topics,follower_count;data[*].author.voteup_count,answer_count,articles_count,follower_count,badge[?(type=best_answerer)].topics`
+    const adeturl = `https://www.zhihu.com/api/v4/${target}s/${id}?include=excerpt,content,author,comment_count,voteup_count;data[*].question.answer_count,topics,follower_count;data[*].author.voteup_count,answer_count,articles_count,follower_count,badge[?(type=best_answerer)].topics`;
     const adet = await ContentBase._get(adeturl);
 
     const output = new StandardDB();

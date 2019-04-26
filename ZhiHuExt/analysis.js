@@ -6,7 +6,7 @@
  * @template T
  * @template R
  * @param {{key: T, count: number}[]} bagArray
- * @param {{[x: T]: R}} detailMap
+ * @param {Object.<T,R>} detailMap
  * @param {string} newProp
  * @returns {{[newProp: string]:T|R, count: number}[]}
  */
@@ -120,7 +120,7 @@ class Analyse
     }
     /**
      * @param {[string, number, number, string, number, number][]} zandata
-     * @param {{[x:number]:number}} objmap
+     * @param {Object.<number,number>} objmap
      * @return {[string, number, number, string, number, number, number, number, number][]}
      */
     static _ZanAndObj(zandata, objmap)
@@ -142,7 +142,7 @@ class Analyse
         const head = "\uFEFF" + "点赞人,点赞目标,点赞时间,点赞日期,当日计秒,当日分钟,目标时间,间隔秒,间隔分钟\n";
         const ansdata = Analyse._zanToCSV(zans);
         const artdata = Analyse._zanToCSV(zanarts);
-        /**@type {{[x:number]:number}[]}*/
+        /**@type {Object.<number,number>[]}*/
         const [anstime, arttime] = await pmss;
         const retdata = Analyse._ZanAndObj(ansdata, anstime).concat(Analyse._ZanAndObj(artdata, arttime)).sort((a, b) => a[2] - b[2]);
         if (returnit)

@@ -1,10 +1,9 @@
-"use strict"
+"use strict";
 
 /**@type {{[x:string]: User}}*/
 let finalUserMap;
 /**@type {SimpleBag}*/
 let finalBag;
-let CUR_ANSWER, CUR_
 
 function reportSpam(id, type)
 {
@@ -26,7 +25,7 @@ function reportSpam(id, type)
                 pms.reject({ code: data.responseJSON.error.code, error: data.responseJSON.error.message });
             else
                 pms.reject({ code: xhr.status, error: "unknown error" });
-        })
+        });
     return pms;
 }
 
@@ -77,7 +76,7 @@ async function StatVoters(...voters)
                 },
                 {
                     data: "status",
-                    render: displayRender(dat => dat === "ban" ? "停用" : (dat === "sban" ? "永禁言" : "正常？")),
+                    render: displayRender(dat => dat === "ban" ? "停用" : (dat === "sban" ? "永禁言" : "正常？"))
                 },
                 { data: "artcnt" },
                 { data: "anscnt" },
@@ -189,7 +188,7 @@ $("body").on("click", "button.Btn-Similarity", e =>
     });
 });
 
-!async function()
+async function Main()
 {
     /**@type {{[x: string]: string}}*/
     const qs = _getQueryString();
@@ -197,13 +196,13 @@ $("body").on("click", "button.Btn-Similarity", e =>
     /**@type {BagArray[]}*/
     let voters;
 
-    if (qs.athid != null)
+    if (qs.athid)
     {
         const athid = qs.athid.split("*");
         chgLoaderState("tabloader", "收集作者点赞人");
         voters = [await DBfunc("getVotersByAuthor", athid)];
     }
-    else if (qs.qid != null)
+    else if (qs.qid)
     {
         const qids = qs.qid.split("*").map(Number);
         chgLoaderState("tabloader", "收集回答");
@@ -211,34 +210,36 @@ $("body").on("click", "button.Btn-Similarity", e =>
         chgLoaderState("tabloader", "收集回答点赞人");
         voters = [await DBfunc("getVoters", anss.mapToProp("id"), "answer")];
     }
-    else if (qs.ansid != null)
+    else if (qs.ansid)
     {
         const aids = qs.ansid.split("*").map(Number);
         chgLoaderState("tabloader", "收集回答点赞人");
         voters = [await DBfunc("getVoters", aids, "answer")];
     }
-    else if (qs.artid != null)
+    else if (qs.artid)
     {
         const aids = qs.artid.split("*").map(Number);
         chgLoaderState("tabloader", "收集文章点赞人");
         voters = [await DBfunc("getVoters", aids, "article")];
     }
-    else if (qs.vid != null)
+    else if (qs.vid)
     {
         const vid = qs.vid.split("*");
         chgLoaderState("tabloader", "收集次级点赞人");
         voters = [await DBfunc("getVotersByVoter", vid)];
     }
-    else if (qs.votblob != null)
+    else if (qs.votblob)
     {
         chgLoaderState("tabloader", "加载点赞人数据");
         voters = [await (await fetch(qs.votblob)).json()];
     }
-    else if (qs.uid != null)
+    else if (qs.uid)
     {
         voters = [qs.uid.split("*").map(uid => ({ key: uid, count: 1 }))];
     }
-    if (voters != null)
+    if (voters)
         StatVoters(...voters);
-}()
+}
+
+Main();
 

@@ -177,7 +177,6 @@ $(selObj).change(ev => { window.location = `/Timeline.html?ansid=${ev.target.val
 
 $(document).on("click", "#changeonly", e =>
 {
-    /**@type {{[x: string]: string}}*/
     const qs = _getQueryString();
     if (qs.only === "true")
         qs.only = "false";
@@ -188,7 +187,6 @@ $(document).on("click", "#changeonly", e =>
 });
 $(document).on("click", "#changestack", e =>
 {
-    /**@type {{[x: string]: string}}*/
     const qs = _getQueryString();
     if (qs.stack === "true")
         qs.stack = "false";
@@ -223,8 +221,8 @@ myChart.on("click", params =>
 
 /**
  * @param {Zan[]} zans
- * @param {{[x:number]:User}} umapper
- * @param {{[x:number]:Answer|Article|Question}} mapper
+ * @param {Object.<number,User>} umapper
+ * @param {Object.<number,Answer|Article|Question>} mapper
  * @param {"answer"|"article"|"question"} type
  * @returns {[number, string, string, number, string, string, string|number, string, number, number, string, number][]}
  */
@@ -252,7 +250,7 @@ function encodeZan(zans, umapper, mapper, type)
 }
 /**
  * @param {Answer[]|Article[]} objs
- * @param {{[x:number]:User}} umapper
+ * @param {Object.<number,User>} umapper
  * @returns {[number, string, string, number, string, string, string|number, string, number, number, string, number][]}
  */
 function encodeObj(objs, umapper)
@@ -288,9 +286,8 @@ async function fetchAActs(ansids, artids)
     return [zananss, zanarts, anss, arts];
 }
 
-!async function()
+async function Main()
 {
-    /**@type {{[x: string]: string}}*/
     const qs = _getQueryString();
     /**@type {Zan[]}*/
     let zananss = [];
@@ -298,17 +295,17 @@ async function fetchAActs(ansids, artids)
     let zanarts = [];
     /**@type {Zan[]}*/
     let folqsts = [];
-    /**@type {{[x:number]:Answer}}*/
+    /**@type {Object.<number,Answer>}*/
     let anss = {};
-    /**@type {{[x:number]:Article}}*/
+    /**@type {Object.<number,Article>}*/
     let arts = {};
-    /**@type {{[x:number]:Question}}*/
+    /**@type {Object.<number,Question>}*/
     let qsts = {};
-    /**@type {{[x:number]:User}}*/
+    /**@type {Object.<number,User>}*/
     let usrs = {};
     let groupidx = -1;
 
-    if (qs.uid != null)
+    if (qs.uid)
     {
         const uids = qs.uid.split("*");
 
@@ -320,7 +317,7 @@ async function fetchAActs(ansids, artids)
         additionTitle = uids.length == 1 ? "[用户]-" + uids[0] : "多个用户";
         groupidx = 1;
     }
-    else if (qs.athid != null)
+    else if (qs.athid)
     {
         const athids = qs.athid.split("*");
         
@@ -332,10 +329,10 @@ async function fetchAActs(ansids, artids)
         usrs = await DBfunc("getDetailMapOfIds", "users", athids, "id");
 
         const us = Object.values(usrs);
-        additionTitle = us.length == 1 ? "[作者]-" + us[0].name : "多个作者";
+        additionTitle = us.length === 1 ? "[作者]-" + us[0].name : "多个作者";
         groupidx = 2;
     }
-    else if (qs.qid != null)
+    else if (qs.qid)
     {
         const qids = qs.qid.split("*").map(Number);
 
@@ -347,10 +344,10 @@ async function fetchAActs(ansids, artids)
         qsts = await DBfunc("getDetailMapOfIds", "questions", qids, "id");
 
         const qstvals = Object.values(qsts);
-        additionTitle = qstvals.length == 1 ? "[问题]-" + qstvals[0].title : "多个问题";
+        additionTitle = qstvals.length === 1 ? "[问题]-" + qstvals[0].title : "多个问题";
         groupidx = 2;
     }
-    else if (qs.ansid != null)
+    else if (qs.ansid)
     {
         const ansids = qs.ansid.split("*").map(Number);
 
@@ -358,10 +355,10 @@ async function fetchAActs(ansids, artids)
         zananss = aas[0], anss = aas[2];
 
         const as = Object.values(anss);
-        additionTitle = as.length == 1 ? "[回答]-" + as[0].id : "多个回答";
+        additionTitle = as.length === 1 ? "[回答]-" + as[0].id : "多个回答";
         groupidx = 2;
     }
-    else if (qs.artid != null)
+    else if (qs.artid)
     {
         const artids = qs.artid.split("*").map(Number);
 
@@ -369,22 +366,22 @@ async function fetchAActs(ansids, artids)
         zanarts = aas[1], arts = aas[3];
 
         const as = Object.values(arts);
-        additionTitle = as.length == 1 ? "[文章]-" + as[0].title : "多篇文章";
+        additionTitle = as.length === 1 ? "[文章]-" + as[0].title : "多篇文章";
         groupidx = 2;
     }
-    else if (qs.qfid != null)
+    else if (qs.qfid)
     {
         const qids = qs.qfid.split("*").map(Number);
 
         chgLoaderState("graphloader", "收集关注记录");
         const pmss = [DBfunc("getAny", "followqsts", "to", qids), DBfunc("getDetailMapOfIds", "questions", qids, "id")];
-        /**@type {[Zan[], {[x:number]: Question}]}*/
+        /**@type {[Zan[], Object.<number,Question>]}*/
         const ret = await Promise.all(pmss);
 
         folqsts = ret[0]; qsts = ret[1];
         baseTitle = "关注";
         const qstvals = Object.values(qsts);
-        additionTitle = qstvals.length == 1 ? "[问题]-" + qstvals[0].title : "多个问题";
+        additionTitle = qstvals.length === 1 ? "[问题]-" + qstvals[0].title : "多个问题";
         groupidx = 2;
     }
     {
@@ -393,7 +390,7 @@ async function fetchAActs(ansids, artids)
         const usrs2 = await DBfunc("getDetailMapOfIds", "users", voters, "id");
         Object.assign(usrs, usrs2);
     }
-    if(qs.limit != null)
+    if(qs.limit)
         limitCount = Number(qs.limit);
 
     if (zananss.length + zanarts.length + folqsts.length > 0)
@@ -480,5 +477,7 @@ async function fetchAActs(ansids, artids)
         $("#changestack").text(qs.stack === "true" ? "切换到非堆栈图" : "切换到堆栈累积图");
 
     }
-}()
+}
+
+Main();
 

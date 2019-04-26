@@ -1,4 +1,4 @@
-"use strict"
+"use strict";
 
 Array.prototype.addall = function (other)
 {
@@ -250,6 +250,7 @@ class SimpleBag
     /**
      * @template T
      * @param {...T} elements
+     * @returns {SimpleBag<T>}
      */
     add(...elements)
     {
@@ -266,6 +267,7 @@ class SimpleBag
     /**
      * @template T
      * @param {T[]} elements
+     * @returns {SimpleBag<T>}
      */
     adds(elements)
     {
@@ -281,6 +283,7 @@ class SimpleBag
      * @template T
      * @param {T} element
      * @param {number} count
+     * @returns {SimpleBag<T>}
      */
     addMany(element, count)
     {
@@ -291,6 +294,7 @@ class SimpleBag
     /**
      * @template T
      * @param {...T} elements
+     * @returns {SimpleBag<T>}
      */
     remove(...elements)
     {
@@ -312,6 +316,7 @@ class SimpleBag
     /**
      * @template T
      * @param {T[]} elements
+     * @returns {SimpleBag<T>}
      */
     removes(elements)
     {
@@ -332,6 +337,7 @@ class SimpleBag
     /**
      * @template T
      * @param {T} element
+     * @returns {number}
      */
     count(element)
     {
@@ -340,6 +346,7 @@ class SimpleBag
     /**
      * @template T
      * @param {...T} elements
+     * @returns {SimpleBag<T>}
      */
     removeAll(...elements)
     {
@@ -353,11 +360,12 @@ class SimpleBag
     /**
      * @template T
      * @param {function(T):boolean} [filter]
+     * @returns {T[]}
      */
     elements(filter)
     {
         const keyit = this._map.keys();
-        if (filter == null)
+        if (!filter)
             return Array.from(keyit);
         const ret = [];
         while (true)
@@ -372,6 +380,7 @@ class SimpleBag
     /**
      * @template T
      * @param {SimpleBag | BagArray} other
+     * @returns {SimpleBag<T>}
      */
     union(other)
     {
@@ -386,6 +395,7 @@ class SimpleBag
     /**
      * @template T
      * @param {function(T, number): boolean} filtor
+     * @returns {SimpleBag<T>}
      */
     filter(filtor)
     {
@@ -429,6 +439,7 @@ class SimpleBag
      * @template T
      * @template R
      * @param {function(T, number):R} callback
+     * @returns {SimpleBag<R>}
      */
     map(callback)
     {
@@ -482,32 +493,33 @@ class SimpleBag
 }
 
 
-/**
- * @param {...[]} objs
- * @returns {IterableIterator<[]>}
- */
-function* zip(...objs)
-{
-    const maxlen = Math.min(...objs.mapToProp("length"));
-    for (let i = 0; i < maxlen; ++i)
-        yield objs.mapToProp(i);
-}
+///**
+// * @param {...[]} objs
+// * @returns {IterableIterator<[]>}
+// */
+//function* zip(...objs)
+//{
+//    const maxlen = Math.min(...objs.mapToProp("length"));
+//    for (let i = 0; i < maxlen; ++i)
+//        yield objs.mapToProp(i);
+//}
 
 /**
  * @template T
  * @param {...T} arg
+ * @returns {T}
  */
 function _any(...arg)
 {
     for (let i = 0; i < arg.length; ++i)
-        if (arg[i] != null)
+        if (arg[i] !== null && arg[i] !== undefined)
             return arg[i];
     return arg[arg.length - 1];
 }
 
 /**@description parse query string to key-value object
  * @param {string} [qurl] URL's query string
- * @returns {{[x:string]: string}} key-value object
+ * @returns {Object.<string,string>} key-value object
  */
 function _getQueryString(qurl)
 {
@@ -662,7 +674,8 @@ function makeElement(type, classes, props, ...childs)
  * @param {number} height
  * @param {string} viewbox
  * @param {string[] | string} paths
- * @param {{[x:string]:string}[]} [attrs]
+ * @param {Object.<string,string>[]} [attrs]
+ * @returns {SVGSVGElement}
  */
 function createSVG(width, height, viewbox, paths, attrs)
 {

@@ -4,7 +4,7 @@
  *
  * By David Fahlander, david.fahlander@gmail.com
  *
- * Version 3.0.0-alpha.3, Sun Jun 03 2018
+ * Version 3.0.0-alpha.7, Mon Mar 04 2019
  *
  * http://dexie.org
  *
@@ -31,162 +31,7 @@ export type IndexableTypePart =
 string | number | Date | ArrayBuffer | ArrayBufferView | DataView | Array<Array<void>>;
 export type IndexableTypeArray = Array<IndexableTypePart>;
 export type IndexableTypeArrayReadonly = ReadonlyArray<IndexableTypePart>;
-export type IDBValidKey = IndexableTypePart | IndexableTypeArrayReadonly;
-export interface IDBCursor {
-  readonly direction: IDBCursorDirection;
-  key: IDBValidKey;
-  readonly primaryKey: any;
-  source: IDBObjectStore | IDBIndex;
-  advance(count: number): void;
-  continue(key?: IDBKeyRange | IDBValidKey): void;
-  delete(): IDBRequest;
-  update(value: any): IDBRequest;
-  readonly NEXT: string;
-  readonly NEXT_NO_DUPLICATE: string;
-  readonly PREV: string;
-  readonly PREV_NO_DUPLICATE: string;
-}
-export interface IDBDatabaseEventMap {
-  "abort": IDBEvent;
-  "error": IDBEvent;
-}
-export interface IDBDatabase extends EventTarget {
-  readonly name: string;
-  readonly objectStoreNames: DOMStringList;
-  onabort: (this: IDBDatabase, ev: IDBEvent) => any;
-  onerror: (this: IDBDatabase, ev: IDBEvent) => any;
-  version: number;
-  onversionchange: (ev: IDBVersionChangeEvent) => any;
-  close(): void;
-  createObjectStore(name: string, optionalParameters?: IDBObjectStoreParameters): IDBObjectStore;
-  deleteObjectStore(name: string): void;
-  transaction(storeNames: string | string[], mode?: IDBTransactionMode): IDBTransaction;
-  addEventListener(type: "versionchange", listener: (ev: IDBVersionChangeEvent) => any, useCapture?: boolean): void;
-  addEventListener<K extends keyof IDBDatabaseEventMap>(type: K, listener: (this: IDBDatabase, ev: IDBDatabaseEventMap[K]) => any, useCapture?: boolean): void;
-  addEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
-  removeEventListener<K extends keyof IDBDatabaseEventMap>(type: K, listener: (this: IDBDatabase, ev: IDBDatabaseEventMap[K]) => any, useCapture?: boolean): void;
-  removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
-}
-export interface IDBIndexParameters {
-  multiEntry?: boolean;
-  unique?: boolean;
-}
-export interface IDBObjectStoreParameters {
-  autoIncrement?: boolean;
-  keyPath?: IDBKeyPath | null;
-}
-export type IDBKeyPath = string | string[];
-export interface IDBFactory {
-  cmp(first: any, second: any): number;
-  deleteDatabase(name: string): IDBOpenDBRequest;
-  open(name: string, version?: number): IDBOpenDBRequest;
-}
-export interface IDBIndex {
-  keyPath: string | string[];
-  readonly name: string;
-  readonly objectStore: IDBObjectStore;
-  readonly unique: boolean;
-  multiEntry: boolean;
-  count(key?: IDBKeyRange | IDBValidKey): IDBRequest;
-  get(key: IDBKeyRange | IDBValidKey): IDBRequest;
-  getKey(key: IDBKeyRange | IDBValidKey): IDBRequest;
-  getAll?(key?: IDBKeyRange | IDBValidKey, limit?: number): IDBRequest;
-  getAllKeys?(key?: IDBKeyRange | IDBValidKey, limit?: number): IDBRequest;  
-  openCursor(range?: IDBKeyRange | IDBValidKey, direction?: IDBCursorDirection): IDBRequest;
-  openKeyCursor(range?: IDBKeyRange | IDBValidKey, direction?: IDBCursorDirection): IDBRequest;
-}
-export interface IDBKeyRange {
-  readonly lower: any;
-  readonly lowerOpen: boolean;
-  readonly upper: any;
-  readonly upperOpen: boolean;
-}
-export interface IDBKeyRangeConstructor {
-  prototype: IDBKeyRange;
-  new(): IDBKeyRange;
-  bound(lower: any, upper: any, lowerOpen?: boolean, upperOpen?: boolean): IDBKeyRange;
-  lowerBound(lower: any, open?: boolean): IDBKeyRange;
-  only(value: any): IDBKeyRange;
-  upperBound(upper: any, open?: boolean): IDBKeyRange;
-}
-export interface IDBObjectStore {
-  readonly indexNames: DOMStringList;
-  keyPath: string | string[];
-  readonly name: string;
-  readonly transaction: IDBTransaction;
-  autoIncrement: boolean;
-  add(value: any, key?: IDBValidKey): IDBRequest;
-  clear(): IDBRequest;
-  count(key?: IDBKeyRange | IDBValidKey): IDBRequest;
-  createIndex(name: string, keyPath: string | string[], optionalParameters?: IDBIndexParameters): IDBIndex;
-  delete(key: IDBKeyRange | IDBValidKey): IDBRequest;
-  deleteIndex(indexName: string): void;
-  get(key: any): IDBRequest;
-  index(name: string): IDBIndex;
-  openCursor(range?: IDBKeyRange | IDBValidKey, direction?: IDBCursorDirection): IDBRequest;
-  openKeyCursor?(range?: IDBKeyRange | IDBValidKey, direction?: IDBCursorDirection): IDBRequest;
-  put(value: any, key?: IDBValidKey): IDBRequest;
-  getAll?(key?: IDBKeyRange | IDBValidKey, limit?: number): IDBRequest;
-  getAllKeys?(key?: IDBKeyRange | IDBValidKey, limit?: number): IDBRequest;  
-}
-export interface IDBOpenDBRequestEventMap extends IDBRequestEventMap {
-  "blocked": IDBEvent;
-  "upgradeneeded": IDBVersionChangeEvent;
-}
-export interface IDBOpenDBRequest extends IDBRequest {
-  onblocked: (this: IDBOpenDBRequest, ev: IDBEvent) => any;
-  onupgradeneeded: (this: IDBOpenDBRequest, ev: IDBVersionChangeEvent) => any;
-  addEventListener<K extends keyof IDBOpenDBRequestEventMap>(type: K, listener: (this: IDBOpenDBRequest, ev: IDBOpenDBRequestEventMap[K]) => any, useCapture?: boolean): void;
-  addEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
-  removeEventListener<K extends keyof IDBOpenDBRequestEventMap>(type: K, listener: (this: IDBOpenDBRequest, ev: IDBOpenDBRequestEventMap[K]) => any, useCapture?: boolean): void;
-  removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
-}
-export interface IDBRequestEventMap {
-  "error": IDBEvent;
-  "success": IDBEvent;
-}
-export interface IDBRequest extends EventTarget {
-  readonly error: DOMException;
-  onerror: (this: IDBRequest, ev: IDBEvent) => any;
-  onsuccess: (this: IDBRequest, ev: IDBEvent) => any;
-  readonly readyState: IDBRequestReadyState;
-  readonly result: any;
-  source: IDBObjectStore | IDBIndex | IDBCursor;
-  readonly transaction: IDBTransaction;
-  addEventListener<K extends keyof IDBRequestEventMap>(type: K, listener: (this: IDBRequest, ev: IDBRequestEventMap[K]) => any, useCapture?: boolean): void;
-  addEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
-  removeEventListener<K extends keyof IDBRequestEventMap>(type: K, listener: (this: IDBRequest, ev: IDBRequestEventMap[K]) => any, useCapture?: boolean): void;
-  removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
-}
-export interface IDBEvent extends Event {
-  target: IDBRequest;
-}
-export interface IDBTransactionEventMap {
-  "abort": IDBEvent;
-  "complete": IDBEvent;
-  "error": IDBEvent;
-}
-export interface IDBTransaction extends EventTarget {
-  readonly db: IDBDatabase;
-  readonly error: DOMException;
-  readonly mode: IDBTransactionMode;
-  onabort: (this: IDBTransaction, ev: IDBEvent) => any;
-  oncomplete: (this: IDBTransaction, ev: IDBEvent) => any;
-  onerror: (this: IDBTransaction, ev: IDBEvent) => any;
-  abort(): void;
-  objectStore(name: string): IDBObjectStore;
-  readonly READ_ONLY: string;
-  readonly READ_WRITE: string;
-  readonly VERSION_CHANGE: string;
-  addEventListener<K extends keyof IDBTransactionEventMap>(type: K, listener: (this: IDBTransaction, ev: IDBTransactionEventMap[K]) => any, useCapture?: boolean): void;
-  addEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
-  removeEventListener<K extends keyof IDBTransactionEventMap>(type: K, listener: (this: IDBTransaction, ev: IDBTransactionEventMap[K]) => any, useCapture?: boolean): void;
-  removeEventListener(type: string, listener: EventListenerOrEventListenerObject, useCapture?: boolean): void;
-}
-export interface IDBVersionChangeEvent extends IDBEvent {
-  readonly newVersion: number | null;
-  readonly oldVersion: number;
-}
+export type IndexableType = IndexableTypePart | IndexableTypeArrayReadonly;
 export interface DexieEvent {
   subscribers: Function[];
   fire(...args:any[]): any;
@@ -250,7 +95,6 @@ export interface PromiseExtended<T=any> extends Promise<T> {
   timeout (ms: number, msg?: string): PromiseExtended<T>;
 }
 export type ThenShortcut<T,TResult> =  (value: T) => TResult | PromiseLike<TResult>;
-export type IndexableType = IDBValidKey;
 export interface Collection<T=any, TKey=IndexableType> {
   //db: Database;
   and(filter: (x: T) => boolean): Collection<T, TKey>;
@@ -285,7 +129,7 @@ export interface Collection<T=any, TKey=IndexableType> {
   until(filter: (value: T) => boolean, includeStopEntry?: boolean): Collection<T, TKey>;
   // Mutating methods
   delete(): PromiseExtended<number>;
-  modify(changeCallback: (obj: T, ctx:{value: T}) => void): PromiseExtended<number>;
+  modify(changeCallback: (obj: T, ctx:{value: T}) => void | boolean): PromiseExtended<number>;
   modify(changes: { [keyPath: string]: any } ): PromiseExtended<number>;
 }
 export interface WhereClause<T=any, TKey=IndexableType> {
@@ -300,7 +144,7 @@ export interface WhereClause<T=any, TKey=IndexableType> {
   between(lower: any, upper: any, includeLower?: boolean, includeUpper?: boolean): Collection<T, TKey>;
   equals(key: any): Collection<T, TKey>;
   equalsIgnoreCase(key: string): Collection<T, TKey>;
-  inAnyRange(ranges: ReadonlyArray<{0: any, 1: any}>): Collection<T, TKey>;
+  inAnyRange(ranges: ReadonlyArray<{0: any, 1: any}>, options?: { includeLowers?: boolean, includeUppers?: boolean }): Collection<T, TKey>;
   startsWith(key: string): Collection<T, TKey>;
   startsWithAnyOf(prefixes: string[]): Collection<T, TKey>;
   startsWithAnyOf(...prefixes: string[]): Collection<T, TKey>;
@@ -436,12 +280,177 @@ export interface DbEvents extends DexieEventSet {
   versionchange: DexieVersionChangeEvent;        
 }
 export type DbSchema = {[tableName: string]: TableSchema};
+export type Key = any;
+export const enum RangeType {
+  Equal = 1,
+  Range = 2,
+  Any = 3,
+  Never = 4
+}
+export interface KeyRange {
+  readonly type: RangeType;
+  readonly lower: Key | undefined;
+  readonly lowerOpen?: boolean;
+  readonly upper: Key | undefined;
+  readonly upperOpen?: boolean;
+  //includes (key: Key) : boolean; Despite IDBKeyRange api - it's no good to have this as a method. Benefit from using a more functional approach.
+}
+export interface DBCoreTransaction {
+  abort(): void;
+}
+export interface DBCoreTransactionRequest {
+  tables: string[];
+  mode: DBCoreTransactionMode;
+}
+export type DBCoreTransactionMode = 'readonly' | 'readwrite';
+export type MutateRequest = AddRequest | PutRequest | DeleteRequest | DeleteRangeRequest;
+export interface MutateResponse {
+  numFailures: number,
+  failures: {[operationNumber: number]: Error};
+  lastResult: Key;
+  results?: Key[]; // Present on AddRequest and PutRequest if request.wantResults is truthy.
+}
+export interface AddRequest {
+  type: 'add';
+  trans: DBCoreTransaction;
+  values: any[];
+  keys?: Key[];
+  wantResults?: boolean;
+}
+export interface PutRequest {
+  type: 'put';
+  trans: DBCoreTransaction;
+  values: any[];
+  keys?: Key[];
+  wantResults?: boolean;
+}
+export interface DeleteRequest {
+  type: 'delete';
+  trans: DBCoreTransaction;
+  keys: Key[];
+}
+export interface DeleteRangeRequest {
+  type: 'deleteRange';
+  trans: DBCoreTransaction;
+  range: KeyRange;
+}
+export interface DBCoreGetManyRequest {
+  trans: DBCoreTransaction;
+  keys: Key[];
+}
+export interface DBCoreGetRequest {
+  trans: DBCoreTransaction;
+  key: Key;  
+}
+export interface DBCoreQuery {
+  index: DBCoreIndex;//keyPath: null | string | string[]; // null represents primary key. string a property, string[] several properties.
+  range: KeyRange;
+}
+export interface DBCoreQueryRequest<TQuery=DBCoreQuery> {
+  trans: DBCoreTransaction;
+  values?: boolean;
+  limit?: number;
+  query: TQuery;
+}
+export interface DBCoreQueryResponse {
+  result: any[];
+}
+export interface DBCoreOpenCursorRequest<TQuery=DBCoreQuery> {
+  trans: DBCoreTransaction;
+  values?: boolean;
+  unique?: boolean;
+  reverse?: boolean;
+  query: TQuery;
+}
+export interface DBCoreCountRequest<TQuery=DBCoreQuery> {
+  trans: DBCoreTransaction;
+  query: TQuery;
+}
+export interface DBCoreCursor<TResult=any> {
+  readonly trans: DBCoreTransaction;
+  readonly key: Key;
+  readonly primaryKey: Key;
+  readonly value?: any;
+  readonly done?: boolean;
+  continue(key?: any): void;
+  continuePrimaryKey(key: Key, primaryKey: Key): void;
+  advance(count: number): void;
+  start(onNext: ()=>void): Promise<TResult>
+  stop(value?: TResult | Promise<TResult>): void;
+  next(): Promise<DBCoreCursor>;
+  fail(error: Error): void;
+}
+export interface DBCoreSchema {
+  name: string;
+  tables: DBCoreTableSchema[];
+}
+export interface DBCoreTableSchema {
+  readonly name: string;
+  readonly primaryKey: DBCoreIndex;
+  readonly indexes: DBCoreIndex[];
+  readonly getIndexByKeyPath: (keyPath: null | string | string[]) => DBCoreIndex | undefined;
+}
+export interface DBCoreIndex {
+  /** Name of the index, or null for primary key */
+  readonly name: string | null;
+  /** True if this index represents the primary key */
+  readonly isPrimaryKey?: boolean;
+  /** True if this index represents the primary key and is not inbound (http://dexie.org/docs/inbound) */
+  readonly outbound?: boolean; 
+  /** True if and only if keyPath is an array (http://dexie.org/docs/Compound-Index) */
+  readonly compound?: boolean;
+  /** keyPath, null for primary key, string for single-property indexes, Array<string> for compound indexes */
+  readonly keyPath: null | string | string[];
+  /** Auto-generated primary key (does not apply to secondary indexes) */
+  readonly autoIncrement?: boolean;
+  /** Whether index is unique. Also true if index is primary key. */
+  readonly unique?: boolean;
+  /** Whether index is multiEntry. */
+  readonly multiEntry?: boolean;
+  /** Extract (using keyPath) a key from given value (object) */
+  readonly extractKey: (value: any) => Key;
+}
+export interface DBCore<TQuery=DBCoreQuery> {
+  stack: "dbcore";
+  // Transaction and Object Store
+  transaction(req: DBCoreTransactionRequest): DBCoreTransaction;
+
+  // Utility methods
+  cmp(a: any, b: any) : number;
+  //rangeIncludes(range: KeyRange): (key: Key) => boolean;
+  //comparer(table: string, index: string | null): (a: any, b: any) => number;
+  //readonly schema: DBCoreSchema;
+  readonly MIN_KEY: Key;
+  readonly MAX_KEY: Key;
+  readonly schema: DBCoreSchema;
+  table(name: string): DBCoreTable<TQuery>;
+}
+export interface DBCoreTable<TQuery=DBCoreQuery> {
+  readonly name: string;
+  readonly schema: DBCoreTableSchema;
+
+  mutate(req: MutateRequest): Promise<MutateResponse>;
+  get(req: DBCoreGetRequest): Promise<any>;
+  getMany(req: DBCoreGetManyRequest): Promise<any[]>;
+  query(req: DBCoreQueryRequest<TQuery>): Promise<DBCoreQueryResponse>;
+  openCursor(req: DBCoreOpenCursorRequest<TQuery>): Promise<DBCoreCursor | null>;
+  count(req: DBCoreCountRequest<TQuery>): Promise<number>;
+}
+export interface Middleware<TStack extends {stack: string}> {
+  stack: TStack["stack"],
+  create: (down: TStack) => Partial<TStack>;
+  level?: number;
+  name?: string;
+}
+export interface DexieStacks {
+  dbcore: DBCore;
+}
 export interface Dexie extends Database {
   readonly name: string;
   readonly tables: Table[];
   readonly verno: number;
   
-  readonly _allTables: {[name: string]: Table<any,any>};
+  readonly _allTables: {[name: string]: Table<any,IndexableType>};
 
   _createTransaction: (
 	this: Dexie,
@@ -460,17 +469,23 @@ export interface Dexie extends Database {
 
   table<T=any, TKey=IndexableType>(tableName: string): Table<T, TKey>;
 
-  transaction<U>(mode: TransactionMode, table: Table, scope: () => PromiseLike<U> | U): PromiseExtended<U>;
+  transaction<U>(mode: TransactionMode, table: Table, scope: (trans: Transaction) => PromiseLike<U> | U): PromiseExtended<U>;
+  transaction<U>(mode: TransactionMode, table: string, scope: (trans: Transaction) => PromiseLike<U> | U): PromiseExtended<U>;
 
-  transaction<U>(mode: TransactionMode, table: Table, table2: Table, scope: () => PromiseLike<U> | U): PromiseExtended<U>;
+  transaction<U>(mode: TransactionMode, table: Table, table2: Table, scope: (trans: Transaction) => PromiseLike<U> | U): PromiseExtended<U>;
+  transaction<U>(mode: TransactionMode, table: string, table2: string, scope: (trans: Transaction) => PromiseLike<U> | U): PromiseExtended<U>;
 
-  transaction<U>(mode: TransactionMode, table: Table, table2: Table, table3: Table, scope: () => PromiseLike<U> | U): PromiseExtended<U>;
+  transaction<U>(mode: TransactionMode, table: Table, table2: Table, table3: Table, scope: (trans: Transaction) => PromiseLike<U> | U): PromiseExtended<U>;
+  transaction<U>(mode: TransactionMode, table: string, table2: string, table3: string, scope: (trans: Transaction) => PromiseLike<U> | U): PromiseExtended<U>;
 
-  transaction<U>(mode: TransactionMode, table: Table, table2: Table, table3: Table, table4: Table<any,any>, scope: () => PromiseLike<U> | U): PromiseExtended<U>;
+  transaction<U>(mode: TransactionMode, table: Table, table2: Table, table3: Table, table4: Table, scope: (trans: Transaction) => PromiseLike<U> | U): PromiseExtended<U>;
+  transaction<U>(mode: TransactionMode, table: string, table2: string, table3: string, table4: string, scope: (trans: Transaction) => PromiseLike<U> | U): PromiseExtended<U>;
 
-  transaction<U>(mode: TransactionMode, table: Table, table2: Table, table3: Table, table4: Table<any,any>, table5: Table<any,any>, scope: () => PromiseLike<U> | U): PromiseExtended<U>;
+  transaction<U>(mode: TransactionMode, table: Table, table2: Table, table3: Table, table4: Table, table5: Table, scope: (trans: Transaction) => PromiseLike<U> | U): PromiseExtended<U>;
+  transaction<U>(mode: TransactionMode, table: string, table2: string, table3: string, table4: string, table5: string, scope: (trans: Transaction) => PromiseLike<U> | U): PromiseExtended<U>;
 
-  transaction<U>(mode: TransactionMode, tables: Table[], scope: () => PromiseLike<U> | U): PromiseExtended<U>;
+  transaction<U>(mode: TransactionMode, tables: Table[], scope: (trans: Transaction) => PromiseLike<U> | U): PromiseExtended<U>;
+  transaction<U>(mode: TransactionMode, tables: string[], scope: (trans: Transaction) => PromiseLike<U> | U): PromiseExtended<U>;
 
   close(): void;
 
@@ -485,6 +500,11 @@ export interface Dexie extends Database {
   dynamicallyOpened(): boolean;
 
   backendDB(): IDBDatabase;
+
+  use(middleware: Middleware<DBCore>): this;
+  // Add more supported stacks here... : use(middleware: Middleware<HookStack>): this;
+  unuse({stack, create}: Middleware<{stack: keyof DexieStacks}>): this;
+  unuse({stack, name}: {stack: keyof DexieStacks, name: string}): this;
   
   // Make it possible to touch physical class constructors where they reside - as properties on db instance.
   // For example, checking if (x instanceof db.Table). Can't do (x instanceof Dexie.Table because it's just a virtual interface)
@@ -628,7 +648,7 @@ export interface ModifyError extends DexieError {
  * http://dexie.org/docs/DexieErrors/Dexie.BulkError
  */
 export interface BulkError extends DexieError {
-  failures: Array<any>;
+  failures: {[operationNumber: number]: Error};
 }
 export interface DexieErrorConstructor {
   new(msg?: string, inner?: Object) : DexieError;
@@ -644,7 +664,7 @@ export interface ModifyErrorConstructor {
   prototype: ModifyError;
 }
 export interface BulkErrorConstructor {
-  new (msg?:string, failures?: any[]) : BulkError;
+  new (msg?:string, failures?: {[operationNumber: number]: Error}) : BulkError;
   prototype: BulkError;
 }
 export type ExceptionSet = {[P in DexieErrors[keyof DexieErrors]]: DexieErrorConstructor};
@@ -655,7 +675,7 @@ export type DexieExceptionClasses = ExceptionSet & {
 }
 export interface DexieDOMDependencies {
   indexedDB: IDBFactory;
-  IDBKeyRange: IDBKeyRangeConstructor;
+  IDBKeyRange: typeof IDBKeyRange;
 }
 export interface DexieOptions {
   addons?: Array<(db: Dexie) => void>,

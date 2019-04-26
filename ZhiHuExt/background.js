@@ -200,7 +200,7 @@ async function blocking(api, id)
     const objdb = (api === "answer" ? db.zans : (api === "article" ? db.zanarts : db.followqsts));
     /**@type {Zan[]}*/
     const zans = await objdb.where("to").equals(id).toArray();
-    /**@type {{[x:string]: User}}*/
+    /**@type {Object.<string,User>}*/
     const voters = await db.getDetailMapOfIds("users", zans.mapToProp("from"), "id");
     const retdata = zans.sort((x, y) => y.time - x.time)
         .filter(zan => voters[zan.from] != null)
@@ -466,7 +466,7 @@ chrome.runtime.onMessageExternal.addListener(
                     const res = new StandardDB();
                     data.data.forEach(act => APIParser.parseByType(res, act));
                     db.insert("batch", res, putBadge);
-                    console.log(request.target, res);
+                    //console.log(request.target, res);
                 } break;
             case "relations":
                 {

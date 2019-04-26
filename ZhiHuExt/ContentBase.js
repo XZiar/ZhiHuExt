@@ -45,8 +45,8 @@ class ContentBase
      */
     static _fetchAnsVoters(obj, id, offset, header)
     {
-        const part = (obj === "answer") ? "voters" : "likers";
-        const zanquery = (obj === "answer") ? ",voteup_count" : "";
+        const part = obj === "answer" ? "voters" : "likers";
+        const zanquery = obj === "answer" ? ",voteup_count" : "";
         const pms = $.Deferred();
         ContentBase._get(`https://www.zhihu.com/api/v4/${obj}s/${id}/${part}?include=data[*].answer_count,articles_count,follower_count${zanquery}&limit=20&offset=${offset}`, undefined, header)
             .done((data, status, xhr) =>
@@ -61,6 +61,7 @@ class ContentBase
      * @param {object} header
      * @param {string} uid
      * @param {number} [time]
+     * @returns {Promise<{acts:StandardDB, end:boolean, lasttime:number}>}
      */
     static _fetchUserActs(header, uid, time)
     {
@@ -78,6 +79,7 @@ class ContentBase
     /**
      * @param {string | number} qid
      * @param {number} offset
+     * @returns {Promise<{data:{}, end:boolean}>}
      */
     static _fetchAnswers(qid, offset)
     {
@@ -152,7 +154,7 @@ class ContentBase
     static _post(url, data, headers)
     {
         let cType;
-        if (typeof data == "string")
+        if (typeof data === "string")
             cType = "application/x-www-form-urlencoded";
         else
         {
@@ -237,15 +239,16 @@ class ContentBase
      * @param {number} limit
      * @param {"old" | "new" | "old+"} config
      * @param {function(number, number):void} onProgress
+     * @returns {Promise<User[]>}
      */
     static async fetchTheVoters(obj, id, limit, config, onProgress)
     {
-        const tokenhead = ContentBase.CUR_TOKEN ? ContentBase.CUR_TOKEN.toHeader() : {};
+        const tokenhead = {};//ContentBase.CUR_TOKEN ? ContentBase.CUR_TOKEN.toHeader() : {};
         let errcnt = 0;
         const first = await ContentBase._fetchAnsVoters(obj, id, 0, tokenhead);
         /**@type {User[]}*/
         let ret = config === "old+" ? [] : first.users;
-        let oldtotal = first.total, demand = Math.min(oldtotal, limit)
+        let oldtotal = first.total, demand = Math.min(oldtotal, limit);
         let left = demand - first.users.length;
         if (left <= 0)
             return ret;
@@ -253,7 +256,7 @@ class ContentBase
         if (config === "old" || config === "old+")
             offset = oldtotal - left;
         let isEnd = false;
-        const usrset = new Set(ret.mapToProp("id"))
+        const usrset = new Set(ret.mapToProp("id"));
         while (left > 0 && !isEnd)
         {
             try
@@ -288,13 +291,14 @@ class ContentBase
      * @param {number} [limittime]
      * @param {number} [begintime]
      * @param {function(number, number):void} onProgress
+     * @returns {Promise<{acts:StandardDB, lasttime:number}>}
      */
     static async fetchUserActs(uid, maxloop, limittime, begintime, onProgress)
     {
         let errcnt = 0;
         let time = begintime || new Date().toUTCSeconds(); 
         limittime = limittime || ContentBase.BASE_LIM_DATE;
-        const tokenhead = ContentBase.CUR_TOKEN ? ContentBase.CUR_TOKEN.toHeader() : {};
+        const tokenhead = {};//ContentBase.CUR_TOKEN ? ContentBase.CUR_TOKEN.toHeader() : {};
         tokenhead["x-api-version"] = "3.0.40";
         const ret = new StandardDB();
         let isEnd = false;

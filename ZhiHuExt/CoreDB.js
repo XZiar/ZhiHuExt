@@ -142,13 +142,13 @@ class ZhiHuDB
 
     /**
      * @param {string} dbname
-     * @param {{[x:string]: string}[]} def
+     * @param {Object.<string,string>[]} def
      * @param {(function(any):void)[]} upgrader
      * @param {function():void} onDone
      */
     constructor(dbname, def, upgrader, onDone)
     {
-        /**@type {{[x:string]: {}}}*/
+        /**@type {Object.<string,{}>}*/
         this.db = new Dexie(dbname);
         for (let v = 0; v < def.length; ++v)
         {
@@ -209,7 +209,7 @@ class ZhiHuDB
                 for (const entry of acttime)
                 {
                     recs.push({ id: entry[0], new: entry[1][0], old: entry[1][1]});
-                };
+                }
                 this.db.rectime.bulkPut(recs);
             }
             return sum;
@@ -367,7 +367,7 @@ class ZhiHuDB
      * @param {string} table
      * @param {[] | Promise<any>} id
      * @param {string} prop
-     * @returns {{[x:any]: any}}
+     * @returns {{}}
      */
     async getPropMapOfIds(table, id, prop)
     {
@@ -383,7 +383,7 @@ class ZhiHuDB
      * @param {any} id
      * @param {string} name
      * @param {...string} except
-     * @returns {{[id:string]: object}}
+     * @returns {Object.<string,{}>}
      */
     async getDetailMapOfIds(table, id, name, ...except)
     {
@@ -415,7 +415,7 @@ class ZhiHuDB
             /**@type {[string,number][][]}*/
             const [zanAnss, zanArts] = await Promise.all(pmss);
             console.log(`here get ${zanAnss.length} ans-zan, ${zanArts.length} art-zan`);
-            /**@type {{[x:number]:string}[]}*/
+            /**@type {Object.<number,string>[]}*/
             const [ansmap, artmap] = await Promise.all([db.getPropMapOfIds("answers", zanAnss.mapToProp(1), "author"), db.getPropMapOfIds("articles", zanArts.mapToProp(1), "author")]);
             zanAnss.forEach(pair =>
             {
@@ -432,7 +432,7 @@ class ZhiHuDB
         }
         else if (target === "from")
         {
-            /**@type {{[x:number]:string}[]}*/
+            /**@type {Object.<number,string>[]}*/
             const [ansmap, artmap] = await Promise.all([this.db.answers.where("author").anyOf(uids).toPropMap("id", "author"), this.db.articles.where("author").anyOf(uids).toPropMap("id", "author")]);
             const pmss = [this.db.zans.where("to").anyOf(Object.keys(ansmap).map(Number)).primaryKeys(), this.db.zanarts.where("to").anyOf(Object.keys(artmap).map(Number)).primaryKeys()];
             /**@type {[string,number][][]}*/
@@ -532,7 +532,7 @@ class ZhiHuDB
         const [zanAnss, zanArts] = await Promise.all(pmss);
         /**@type {number[]}*/
         const ansid = zanAnss.mapToProp(1), artid = zanArts.mapToProp(1);
-        /**@type {{[x:number]:string}[]}*/
+        /**@type {Object.<number,string>[]}*/
         const [ansmap, artmap] = await Promise.all([db.getPropMapOfIds("answers", ansid, "author"), db.getPropMapOfIds("articles", artid, "author")]);
         const athBag = new SimpleBag();
         ansid.forEach(aid => athBag.add(_any(ansmap[aid], "**")));

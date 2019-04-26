@@ -1,5 +1,10 @@
 # 知乎疯牛病 --- 更新日志
 
+## 1.0.12
+ * 更新第三方库（dexie.js到3.0.0alpha7， nouislider、clipboardjs）。
+ * JSDoc修正。
+ * 修正用户页标注
+
 ## 1.0.11
  * 知乎改前(后)端啦，修复。
  * 更新到Asp.net core 2.1。
