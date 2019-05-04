@@ -86,8 +86,10 @@
     {
       "matches":
       [
-        "*://www.zhihu.com/community/*"
+        "*://www.zhihu.com/community/*",
+        "*://www.zhihu.com/community*"
       ],
+      "include_globs": ["*://www.zhihu.com/community*"],
       "exclude_matches":
       [
         "*://www.zhihu.com/community/reported/*"

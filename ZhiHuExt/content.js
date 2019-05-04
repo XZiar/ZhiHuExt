@@ -308,7 +308,7 @@ async function addAASpamBtns(answerNodes)
                 if (athMap.has(athMth[1]))
                     athMap.get(athMth[1]).add(div);
                 else
-                    athMap.set(athMth[1], new Set(div));
+                    athMap.set(athMth[1], new Set([div]));
             }
         });
     const result = await ContentBase.checkSpam("users", Array.from(athMap.keys()));

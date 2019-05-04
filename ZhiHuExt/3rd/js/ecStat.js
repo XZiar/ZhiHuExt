@@ -1,4 +1,11 @@
-(function webpackUniversalModuleDefinition(root, factory) {
+Number.prototype.toFixed2 = function (digits)
+{
+    if (digits < 0) return this.toFixed(0);
+    if (digits > 20) return this.toFixed(20);
+    return this.toFixed(digits);
+};
+(function webpackUniversalModuleDefinition(root, factory)
+{
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
 	else if(typeof define === 'function' && define.amd)
@@ -1226,8 +1233,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        // return the xAxis coordinate for each bins, except the end point of the value
 	        var rangeArray = range(
 	                // use function toFixed() to avoid data like '0.700000001'
-	                +((Math.ceil(minValue / step) * step).toFixed(precision)),
-	                +((Math.floor(maxValue / step) * step).toFixed(precision)),
+	                +((Math.ceil(minValue / step) * step).toFixed2(precision)),
+	                +((Math.floor(maxValue / step) * step).toFixed2(precision)),
 	                step,
 	                precision
 	            );
@@ -1259,7 +1266,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	        var data = map(bins, function (bin) {
 	            // use function toFixed() to avoid data like '6.5666638489'
-	            return [+((bin.x0 + bin.x1) / 2).toFixed(precision), bin.sample.length];
+	            return [+((bin.x0 + bin.x1) / 2).toFixed2(precision), bin.sample.length];
 	        });
 
 	        var customData = map(bins, function (bin) {
@@ -1351,10 +1358,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	            precision = +precision;
 	        }
 
-	        var n = Math.ceil(((end - start) / step).toFixed(precision));
+	        var n = Math.ceil(((end - start) / step).toFixed2(precision));
 	        var range = new Array(n + 1);
 	        for (var i = 0; i < n + 1; i++) {
-	            range[i] = +(start + i * step).toFixed(precision);
+	            range[i] = +(start + i * step).toFixed2(precision);
 	        }
 	        return range;
 	    };
@@ -1390,7 +1397,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        else if(error >= Math.sqrt(2)) {
 	            step1 *= 2;
 	        }
-	        return +((stop >= start ? step1 : -step1).toFixed(-precision));
+	        return +((stop >= start ? step1 : -step1).toFixed2(-precision));
 
 	    };
 

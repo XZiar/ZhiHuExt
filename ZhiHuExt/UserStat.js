@@ -182,7 +182,7 @@ $("#namecloud")[0].ondrop = ev =>
 }
 const myChart = echarts.init(document.getElementById("graph"), null, { renderer: "canvas" });
 
-!async function()
+async function Main()
 {
     /**@type {{[x: string]: string}}*/
     const qs = _getQueryString();
@@ -222,6 +222,11 @@ const myChart = echarts.init(document.getElementById("graph"), null, { renderer:
         const athids = qs.athid.split("*");
         uids = (await DBfunc("getVotersByAuthor", athids)).mapToProp("key");
     }
+    else if (qs.fid != null)
+    {
+        const fid = qs.fid.split("*");
+        uids = (await DBfunc("getAny", "follows", "to", fid)).mapToProp("from");
+    }
 
     console.log(`receive ${uids.length} uids`);
 
@@ -233,5 +238,7 @@ const myChart = echarts.init(document.getElementById("graph"), null, { renderer:
     title = qs.title || "用户分析";
 
     showStat();
-}()
+}
+
+Main();
 

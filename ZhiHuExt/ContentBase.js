@@ -273,6 +273,7 @@ class ContentBase
                 if (onProgress)
                     onProgress(ret.length, demand);
                 isEnd = part.end;
+                if (errcnt > 0) errcnt--;
             }
             catch (e)
             {
@@ -315,6 +316,7 @@ class ContentBase
                 if (onProgress)
                     onProgress(i, time);
                 isEnd = part.end;
+                if (errcnt > 0) errcnt--;
             }
             catch (e)
             {
@@ -341,6 +343,7 @@ class ContentBase
                 whole.push(...part.data);
                 isEnd = part.end;
                 offset += part.data.length;
+                if (errcnt > 0) errcnt--;
             }
             catch (e)
             {
@@ -366,6 +369,7 @@ class ContentBase
                 whole.push(...part.data);
                 isEnd = part.end;
                 offset += part.data.length;
+                if (errcnt > 0) errcnt--;
             }
             catch (e)
             {
@@ -397,6 +401,7 @@ class ContentBase
                 whole.push(...part.data);
                 isEnd = part.end;
                 offset += part.data.length;
+                if (errcnt > 0) errcnt--;
             }
             catch (e)
             {

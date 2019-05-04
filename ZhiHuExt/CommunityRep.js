@@ -1,6 +1,6 @@
 "use strict"
 
-!function ()
+function Main()
 {
     console.log("community-report page");
 
@@ -18,13 +18,13 @@
             for (let nidx = 0; nidx < nodes.length; ++nidx)
             {
                 const node = nodes[nidx];
-                if (node instanceof HTMLTableRowElement)
+                if (node instanceof HTMLTableRowElement && node.className.includes("ReportItem-row"))
                     rows.push(node);
-                else if (node instanceof HTMLDivElement && node.className.includes("Community-subNav"))
+                else if (node instanceof HTMLDivElement && node.className.includes("Report-tip"))
                     subnav = node;
                 else if (node instanceof HTMLElement)
                 {
-                    rows = rows.concat(Array.from(node.querySelectorAll("tr")));
+                    rows = rows.concat(Array.from(node.querySelectorAll("tr.ReportItem-row")));
                     if (!subnav)
                         subnav = node.querySelector("div.Community-subNav");
                 }
@@ -33,20 +33,20 @@
         if (subnav)
         {
             const chkAll = createButton(["Btn-QCheckStatusAll"], "检测全部");
-            const prevPage = createButton(["Btn-Page"], "上一页");
-            prevPage.dataset.type = "prev";
-            const nextPage = createButton(["Btn-Page"], "下一页");
-            nextPage.dataset.type = "next";
+            //const prevPage = createButton(["Btn-Page"], "上一页");
+            //prevPage.dataset.type = "prev";
+            //const nextPage = createButton(["Btn-Page"], "下一页");
+            //nextPage.dataset.type = "next";
 
-            $(subnav).prepend(nextPage);
+            //$(subnav).prepend(nextPage);
             $(subnav).prepend(chkAll);
-            $(subnav).prepend(prevPage);
+            //$(subnav).prepend(prevPage);
         }
         if (rows.length === 0)
             return;
         console.log("find " + rows.length + " table-row", rows);
         const spams = [];
-        const userUpds = [];
+        const userBans = [], userSbans = [];
         for (let ridx = 0; ridx < rows.length; ++ridx)
         {
             /**@type {HTMLTableCellElement[]}*/
@@ -54,17 +54,21 @@
                 .filter(child => child instanceof HTMLTableCellElement);
             if (tds.length !== 5)
                 continue;
-            if (tds[2].innerText === "用户")
+            if (tds[1].innerText === "用户")
             {
-                const link = tds[3].querySelector("a").href;
+                const link = tds[0].querySelector("a.ReportItem-Link").href;
                 const uid = link.split("/").pop();
                 spams.push({ id: uid, type: "member" });
-                if (tds[4].innerText.includes("已封禁"))
-                    userUpds.push(uid);
+                if (tds[3].innerText.includes("已封禁"))
+                    userBans.push(uid);
+                else if (tds[3].innerText.includes("已禁言"))
+                    userSbans.push(uid);
             }
         }
         ContentBase._report("spams", spams);
-        ContentBase._update("users", "id", userUpds, { status: "ban" });
+        console.log("userBans", userBans, "userSbans", userSbans);
+        ContentBase._update("users", "id", userBans, { status: "ban" });
+        ContentBase._update("users", "id", userSbans, { status: "sban" });
     });
 
     /**
@@ -94,12 +98,12 @@
         let objs = [];
         $("tbody > tr", document).toArray()
             .map(tr => Array.from(tr.childNodes).filter(child => child instanceof HTMLTableCellElement))
-            .filter((/**@type {HTMLTableCellElement[]}*/tds) => tds.length === 5 && tds[2].innerText === "用户" && tds[3].style.backgroundColor == "")
+            .filter((/**@type {HTMLTableCellElement[]}*/tds) => tds.length === 5 && tds[1].innerText === "用户" && !tds[3].style.background)
             .forEach((/**@type {HTMLTableCellElement[]}*/tds) =>
             {
-                const link = tds[3].querySelector("a").href;
+                const link = tds[0].querySelector("a.ReportItem-Link").href;
                 const uid = link.split("/").pop();
-                if (!isShift && tds[4].innerText.includes("已封禁"))
+                if (!isShift && (tds[3].innerText.includes("已封禁") || tds[3].innerText.includes("已禁言")))
                     return;
                 objs.push([uid, tds[3]]);
             });
@@ -127,5 +131,7 @@
     });
 
 
-    cmrepotObserver.observe($(".zu-main-content-inner")[0], { "childList": true, "subtree": true });
-}()
+    cmrepotObserver.observe($(".Community")[0], { "childList": true, "subtree": true });
+}
+
+Main()

@@ -142,7 +142,7 @@ async function peopleEnhance()
     btn2.dataset.qname = "athid";
     const btn3 = createButton(["Btn-StatVoter", "Button--primary"], "赞谁");
     btn3.dataset.id = uid;
-    btn3.dataset.qname = "uid";
+    btn3.dataset.qname = "vid";
     const btn4 = createButton(["Btn-AutoActSpider", "Button--primary"], "爬");
     btn4.dataset.id = uid;
     const btn5 = createButton(["Btn-ShowTime", "Button--primary"], "时间图");
